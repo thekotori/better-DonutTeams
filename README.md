@@ -40,8 +40,22 @@
 ### `config.yml`
 
 ```yaml
+# ----------------------------------------------------
+#  DonutTeams Configuration
+# ----------------------------------------------------
+#  This file contains all the main settings for the plugin.
+#  For message customization, please see messages.yml.
+# ----------------------------------------------------
+
+# Storage settings
+# Configure how the plugin stores its data.
 storage:
+  # Can be "mysql" for a central database or "h2" for local file-based storage.
+  # H2 is recommended for smaller servers as it requires no setup.
   type: "h2"
+  
+  # MySQL database settings.
+  # Only used if type is "mysql" and enabled is "true".
   mysql:
     enabled: false
     host: "localhost"
@@ -50,18 +64,36 @@ storage:
     username: "root"
     password: ""
 
+# General team settings
 settings:
+  # The main color used in GUIs and messages.
   main_color: "#95FD95"
+  # The accent color used for highlights.
   accent_color: "#FFFFFF"
+  # Maximum number of players allowed in a single team.
   max_team_size: 10
+  # Minimum character length for a team name.
   min_name_length: 3
+  # Maximum character length for a team name.
   max_name_length: 16
+  # Maximum character length for a team tag.
   max_tag_length: 6
+  # Default PvP status for newly created teams. If true, members can hurt each other.
   default_pvp_status: true
 
+# Team Home feature settings
 team_home:
+  # Time in seconds a player must stand still before being teleported.
+  # Set to 0 to disable the warmup.
   warmup_seconds: 5
-  cooldown_seconds: 300
+  # Cooldown in seconds before a player can use /team home again.
+  cooldown_seconds: 300 # 5 minutes
+
+# Webhook settings
+# This feature sends anonymous startup statistics to the developer to help improve the plugin.
+# IP and Port is being sent to us. You can disable it at any time.
+webhook:
+  enabled: true
 ```
 
 ---
