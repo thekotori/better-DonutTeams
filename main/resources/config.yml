@@ -46,3 +46,9 @@ team_home:
   warmup_seconds: 5
   # Cooldown in seconds before a player can use /team home again.
   cooldown_seconds: 300 # 5 minutes
+
+# Webhook settings
+# This feature sends anonymous startup statistics to the developer to help improve the plugin.
+# IP and Port is being sent to us. You can disable it at any time.
+webhook:
+  enabled: true

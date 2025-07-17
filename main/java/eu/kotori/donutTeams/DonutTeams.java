@@ -12,6 +12,7 @@ import eu.kotori.donutTeams.listeners.TeamChatListener;
 import eu.kotori.donutTeams.storage.StorageManager;
 import eu.kotori.donutTeams.team.TeamManager;
 import eu.kotori.donutTeams.util.StartupMessage;
+import eu.kotori.donutTeams.util.WebhookUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -49,6 +50,8 @@ public final class DonutTeams extends JavaPlugin {
         registerCommands();
 
         StartupMessage.send();
+        WebhookUtil.sendStartupNotification(this);
+
     }
 
     @Override
