@@ -6,20 +6,21 @@ import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.config.ConfigManager;
 import eu.kotori.donutTeams.config.MessageManager;
 import eu.kotori.donutTeams.storage.IDataStorage;
+import eu.kotori.donutTeams.util.InventoryUtil;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +30,7 @@ public class TeamManager {
     private final IDataStorage storage;
     private final MessageManager messageManager;
     private final ConfigManager configManager;
+    private final Economy economy;
 
     private final Map<String, Team> teamNameCache = new ConcurrentHashMap<>();
     private final Map<UUID, Team> playerTeamCache = new ConcurrentHashMap<>();
@@ -41,31 +43,10 @@ public class TeamManager {
         this.storage = plugin.getStorageManager().getStorage();
         this.messageManager = plugin.getMessageManager();
         this.configManager = plugin.getConfigManager();
+        this.economy = plugin.getEconomy();
         this.teamInvites = CacheBuilder.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
-    }
-
-    public void loadPlayerTeam(Player player) {
-        if (playerTeamCache.containsKey(player.getUniqueId())) {
-            return;
-        }
-        storage.findTeamByPlayer(player.getUniqueId()).ifPresent(this::loadTeamIntoCache);
-    }
-
-    public void unloadPlayer(Player player) {
-        if (teleportTasks.containsKey(player.getUniqueId())) {
-            teleportTasks.get(player.getUniqueId()).cancel();
-        }
-        Team team = getPlayerTeam(player.getUniqueId());
-        if (team != null) {
-            playerTeamCache.remove(player.getUniqueId());
-            boolean isTeamEmptyOnline = team.getMembers().stream()
-                    .allMatch(member -> member.getPlayerUuid().equals(player.getUniqueId()) || !member.isOnline());
-            if (isTeamEmptyOnline) {
-                teamNameCache.remove(team.getName().toLowerCase());
-            }
-        }
     }
 
     private void loadTeamIntoCache(Team team) {
@@ -78,11 +59,36 @@ public class TeamManager {
 
         team.getMembers().clear();
         team.getMembers().addAll(storage.getTeamMembers(team.getId()));
+        loadEnderChest(team);
         teamNameCache.put(lowerCaseName, team);
         team.getMembers().forEach(member -> playerTeamCache.put(member.getPlayerUuid(), team));
     }
 
+    public void unloadPlayer(Player player) {
+        if (teleportTasks.containsKey(player.getUniqueId())) {
+            teleportTasks.get(player.getUniqueId()).cancel();
+        }
+        Team team = getPlayerTeam(player.getUniqueId());
+        if (team != null) {
+            playerTeamCache.remove(player.getUniqueId());
+            boolean isTeamEmptyOnline = team.getMembers().stream()
+                    .allMatch(member -> member.getPlayerUuid().equals(player.getUniqueId()) || !member.isOnline());
+            if (isTeamEmptyOnline) {
+                saveEnderChest(team);
+                teamNameCache.remove(team.getName().toLowerCase());
+            }
+        }
+    }
+
+    public void loadPlayerTeam(Player player) {
+        if (playerTeamCache.containsKey(player.getUniqueId())) {
+            return;
+        }
+        storage.findTeamByPlayer(player.getUniqueId()).ifPresent(this::loadTeamIntoCache);
+    }
+
     private void uncacheTeam(Team team) {
+        saveEnderChest(team);
         teamNameCache.remove(team.getName().toLowerCase());
         team.getMembers().forEach(member -> playerTeamCache.remove(member.getPlayerUuid()));
     }
@@ -113,6 +119,10 @@ public class TeamManager {
         }
         if (name.length() > configManager.getMaxNameLength()) {
             messageManager.sendMessage(owner, "name_too_long", Placeholder.unparsed("max_length", String.valueOf(configManager.getMaxNameLength())));
+            return;
+        }
+        if (!name.matches("^[a-zA-Z0-9_]{3,16}$")) {
+            messageManager.sendMessage(owner, "name_invalid");
             return;
         }
         if (tag.length() > configManager.getMaxTagLength() || !tag.matches("[a-zA-Z0-9]+")) {
@@ -213,7 +223,7 @@ public class TeamManager {
 
         storage.addMemberToTeam(team.getId(), player.getUniqueId());
 
-        team.addMember(new TeamPlayer(player.getUniqueId(), TeamRole.MEMBER, Instant.now()));
+        team.addMember(new TeamPlayer(player.getUniqueId(), TeamRole.MEMBER, Instant.now(), false, true));
         playerTeamCache.put(player.getUniqueId(), team);
 
         messageManager.sendMessage(player, "invite_accepted", Placeholder.unparsed("team", team.getName()));
@@ -315,6 +325,25 @@ public class TeamManager {
         messageManager.sendMessage(player, "tag_set", Placeholder.unparsed("tag", newTag));
     }
 
+    public void setTeamDescription(Player player, String newDescription) {
+        Team team = getPlayerTeam(player.getUniqueId());
+        if (team == null) {
+            messageManager.sendMessage(player, "player_not_in_team");
+            return;
+        }
+        if (!team.isOwner(player.getUniqueId())) {
+            messageManager.sendMessage(player, "not_owner");
+            return;
+        }
+        if (newDescription.length() > configManager.getMaxDescriptionLength()) {
+            messageManager.sendMessage(player, "description_too_long", Placeholder.unparsed("max_length", String.valueOf(configManager.getMaxDescriptionLength())));
+            return;
+        }
+        team.setDescription(newDescription);
+        storage.setTeamDescription(team.getId(), newDescription);
+        messageManager.sendMessage(player, "description_set");
+    }
+
     public void transferOwnership(Player oldOwner, UUID newOwnerUuid) {
         Team team = getPlayerTeam(oldOwner.getUniqueId());
         if (team == null || !team.isOwner(oldOwner.getUniqueId())) {
@@ -334,8 +363,14 @@ public class TeamManager {
         storage.transferOwnership(team.getId(), newOwnerUuid, oldOwner.getUniqueId());
         team.setOwnerUuid(newOwnerUuid);
 
-        team.getMembers().stream().filter(p -> p.getPlayerUuid().equals(newOwnerUuid)).findFirst().ifPresent(p -> p.setRole(TeamRole.OWNER));
-        team.getMembers().stream().filter(p -> p.getPlayerUuid().equals(oldOwner.getUniqueId())).findFirst().ifPresent(p -> p.setRole(TeamRole.MEMBER));
+        team.getMembers().stream().filter(p -> p.getPlayerUuid().equals(newOwnerUuid)).findFirst().ifPresent(p -> {
+            p.setRole(TeamRole.OWNER);
+            p.setCanWithdraw(true);
+        });
+        team.getMembers().stream().filter(p -> p.getPlayerUuid().equals(oldOwner.getUniqueId())).findFirst().ifPresent(p -> {
+            p.setRole(TeamRole.MEMBER);
+            p.setCanWithdraw(false);
+        });
 
         Player newOwnerPlayer = Bukkit.getPlayer(newOwnerUuid);
         String newOwnerName = newOwnerPlayer != null ? newOwnerPlayer.getName() : Bukkit.getOfflinePlayer(newOwnerUuid).getName();
@@ -449,5 +484,118 @@ public class TeamManager {
         if (cooldownSeconds > 0) {
             homeCooldowns.put(player.getUniqueId(), Instant.now().plusSeconds(cooldownSeconds));
         }
+    }
+
+    public void deposit(Player player, double amount) {
+        if (economy == null) {
+            messageManager.sendMessage(player, "economy_not_found");
+            return;
+        }
+        Team team = getPlayerTeam(player.getUniqueId());
+        if (team == null) {
+            messageManager.sendMessage(player, "player_not_in_team");
+            return;
+        }
+        if (amount <= 0) {
+            messageManager.sendMessage(player, "bank_invalid_amount");
+            return;
+        }
+        if (economy.getBalance(player) < amount) {
+            messageManager.sendMessage(player, "player_insufficient_funds");
+            return;
+        }
+        double maxBalance = configManager.getMaxBankBalance();
+        if (maxBalance != -1 && team.getBalance() + amount > maxBalance) {
+            messageManager.sendMessage(player, "bank_max_balance_reached");
+            return;
+        }
+
+        economy.withdrawPlayer(player, amount);
+        team.addBalance(amount);
+        storage.updateTeamBalance(team.getId(), team.getBalance());
+        messageManager.sendMessage(player, "bank_deposit_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
+    }
+
+    public void withdraw(Player player, double amount) {
+        if (economy == null) {
+            messageManager.sendMessage(player, "economy_not_found");
+            return;
+        }
+        Team team = getPlayerTeam(player.getUniqueId());
+        if (team == null) {
+            messageManager.sendMessage(player, "player_not_in_team");
+            return;
+        }
+        TeamPlayer member = team.getMember(player.getUniqueId());
+        if (member == null || !member.canWithdraw()) {
+            messageManager.sendMessage(player, "no_permission");
+            return;
+        }
+        if (amount <= 0) {
+            messageManager.sendMessage(player, "bank_invalid_amount");
+            return;
+        }
+        if (team.getBalance() < amount) {
+            messageManager.sendMessage(player, "bank_insufficient_funds");
+            return;
+        }
+
+        team.removeBalance(amount);
+        economy.depositPlayer(player, amount);
+        storage.updateTeamBalance(team.getId(), team.getBalance());
+        messageManager.sendMessage(player, "bank_withdraw_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
+    }
+
+    public void openEnderChest(Player player) {
+        Team team = getPlayerTeam(player.getUniqueId());
+        if (team == null) {
+            messageManager.sendMessage(player, "player_not_in_team");
+            return;
+        }
+        TeamPlayer member = team.getMember(player.getUniqueId());
+        if (member == null || !member.canUseEnderChest()) {
+            messageManager.sendMessage(player, "no_permission");
+            return;
+        }
+        player.openInventory(team.getEnderChest());
+    }
+
+    private void loadEnderChest(Team team) {
+        int rows = configManager.getEnderChestRows();
+        Inventory enderChest = Bukkit.createInventory(team, rows * 9, Component.text("ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ"));
+        String data = storage.getEnderChest(team.getId());
+        if (data != null && !data.isEmpty()) {
+            try {
+                InventoryUtil.deserializeInventory(enderChest, data);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Could not deserialize ender chest for team " + team.getName() + ": " + e.getMessage());
+            }
+        }
+        team.setEnderChest(enderChest);
+    }
+
+    public void saveEnderChest(Team team) {
+        if (team == null || team.getEnderChest() == null) return;
+        try {
+            String data = InventoryUtil.serializeInventory(team.getEnderChest());
+            storage.saveEnderChest(team.getId(), data);
+        } catch (Exception e) {
+            plugin.getLogger().severe("Could not save ender chest for team " + team.getName() + ": " + e.getMessage());
+        }
+    }
+
+    public void updateMemberPermissions(Player owner, UUID targetUuid, boolean canWithdraw, boolean canUseEnderChest) {
+        Team team = getPlayerTeam(owner.getUniqueId());
+        if (team == null || !team.isOwner(owner.getUniqueId())) {
+            messageManager.sendMessage(owner, "not_owner");
+            return;
+        }
+        TeamPlayer member = team.getMember(targetUuid);
+        if (member == null) {
+            return;
+        }
+        member.setCanWithdraw(canWithdraw);
+        member.setCanUseEnderChest(canUseEnderChest);
+        storage.updateMemberPermissions(team.getId(), targetUuid, canWithdraw, canUseEnderChest);
     }
 }

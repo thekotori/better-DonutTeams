@@ -1,7 +1,6 @@
 package eu.kotori.donutTeams.gui;
 
 import eu.kotori.donutTeams.DonutTeams;
-import eu.kotori.donutTeams.gui.sub.MemberEditGUI;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamPlayer;
 import eu.kotori.donutTeams.util.ItemBuilder;
@@ -43,48 +42,62 @@ public class TeamGUI implements InventoryHolder {
         for (int i = 0; i < 9; i++) inventory.setItem(i, border);
         for (int i = 45; i < 54; i++) inventory.setItem(i, border);
 
-        int memberSlot = 0;
+        int memberSlot = 9;
         for (TeamPlayer member : team.getSortedMembers(currentSort)) {
             if (memberSlot >= 45) break;
             inventory.setItem(memberSlot++, createMemberHead(member));
         }
 
+        inventory.setItem(46, new ItemBuilder(Material.GOLD_NUGGET)
+                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʙᴀɴᴋ</bold></gradient>")
+                .withLore(
+                        "<gray>Balance: <white>" + String.format("%,.2f", team.getBalance()) + "</white>",
+                        "",
+                        "<yellow>Click to manage the bank.</yellow>"
+                ).build());
+
         inventory.setItem(47, new ItemBuilder(Material.ENDER_PEARL)
-                .withName("<gradient:#95FD95:#FFFFFF><bold>ᴛᴇᴀᴍ ʜᴏᴍᴇ")
+                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʜᴏᴍᴇ</bold></gradient>")
                 .withLore(
                         "<gray>Click to teleport to your team's home.",
                         "",
-                        team.getHomeLocation() == null ? "<red>Home not set." : "<yellow>Click to teleport!"
+                        team.getHomeLocation() == null ? "<red>Home not set." : "<yellow>Click to teleport!</yellow>"
                 ).build());
 
-        inventory.setItem(48, createPvpItem());
+        inventory.setItem(48, new ItemBuilder(Material.ENDER_CHEST)
+                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ</bold></gradient>")
+                .withLore(
+                        "<gray>A shared inventory for your team.",
+                        "",
+                        "<yellow>Click to open.</yellow>"
+                ).build());
 
         inventory.setItem(49, createSortItem());
+        inventory.setItem(50, createPvpItem());
 
         if (team.isOwner(viewer.getUniqueId())) {
-            inventory.setItem(51, new ItemBuilder(Material.TNT)
-                    .withName("<red><bold>ᴅɪsʙᴀɴᴅ ᴛᴇᴀᴍ")
+            inventory.setItem(51, new ItemBuilder(Material.COMPARATOR)
+                    .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs</bold></gradient>")
+                    .withLore("<yellow>Click to manage team settings.</yellow>")
+                    .build());
+            inventory.setItem(52, new ItemBuilder(Material.TNT)
+                    .withName("<red><bold>ᴅɪsʙᴀɴᴅ ᴛᴇᴀᴍ</bold></red>")
                     .withLore(
                             "<gray>Permanently deletes the team.",
-                            "<dark_red>This action cannot be undone!",
-                            "",
-                            "<yellow>Click to disband"
+                            "<dark_red>This action cannot be undone!</dark_red>"
                     ).build());
         } else {
-            inventory.setItem(51, new ItemBuilder(Material.BARRIER)
-                    .withName("<red><bold>ʟᴇᴀᴠᴇ ᴛᴇᴀᴍ")
-                    .withLore(
-                            "<gray>Leave your current team.",
-                            "",
-                            "<yellow>Click to leave"
-                    ).build());
+            inventory.setItem(52, new ItemBuilder(Material.BARRIER)
+                    .withName("<red><bold>ʟᴇᴀᴠᴇ ᴛᴇᴀᴍ</bold></red>")
+                    .withLore("<yellow>Click to leave the team.</yellow>")
+                    .build());
         }
     }
 
     private ItemStack createPvpItem() {
         boolean pvp = team.isPvpEnabled();
         return new ItemBuilder(Material.IRON_SWORD)
-                .withName("<gradient:#95FD95:#FFFFFF><bold>ᴛᴇᴀᴍ ᴘᴠᴘ")
+                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴘᴠᴘ</bold></gradient>")
                 .withLore(
                         "<gray>Determines if members can damage each other.",
                         "",
@@ -96,7 +109,7 @@ public class TeamGUI implements InventoryHolder {
 
     private ItemStack createSortItem() {
         return new ItemBuilder(Material.HOPPER)
-                .withName("<gradient:#95FD95:#FFFFFF><bold>sᴏʀᴛ ᴍᴇᴍʙᴇʀs")
+                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>sᴏʀᴛ ᴍᴇᴍʙᴇʀs</bold></gradient>")
                 .withLore(
                         "<gray>Click to change the sorting.",
                         "",
@@ -123,14 +136,12 @@ public class TeamGUI implements InventoryHolder {
         lore.add("<gray>Joined: <white>" + formatter.format(member.getJoinDate()));
         lore.add("");
         if (team.isOwner(viewer.getUniqueId()) && !isOwner) {
-            lore.add("<yellow>Click to edit this member");
-        } else {
-            lore.add("<green>A valued team member!");
+            lore.add("<yellow>Click to edit this member.</yellow>");
         }
 
         ItemBuilder itemBuilder = new ItemBuilder(Material.PLAYER_HEAD)
                 .asPlayerHead(member.getPlayerUuid())
-                .withName((member.isOnline() ? "<gradient:#95FD95:#FFFFFF>" : "<gray>") + (isOwner ? "⭐ " : "") + playerName)
+                .withName((member.isOnline() ? "<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + ">" : "<gray>") + (isOwner ? "⭐ " : "") + playerName)
                 .withLore(lore);
 
         if (isOwner) {
@@ -151,6 +162,10 @@ public class TeamGUI implements InventoryHolder {
             case ONLINE_STATUS -> Team.SortType.JOIN_DATE;
         };
         initializeItems();
+    }
+
+    public Team getTeam() {
+        return team;
     }
 
     @NotNull

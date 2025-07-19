@@ -2,6 +2,8 @@ package eu.kotori.donutTeams.commands;
 
 import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.config.MessageManager;
+import eu.kotori.donutTeams.gui.BankGUI;
+import eu.kotori.donutTeams.gui.LeaderboardCategoryGUI;
 import eu.kotori.donutTeams.gui.TeamGUI;
 import eu.kotori.donutTeams.listeners.TeamChatListener;
 import eu.kotori.donutTeams.team.Team;
@@ -62,9 +64,76 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             case "settag" -> handleSetTag(sender, args);
             case "transfer" -> handleTransfer(sender, args);
             case "pvp" -> handlePvpToggle(sender);
+            case "bank" -> handleBank(sender, args);
+            case "top", "leaderboard" -> handleLeaderboard(sender);
+            case "enderchest", "ec" -> handleEnderChest(sender);
+            case "setdescription" -> handleSetDescription(sender, args);
             default -> handleHelp(sender);
         }
         return true;
+    }
+
+    private void handleBank(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            messageManager.sendMessage(sender, "player_only");
+            return;
+        }
+        Team team = teamManager.getPlayerTeam(player.getUniqueId());
+        if (team == null) {
+            messageManager.sendMessage(player, "player_not_in_team");
+            return;
+        }
+
+        if (args.length == 1) {
+            new BankGUI(plugin, player, team).open();
+            return;
+        }
+        if (args.length < 3) {
+            messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount>");
+            return;
+        }
+
+        try {
+            double amount = Double.parseDouble(args[2]);
+            if (args[1].equalsIgnoreCase("deposit")) {
+                teamManager.deposit(player, amount);
+            } else if (args[1].equalsIgnoreCase("withdraw")) {
+                teamManager.withdraw(player, amount);
+            } else {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount>");
+            }
+        } catch (NumberFormatException e) {
+            messageManager.sendMessage(player, "bank_invalid_amount");
+        }
+    }
+
+    private void handleLeaderboard(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            messageManager.sendMessage(sender, "player_only");
+            return;
+        }
+        new LeaderboardCategoryGUI(plugin, player).open();
+    }
+
+    private void handleEnderChest(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            messageManager.sendMessage(sender, "player_only");
+            return;
+        }
+        teamManager.openEnderChest(player);
+    }
+
+    private void handleSetDescription(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            messageManager.sendMessage(sender, "player_only");
+            return;
+        }
+        if (args.length < 2) {
+            messageManager.sendRawMessage(sender, "<gray>Usage: /team setdescription <description...>");
+            return;
+        }
+        String description = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        teamManager.setTeamDescription(player, description);
     }
 
     private void handleSetHome(CommandSender sender) {
@@ -241,7 +310,17 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_header"), Placeholder.unparsed("team", team.getName()));
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_tag"), Placeholder.unparsed("tag", team.getTag()));
+        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_description"), Placeholder.unparsed("description", team.getDescription()));
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_owner"), Placeholder.unparsed("owner", ownerName != null ? ownerName : "Unknown"));
+        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_bank"), Placeholder.unparsed("balance", String.format("%,.2f", team.getBalance())));
+
+        double kdr = (team.getDeaths() == 0) ? team.getKills() : (double) team.getKills() / team.getDeaths();
+        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_stats"),
+                Placeholder.unparsed("kills", String.valueOf(team.getKills())),
+                Placeholder.unparsed("deaths", String.valueOf(team.getDeaths())),
+                Placeholder.unparsed("kdr", String.format("%.2f", kdr))
+        );
+
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_members"),
                 Placeholder.unparsed("member_count", String.valueOf(team.getMembers().size())),
                 Placeholder.unparsed("max_members", String.valueOf(plugin.getConfigManager().getMaxTeamSize()))
@@ -263,7 +342,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleReload(CommandSender sender) {
-        if (!sender.hasPermission("donutteams.reload")) {
+        if (!sender.hasPermission("donutteams.admin.reload")) {
             messageManager.sendMessage(sender, "no_permission");
             return;
         }
@@ -281,8 +360,12 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         messageManager.sendRawMessage(sender, "<gray>/team sethome <white>- Sets the team home.");
         messageManager.sendRawMessage(sender, "<gray>/team home <white>- Teleports to the team home.");
         messageManager.sendRawMessage(sender, "<gray>/team settag <tag> <white>- Changes the team tag.");
+        messageManager.sendRawMessage(sender, "<gray>/team setdescription <desc> <white>- Changes the team description.");
         messageManager.sendRawMessage(sender, "<gray>/team transfer <player> <white>- Transfers ownership.");
         messageManager.sendRawMessage(sender, "<gray>/team pvp <white>- Toggles team PvP.");
+        messageManager.sendRawMessage(sender, "<gray>/team bank [deposit|withdraw] [amount] <white>- Manage team bank.");
+        messageManager.sendRawMessage(sender, "<gray>/team enderchest <white>- Opens the team enderchest.");
+        messageManager.sendRawMessage(sender, "<gray>/team top <white>- Shows leaderboards.");
         messageManager.sendRawMessage(sender, "<gray>/team gui <white>- Opens the team GUI.");
     }
 
@@ -290,8 +373,8 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> subcommands = new ArrayList<>(Arrays.asList("create", "disband", "invite", "accept", "deny", "kick", "leave", "info", "gui", "chat", "sethome", "home", "settag", "transfer", "pvp"));
-            if (sender.hasPermission("donutteams.reload")) {
+            List<String> subcommands = new ArrayList<>(Arrays.asList("create", "disband", "invite", "accept", "deny", "kick", "leave", "info", "gui", "chat", "sethome", "home", "settag", "transfer", "pvp", "bank", "top", "enderchest", "setdescription"));
+            if (sender.hasPermission("donutteams.admin.reload")) {
                 subcommands.add("reload");
             }
             return subcommands.stream()
@@ -300,7 +383,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("invite") || args[0].equalsIgnoreCase("kick") || args[0].equalsIgnoreCase("transfer")) {
+            if (Arrays.asList("invite", "kick", "transfer").contains(args[0].toLowerCase())) {
                 return Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName)
                         .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))

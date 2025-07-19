@@ -1,5 +1,13 @@
-prefix: "<gradient:#95FD95:#FFFFFF><bold>ᴛᴇᴀᴍs</bold></gradient> <dark_gray>| <gray>"
+# ----------------------------------------------------
+#  DonutTeams Messages
+# ----------------------------------------------------
+#  This file supports MiniMessage formatting.
+#  Learn more here: https://docs.advntr.dev/minimessage/format.html
+# ----------------------------------------------------
 
+prefix: "<b><gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍs</gradient></b> <dark_gray>| <gray>"
+
+# --- General Messages ---
 reload: "<green>Plugin successfully reloaded."
 no_permission: "<red>You do not have permission to use this command."
 player_only: "<red>This command can only be executed by a player."
@@ -7,19 +15,26 @@ team_not_found: "<red>A team with that name does not exist."
 player_not_found: "<red>Player <white><target></white> could not be found."
 player_not_in_team: "<red>You are not in a team."
 target_not_in_your_team: "<red><white><target></white> is not in your team."
+not_owner: "<red>Only the team owner can do that."
+owner_must_disband: "<red>As the owner, you must disband the team instead of leaving."
+must_be_owner_or_co_owner: "<red>Only the team owner or co-owner can do that."
 
+# --- Team Creation ---
 team_created: "<green>You have successfully created the team <white><team></white>."
 already_in_team: "<red>You are already in a team. Leave your current one first."
 name_too_short: "<red>The team name must be at least <white><min_length></white> characters long."
 name_too_long: "<red>The team name cannot be longer than <white><max_length></white> characters."
+name_invalid: "<red>The team name can only contain letters, numbers, and underscores."
 tag_too_long: "<red>The team tag cannot be longer than <white><max_length></white> characters."
 team_name_exists: "<red>A team with the name <white><team></white> already exists."
 
+# --- Team Disband / Leave ---
 team_disbanded: "<green>You have successfully disbanded your team."
 team_disbanded_broadcast: "<gray>The team <white><team></white> has been disbanded."
-not_owner: "<red>Only the team owner can do that."
-owner_must_disband: "<red>As the owner, you must disband the team instead of leaving."
+you_left_team: "<green>You have left the team <white><team></white>."
+player_left_broadcast: "<gray><white><player></white> has left the team."
 
+# --- Team Invites ---
 invite_sent: "<green>You have invited <white><target></white> to your team."
 invite_received: "You have been invited to join <white><team></white>. <click:run_command:/team accept <team>><hover:show_text:'<green>Click to accept!'><green>[Accept]</hover></click> or <click:run_command:/team deny <team>><hover:show_text:'<red>Click to deny!'><red>[Deny]</hover></click>"
 invite_self: "<red>You cannot invite yourself."
@@ -32,16 +47,24 @@ invite_accepted_broadcast: "<gray><white><player></white> has joined the team."
 invite_denied: "<red>You have denied the invitation from <white><team></white>."
 invite_denied_broadcast: "<gray><white><player></white> denied the team invitation."
 
+# --- Team Management ---
 player_kicked: "<red>You have kicked <white><target></white> from the team."
 you_were_kicked: "<red>You have been kicked from the team <white><team></white>."
 cannot_kick_owner: "<red>You cannot kick the owner of the team."
-you_left_team: "<green>You have left the team <white><team></white>."
-player_left_broadcast: "<gray><white><player></white> has left the team."
+transfer_success: "<green>You have transferred ownership of the team to <white><player></white>."
+transfer_broadcast: "<green><owner> has transferred ownership of the team to <white><player></white>."
+cannot_transfer_to_self: "<red>You cannot transfer the team to yourself."
+tag_set: "<green>Team tag has been changed to <white><tag></white>."
+tag_invalid: "<red>The new tag is invalid (too long or contains invalid characters)."
+description_set: "<green>Team description updated."
+description_too_long: "<red>The description cannot be longer than <white><max_length></white> characters."
 
+# --- Team Chat ---
 team_chat_enabled: "<green>Team chat enabled."
 team_chat_disabled: "<red>Team chat disabled."
-team_chat_format: "<dark_gray>[<gradient:#95FD95:#FFFFFF>ᴛᴇᴀᴍ</gradient>]</dark_gray> <white><player></white><dark_gray>: <gray><message>"
+team_chat_format: "<dark_gray>[<gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍ</gradient>]</dark_gray> <white><player></white><dark_gray>: <gray><message>"
 
+# --- Team Home ---
 home_not_set: "<red>Your team does not have a home set. The owner can set one with /team sethome."
 home_set: "<green>Team home has been set to your current location."
 teleport_warmup: "<gray>Teleporting in <white><seconds></white> seconds... Don't move!"
@@ -49,18 +72,29 @@ teleport_success: "<green>You have been successfully teleported to your team hom
 teleport_moved: "<red>Teleportation canceled because you moved."
 teleport_cooldown: "<red>You must wait <white><time></white> before using this again."
 
-transfer_success: "<green>You have transferred ownership of the team to <white><player></white>."
-transfer_broadcast: "<green><owner> has transferred ownership of the team to <white><player></white>."
-cannot_transfer_to_self: "<red>You cannot transfer the team to yourself."
-tag_set: "<green>Team tag has been changed to <white><tag></white>."
-tag_invalid: "<red>The new tag is invalid (too long or contains invalid characters)."
-
+# --- Team PvP ---
 team_pvp_enabled: "<green>Team PvP has been enabled."
 team_pvp_disabled: "<red>Team PvP has been disabled."
 
-team_info_header: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <white><bold>Team Info: <team></bold></white> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯"
+# --- Team Bank ---
+economy_not_found: "<red>Economy plugin (Vault) not found. The bank is disabled."
+bank_deposit_success: "<green>You deposited <white><amount></white> into the team bank."
+bank_withdraw_success: "<green>You withdrew <white><amount></white> from the team bank."
+bank_insufficient_funds: "<red>The team bank does not have enough funds."
+player_insufficient_funds: "<red>You do not have enough money to deposit."
+bank_invalid_amount: "<red>Invalid amount specified. Amount must be greater than 0."
+bank_max_balance_reached: "<red>The team bank has reached its maximum balance."
+
+# --- Team Ender Chest ---
+ender_chest_saved: "<gray>Your team ender chest has been saved."
+
+# --- Team Info ---
+team_info_header: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <white><bold>ᴛᴇᴀᴍ ɪɴғᴏ: <team></bold></white> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯"
 team_info_tag: "<gray>Tag: <white><tag>"
+team_info_description: "<gray>Description: <white><description>"
 team_info_owner: "<gray>Owner: <white><owner>"
 team_info_members: "<gray>Members (<member_count>/<max_members>):"
 team_info_member_list: "<gray>- <white><player>"
+team_info_stats: "<gray>Kills: <white><kills></white> | Deaths: <white><deaths></white> | KDR: <white><kdr>"
+team_info_bank: "<gray>Bank Balance: <white><balance>"
 team_info_footer: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"

@@ -3,6 +3,9 @@
 # ----------------------------------------------------
 #  This file contains all the main settings for the plugin.
 #  For message customization, please see messages.yml.
+#
+#  CONFIG VERSION - DO NOT CHANGE THIS
+config-version: 3
 # ----------------------------------------------------
 
 # Storage settings
@@ -11,7 +14,7 @@ storage:
   # Can be "mysql" for a central database or "h2" for local file-based storage.
   # H2 is recommended for smaller servers as it requires no setup.
   type: "h2"
-  
+
   # MySQL database settings.
   # Only used if type is "mysql" and enabled is "true".
   mysql:
@@ -25,9 +28,9 @@ storage:
 # General team settings
 settings:
   # The main color used in GUIs and messages.
-  main_color: "#95FD95"
+  main_color: "#4C9DDE"
   # The accent color used for highlights.
-  accent_color: "#FFFFFF"
+  accent_color: "#4C96D2"
   # Maximum number of players allowed in a single team.
   max_team_size: 10
   # Minimum character length for a team name.
@@ -36,6 +39,8 @@ settings:
   max_name_length: 16
   # Maximum character length for a team tag.
   max_tag_length: 6
+  # Maximum character length for a team description.
+  max_description_length: 64
   # Default PvP status for newly created teams. If true, members can hurt each other.
   default_pvp_status: true
 
@@ -46,6 +51,16 @@ team_home:
   warmup_seconds: 5
   # Cooldown in seconds before a player can use /team home again.
   cooldown_seconds: 300 # 5 minutes
+
+# Team Bank feature settings
+team_bank:
+  # Maximum balance a team bank can hold. Set to -1 for unlimited.
+  max_balance: 1000000.0
+
+# Team Ender Chest feature settings
+team_enderchest:
+  # Number of rows in the team ender chest. Must be between 1 and 6.
+  rows: 3 # 3 rows = 27 slots
 
 # Webhook settings
 # This feature sends anonymous startup statistics to the developer to help improve the plugin.

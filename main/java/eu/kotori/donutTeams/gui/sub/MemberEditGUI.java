@@ -34,25 +34,25 @@ public class MemberEditGUI implements InventoryHolder {
 
     private void initializeItems() {
         inventory.setItem(11, new ItemBuilder(Material.RED_WOOL)
-                .withName("<red><bold>ᴋɪᴄᴋ ᴍᴇᴍʙᴇʀ")
+                .withName("<red><bold>KICK MEMBER</bold></red>")
                 .withLore(
                         "<gray>Removes this player from the team.",
                         "",
-                        "<yellow>Click to kick"
+                        "<yellow>Click to kick</yellow>"
                 ).build());
 
         inventory.setItem(13, new ItemBuilder(Material.BEACON)
-                .withName("<gold><bold>ᴛʀᴀɴsғᴇʀ ᴏᴡɴᴇʀsʜɪᴘ")
+                .withName("<gold><bold>TRANSFER OWNERSHIP</bold></gold>")
                 .withLore(
                         "<gray>Makes this player the new team owner.",
-                        "<dark_red>You will become a regular member!",
+                        "<dark_red>You will become a regular member!</dark_red>",
                         "",
-                        "<yellow>Click to transfer"
+                        "<yellow>Click to transfer</yellow>"
                 ).build());
 
         inventory.setItem(15, new ItemBuilder(Material.ARROW)
-                .withName("<gray><bold>ʙᴀᴄᴋ")
-                .withLore("<yellow>Click to return to the main menu.").build());
+                .withName("<gray><bold>BACK</bold></gray>")
+                .withLore("<yellow>Click to return to the main menu.</yellow>").build());
     }
 
     public void open() {
@@ -61,6 +61,10 @@ public class MemberEditGUI implements InventoryHolder {
 
     public UUID getTargetUuid() {
         return targetUuid;
+    }
+
+    public Team getTeam() {
+        return team;
     }
 
     @NotNull

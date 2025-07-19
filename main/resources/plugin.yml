@@ -4,6 +4,7 @@ main: eu.kotori.donutTeams.DonutTeams
 api-version: '1.21'
 authors: [ kotori ]
 description: A powerful teams plugin replica for DonutSMP.
+softdepend: [ Vault, PlaceholderAPI ]
 commands:
   team:
     description: Main command for DonutTeams.

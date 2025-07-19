@@ -43,11 +43,20 @@ public class ConfigManager {
         return config.getInt("settings.max_tag_length", 6);
     }
 
-    public boolean isFriendlyFireEnabled() {
-        return config.getBoolean("settings.friendly_fire", false);
+    public int getMaxDescriptionLength() {
+        return config.getInt("settings.max_description_length", 64);
     }
 
     public boolean getDefaultPvpStatus() {
         return config.getBoolean("settings.default_pvp_status", true);
+    }
+
+    public double getMaxBankBalance() {
+        return config.getDouble("team_bank.max_balance", 1000000.0);
+    }
+
+    public int getEnderChestRows() {
+        int rows = config.getInt("team_enderchest.rows", 3);
+        return Math.max(1, Math.min(6, rows));
     }
 }
