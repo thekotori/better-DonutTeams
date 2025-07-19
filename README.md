@@ -1,25 +1,31 @@
+
 # 🍩 DonutTeams
 
-> A powerful and modern Minecraft teams plugin, built for DonutSMP and fully customizable for any Paper-based server.
+A powerful and modern Minecraft **teams plugin**, built for **DonutSMP** and fully customizable for any **Paper-based server**.
 
-![Author](https://img.shields.io/badge/Author-kotori-lightgrey?style=for-the-badge)
-![API](https://img.shields.io/badge/API-1.21-brightgreen?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+<p align="center">
+  <img src="https://img.shields.io/badge/Author-kotori-lightgrey?style=for-the-badge" alt="Author" />
+  <img src="https://img.shields.io/badge/API-1.21-brightgreen?style=for-the-badge" alt="API Version" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
+</p>
 
 ---
 
 ## ✨ Features
 
-- **👥 Full Team Management** — Create, invite, kick, disband, and manage teams.
-- **🎨 Highly Customizable** — Change team size, name limits, messages, colors, and more.
-- **💾 Flexible Storage** — Use local **H2** or **MySQL** for multi-server setups.
-- **🏠 Team Homes** — Set and teleport to a team home with cooldown/warmup.
-- **⚔️ PvP Toggle** — Enable/disable friendly fire per team.
-- **💬 Private Team Chat** — Toggle team-only chat or use `/teammsg`.
-- **🖥️ GUI Interface** — Use `/team gui` to manage teams visually.
-- **📊 Member Sorting** — Sort members by join date, name, or online status.
-- **💎 MiniMessage Support** — Stylish gradients, click/hover effects.
-- **🧩 PlaceholderAPI Ready** — Integration planned in future versions.
+- 👥 **Full Team Management** — Create, invite, kick, disband, and manage teams.
+- 🏦 **Team Bank** — Let teams pool their money with Vault integration.
+- 🗄️ **Team Ender Chest** — A shared, persistent inventory for every team.
+- 🏆 **Stats & Leaderboards** — Track team kills, deaths, and KDR, and display top teams.
+- 🎨 **Highly Customizable** — Change team size, name limits, colors, and all messages.
+- 💾 **Flexible Storage** — Use local H2 or MySQL for multi-server setups.
+- ⚙️ **Automatic Migration** — Update the plugin without resetting configs or database.
+- 🏠 **Team Homes** — Set and teleport to a team home with cooldown/warmup.
+- ⚔️ **PvP Toggle** — Enable/disable friendly fire per team.
+- 💬 **Private Team Chat** — Toggle team-only chat or use `/teammsg`.
+- 🖥️ **Full GUI Interface** — Manage everything from the bank to member permissions visually.
+- 💎 **MiniMessage Support** — Stylish gradients, click/hover effects.
+- 🧩 **Full PlaceholderAPI Support** — Display team info anywhere.
 
 ---
 
@@ -28,10 +34,11 @@
 1. Download the latest `DonutTeams.jar`.
 2. Stop your Minecraft server.
 3. Place the file in the `plugins/` folder.
-4. *(Optional)* Install [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/).
-5. Start the server to generate configuration files.
-6. Edit `config.yml` and `messages.yml` as desired.
-7. Reload config with `/team reload`.
+4. _(Required for Bank)_ Install **[Vault](https://www.spigotmc.org/resources/vault.34315/)**.
+5. _(Recommended)_ Install **[PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/)**.
+6. Start the server to generate configuration files.
+7. Edit `config.yml` and `messages.yml` as desired.
+8. Reload the config with `/team reload`.
 
 ---
 
@@ -45,17 +52,14 @@
 # ----------------------------------------------------
 #  This file contains all the main settings for the plugin.
 #  For message customization, please see messages.yml.
+#
+#  CONFIG VERSION - DO NOT CHANGE THIS
+config-version: 3
 # ----------------------------------------------------
 
 # Storage settings
-# Configure how the plugin stores its data.
 storage:
-  # Can be "mysql" for a central database or "h2" for local file-based storage.
-  # H2 is recommended for smaller servers as it requires no setup.
   type: "h2"
-  
-  # MySQL database settings.
-  # Only used if type is "mysql" and enabled is "true".
   mysql:
     enabled: false
     host: "localhost"
@@ -66,53 +70,43 @@ storage:
 
 # General team settings
 settings:
-  # The main color used in GUIs and messages.
-  main_color: "#95FD95"
-  # The accent color used for highlights.
-  accent_color: "#FFFFFF"
-  # Maximum number of players allowed in a single team.
+  main_color: "#4C9DDE"
+  accent_color: "#4C96D2"
   max_team_size: 10
-  # Minimum character length for a team name.
   min_name_length: 3
-  # Maximum character length for a team name.
   max_name_length: 16
-  # Maximum character length for a team tag.
   max_tag_length: 6
-  # Default PvP status for newly created teams. If true, members can hurt each other.
+  max_description_length: 64
   default_pvp_status: true
 
 # Team Home feature settings
 team_home:
-  # Time in seconds a player must stand still before being teleported.
-  # Set to 0 to disable the warmup.
   warmup_seconds: 5
-  # Cooldown in seconds before a player can use /team home again.
-  cooldown_seconds: 300 # 5 minutes
+  cooldown_seconds: 300
+
+# Team Bank feature settings
+team_bank:
+  max_balance: 1000000.0
+
+# Team Ender Chest feature settings
+team_enderchest:
+  rows: 3
 
 # Webhook settings
-# This feature sends anonymous startup statistics to the developer to help improve the plugin.
-# IP and Port is being sent to us. You can disable it at any time.
 webhook:
   enabled: true
 ```
 
----
-
-## 📝 Messages (`messages.yml`)
-
-Supports full [MiniMessage](https://docs.advntr.dev/minimessage/format.html) syntax.
+### `messages.yml` (Supports MiniMessage)
 
 ```yaml
-prefix: "<gradient:#95FD95:#FFFFFF><bold>ᴛᴇᴀᴍs</bold></gradient> <dark_gray>| <gray>"
+prefix: "<b><gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍs</gradient></b> <dark_gray>| <gray>"
 
 team_created: "<green>You have successfully created the team <white><team></white>."
-name_too_short: "<red>The team name must be at least <white><min_length></white> characters long."
-
+bank_deposit_success: "<green>You deposited <white><amount></white> into the team bank."
 invite_received: |
   You have been invited to join <white><team></white>.
-  <click:run_command:/team accept <team>><hover:show_text:'<green>Click to accept!'><green>[Accept]</hover></click>
-  or
-  <click:run_command:/team deny <team>><hover:show_text:'<red>Click to deny!'><red>[Deny]</hover></click>
+  <click:run_command:/team accept <team>><hover:show_text:'<green>Click to accept!'><green>[Accept]</hover></click> or <click:run_command:/team deny <team>><hover:show_text:'<red>Click to deny!'><red>[Deny]</hover></click>
 ```
 
 ---
@@ -121,58 +115,66 @@ invite_received: |
 
 ### 🔧 Commands
 
-| Command                        | Aliases              | Permission                      | Description                             |
-|-------------------------------|----------------------|----------------------------------|-----------------------------------------|
-| `/team`                       | `t`, `clan`, `party` | `donutteams.command.info`       | Show team info                          |
-| `/team help`                  | -                    | `donutteams.command.help`       | Show help menu                          |
-| `/team create <name> <tag>`   | -                    | `donutteams.command.create`     | Create a new team                       |
-| `/team disband`               | -                    | `donutteams.command.disband`    | Disband team (owner only)              |
-| `/team invite <player>`       | -                    | `donutteams.command.invite`     | Invite a player                         |
-| `/team accept <team>`         | -                    | `donutteams.command.accept`     | Accept an invitation                    |
-| `/team deny <team>`           | -                    | `donutteams.command.deny`       | Deny an invitation                      |
-| `/team leave`                 | -                    | `donutteams.command.leave`      | Leave current team                      |
-| `/team kick <player>`         | -                    | `donutteams.command.kick`       | Kick a member (owner only)             |
-| `/team info [team]`           | -                    | `donutteams.command.info`       | Show team info                          |
-| `/team chat`                  | `c`                  | `donutteams.command.chat`       | Toggle team chat                        |
-| `/team gui`                   | -                    | `donutteams.command.gui`        | Open team GUI                           |
-| `/team sethome`               | -                    | `donutteams.command.sethome`    | Set team home (owner only)             |
-| `/team home`                  | -                    | `donutteams.command.home`       | Teleport to team home                   |
-| `/team settag <tag>`          | -                    | `donutteams.command.settag`     | Set team tag (owner only)              |
-| `/team transfer <player>`     | -                    | `donutteams.command.transfer`   | Transfer ownership                      |
-| `/team pvp`                   | -                    | `donutteams.command.pvp`        | Toggle PvP (owner only)                |
-| `/team reload`                | -                    | `donutteams.admin.reload`       | Reload plugin config                    |
-| `/teammsg <message>`          | `tm`, `tmsg`         | `donutteams.command.teammsg`    | Send one message to team chat          |
-
----
+| Command | Aliases | Description |
+|--------|---------|-------------|
+| `/team` | `t, clan, party` | Show team info or help. |
+| `/team create <name> <tag>` | - | Create a new team. |
+| `/team disband` | - | Disband your team (owner only). |
+| `/team invite <player>` | - | Invite a player to your team. |
+| `/team accept <team>` | - | Accept a team invitation. |
+| `/team deny <team>` | - | Deny a team invitation. |
+| `/team leave` | - | Leave your current team. |
+| `/team kick <player>` | - | Kick a member (owner only). |
+| `/team info [team]` | - | Show detailed team info. |
+| `/team chat` | `c` | Toggle team-only chat. |
+| `/team gui` | - | Open the team management GUI. |
+| `/team sethome` | - | Set the team's home location. |
+| `/team home` | - | Teleport to team home. |
+| `/team settag <tag>` | - | Change your team tag. |
+| `/team setdescription <desc>` | `setdesc` | Set the team description. |
+| `/team transfer <player>` | - | Transfer ownership. |
+| `/team pvp` | - | Toggle friendly fire. |
+| `/team bank` | - | Open the team bank GUI. |
+| `/team bank <deposit/withdraw> <amount>` | - | Quick bank actions. |
+| `/team enderchest` | `ec` | Open shared ender chest. |
+| `/team top` | `leaderboard` | View team leaderboard. |
+| `/team reload` | - | Reload config (admin only). |
+| `/teammsg <message>` | `tm, tmsg` | Send message to team chat. |
 
 ### 🔐 Permissions
 
-| Permission                   | Description                          |
-|-----------------------------|--------------------------------------|
-| `donutteams.user`           | Group node for all player commands   |
-| `donutteams.admin`          | Full admin access (e.g. reload)      |
-| `donutteams.command.*`      | Wildcard for all user commands       |
+| Permission | Description |
+|------------|-------------|
+| `donutteams.user` | Grants access to all player commands. |
+| `donutteams.admin` | Grants access to all admin commands. |
+| `donutteams.command.*` | Wildcard for all command permissions. |
 
-📌 **Recommended setup:**
+**Recommended Setup:**
+
 - Players: `donutteams.user`
 - Admins: `donutteams.admin`
 
 ---
 
-## 🧩 PlaceholderAPI (Planned)
+## 🧩 PlaceholderAPI
 
-Support for PlaceholderAPI is coming soon!
+DonutTeams supports **PlaceholderAPI** out of the box.
 
-| Placeholder                  | Description                                |
-|-----------------------------|--------------------------------------------|
-| `%donutteams_name%`         | Player's team name                         |
-| `%donutteams_tag%`          | Player's team tag                          |
-| `%donutteams_owner%`        | Team owner                                 |
-| `%donutteams_member_count%` | Number of members in the team              |
-| `%donutteams_max_members%`  | Maximum allowed members                    |
-| `%donutteams_members_online%` | Online team members                     |
-| `%donutteams_role%`         | Player's role (e.g., Owner, Member)        |
+| Placeholder | Description |
+|------------|-------------|
+| `%donutteams_name%` | Player's team name |
+| `%donutteams_tag%` | Team's tag |
+| `%donutteams_description%` | Team description |
+| `%donutteams_owner%` | Team owner's name |
+| `%donutteams_member_count%` | Current number of members |
+| `%donutteams_max_members%` | Max team size |
+| `%donutteams_members_online%` | Online team members |
+| `%donutteams_role%` | Player's role (Owner or Member) |
+| `%donutteams_kills%` | Total team kills |
+| `%donutteams_deaths%` | Total team deaths |
+| `%donutteams_kdr%` | Team K/D ratio |
+| `%donutteams_bank_balance%` | Formatted team bank balance |
 
 ---
 
-<p align="center">Made with ❤️ by kotori</p>
+<p align="center">Made with ❤️ by <strong>kotori</strong></p>
