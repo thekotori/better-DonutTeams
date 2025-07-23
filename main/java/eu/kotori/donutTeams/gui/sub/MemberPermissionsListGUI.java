@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class MemberPermissionsListGUI implements InventoryHolder {
@@ -24,7 +25,12 @@ public class MemberPermissionsListGUI implements InventoryHolder {
     }
 
     private void initializeItems() {
-        int slot = 0;
+        inventory.clear();
+        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
+        for (int i = 45; i < 54; i++) inventory.setItem(i, border);
+
+        int slot = 9;
         for (TeamPlayer member : team.getMembers()) {
             if (slot >= 45 || team.isOwner(member.getPlayerUuid())) continue;
 

@@ -2,6 +2,8 @@ package eu.kotori.donutTeams.gui.sub;
 
 import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
+import eu.kotori.donutTeams.team.TeamPlayer;
+import eu.kotori.donutTeams.team.TeamRole;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -10,6 +12,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -33,7 +36,27 @@ public class MemberEditGUI implements InventoryHolder {
     }
 
     private void initializeItems() {
-        inventory.setItem(11, new ItemBuilder(Material.RED_WOOL)
+        inventory.clear();
+        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
+        for (int i = 18; i < 27; i++) inventory.setItem(i, border);
+
+        TeamPlayer targetMember = team.getMember(targetUuid);
+        if(targetMember == null) return;
+
+        if (targetMember.getRole() == TeamRole.MEMBER) {
+            inventory.setItem(10, new ItemBuilder(Material.LIME_DYE)
+                    .withName("<green><bold>PROMOTE TO CO-OWNER</bold></green>")
+                    .withLore("<gray>Gives this player more permissions.", "", "<yellow>Click to promote.</yellow>")
+                    .build());
+        } else if (targetMember.getRole() == TeamRole.CO_OWNER) {
+            inventory.setItem(10, new ItemBuilder(Material.GRAY_DYE)
+                    .withName("<gray><bold>DEMOTE TO MEMBER</bold></gray>")
+                    .withLore("<gray>Removes co-owner permissions.", "", "<yellow>Click to demote.</yellow>")
+                    .build());
+        }
+
+        inventory.setItem(12, new ItemBuilder(Material.RED_WOOL)
                 .withName("<red><bold>KICK MEMBER</bold></red>")
                 .withLore(
                         "<gray>Removes this player from the team.",
@@ -41,7 +64,7 @@ public class MemberEditGUI implements InventoryHolder {
                         "<yellow>Click to kick</yellow>"
                 ).build());
 
-        inventory.setItem(13, new ItemBuilder(Material.BEACON)
+        inventory.setItem(14, new ItemBuilder(Material.BEACON)
                 .withName("<gold><bold>TRANSFER OWNERSHIP</bold></gold>")
                 .withLore(
                         "<gray>Makes this player the new team owner.",
@@ -50,7 +73,7 @@ public class MemberEditGUI implements InventoryHolder {
                         "<yellow>Click to transfer</yellow>"
                 ).build());
 
-        inventory.setItem(15, new ItemBuilder(Material.ARROW)
+        inventory.setItem(22, new ItemBuilder(Material.ARROW)
                 .withName("<gray><bold>BACK</bold></gray>")
                 .withLore("<yellow>Click to return to the main menu.</yellow>").build());
     }
@@ -61,6 +84,10 @@ public class MemberEditGUI implements InventoryHolder {
 
     public UUID getTargetUuid() {
         return targetUuid;
+    }
+
+    public TeamPlayer getTargetMember() {
+        return team.getMember(targetUuid);
     }
 
     public Team getTeam() {

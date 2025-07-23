@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class TeamSettingsGUI implements InventoryHolder {
@@ -26,6 +27,11 @@ public class TeamSettingsGUI implements InventoryHolder {
     }
 
     private void initializeItems() {
+        inventory.clear();
+        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
+        for (int i = 18; i < 27; i++) inventory.setItem(i, border);
+
         String mainColor = plugin.getConfigManager().getMainColor();
         String accentColor = plugin.getConfigManager().getAccentColor();
 
@@ -45,15 +51,18 @@ public class TeamSettingsGUI implements InventoryHolder {
                         "<yellow>Click to set a new description in chat.</yellow>"
                 ).build());
 
-        inventory.setItem(15, new ItemBuilder(Material.COMPARATOR)
-                .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴍᴇᴍʙᴇʀ ᴘᴇʀᴍɪssɪᴏɴs</bold></gradient>")
-                .withLore(
-                        "<gray>Manage individual member permissions.",
-                        "",
-                        "<yellow>Click to open the member list.</yellow>"
-                ).build());
+        if (team.isOwner(viewer.getUniqueId())) {
+            inventory.setItem(15, new ItemBuilder(Material.COMPARATOR)
+                    .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴍᴇᴍʙᴇʀ ᴘᴇʀᴍɪssɪᴏɴs</bold></gradient>")
+                    .withLore(
+                            "<gray>Manage individual member permissions.",
+                            "",
+                            "<yellow>Click to open the member list.</yellow>"
+                    ).build());
+        }
 
-        inventory.setItem(26, new ItemBuilder(Material.ARROW)
+
+        inventory.setItem(22, new ItemBuilder(Material.ARROW)
                 .withName("<gray><bold>ʙᴀᴄᴋ</bold></gray>")
                 .withLore("<yellow>Click to return to the main menu.</yellow>").build());
     }

@@ -1,13 +1,14 @@
-name: DonutTeams
+name: BetterDonutTeams
 version: '${project.version}'
 main: eu.kotori.donutTeams.DonutTeams
 api-version: '1.21'
+folia-supported: true
 authors: [ kotori ]
-description: A powerful teams plugin replica for DonutSMP.
+description: A powerful teams plugin replica for DonutSMP, now with Folia support and more features.
 softdepend: [ Vault, PlaceholderAPI ]
 commands:
   team:
-    description: Main command for DonutTeams.
+    description: Main command for BetterDonutTeams.
     usage: /<command> [subcommand]
     aliases: [t, clan, party]
   teammsg:

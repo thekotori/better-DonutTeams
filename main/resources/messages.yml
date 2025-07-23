@@ -1,5 +1,5 @@
 # ----------------------------------------------------
-#  DonutTeams Messages
+#  BetterDonutTeams Messages
 # ----------------------------------------------------
 #  This file supports MiniMessage formatting.
 #  Learn more here: https://docs.advntr.dev/minimessage/format.html
@@ -17,7 +17,7 @@ player_not_in_team: "<red>You are not in a team."
 target_not_in_your_team: "<red><white><target></white> is not in your team."
 not_owner: "<red>Only the team owner can do that."
 owner_must_disband: "<red>As the owner, you must disband the team instead of leaving."
-must_be_owner_or_co_owner: "<red>Only the team owner or co-owner can do that."
+must_be_owner_or_co_owner: "<red>Only the team owner or a co-owner can do that."
 
 # --- Team Creation ---
 team_created: "<green>You have successfully created the team <white><team></white>."
@@ -29,6 +29,7 @@ tag_too_long: "<red>The team tag cannot be longer than <white><max_length></whit
 team_name_exists: "<red>A team with the name <white><team></white> already exists."
 
 # --- Team Disband / Leave ---
+disband_confirm: "<yellow>Are you sure you want to disband your team? This cannot be undone. Type <gold>/team disband confirm</gold> to proceed."
 team_disbanded: "<green>You have successfully disbanded your team."
 team_disbanded_broadcast: "<gray>The team <white><team></white> has been disbanded."
 you_left_team: "<green>You have left the team <white><team></white>."
@@ -51,6 +52,7 @@ invite_denied_broadcast: "<gray><white><player></white> denied the team invitati
 player_kicked: "<red>You have kicked <white><target></white> from the team."
 you_were_kicked: "<red>You have been kicked from the team <white><team></white>."
 cannot_kick_owner: "<red>You cannot kick the owner of the team."
+cannot_kick_co_owner: "<red>You cannot kick a co-owner."
 transfer_success: "<green>You have transferred ownership of the team to <white><player></white>."
 transfer_broadcast: "<green><owner> has transferred ownership of the team to <white><player></white>."
 cannot_transfer_to_self: "<red>You cannot transfer the team to yourself."
@@ -58,6 +60,11 @@ tag_set: "<green>Team tag has been changed to <white><tag></white>."
 tag_invalid: "<red>The new tag is invalid (too long or contains invalid characters)."
 description_set: "<green>Team description updated."
 description_too_long: "<red>The description cannot be longer than <white><max_length></white> characters."
+player_promoted: "<green><target> has been promoted to Co-Owner."
+player_demoted: "<gray><target> has been demoted to Member."
+already_that_role: "<red><target> already has that role."
+cannot_promote_owner: "<red>The owner cannot be promoted."
+cannot_demote_owner: "<red>The owner cannot be demoted."
 
 # --- Team Chat ---
 team_chat_enabled: "<green>Team chat enabled."
@@ -93,6 +100,7 @@ team_info_header: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> 
 team_info_tag: "<gray>Tag: <white><tag>"
 team_info_description: "<gray>Description: <white><description>"
 team_info_owner: "<gray>Owner: <white><owner>"
+team_info_co_owners: "<gray>Co-Owners: <white><co_owners>"
 team_info_members: "<gray>Members (<member_count>/<max_members>):"
 team_info_member_list: "<gray>- <white><player>"
 team_info_stats: "<gray>Kills: <white><kills></white> | Deaths: <white><deaths></white> | KDR: <white><kdr>"

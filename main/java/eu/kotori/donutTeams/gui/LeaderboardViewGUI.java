@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +32,12 @@ public class LeaderboardViewGUI implements InventoryHolder {
     }
 
     private void initializeItems(Map<Integer, Team> topTeams, LeaderboardType type) {
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 20, 21, 22};
+        inventory.clear();
+        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
+        for (int i = 45; i < 54; i++) inventory.setItem(i, border);
+
+        int[] slots = { 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34 };
         int slotIndex = 0;
 
         String mainColor = plugin.getConfigManager().getMainColor();

@@ -8,6 +8,7 @@ import eu.kotori.donutTeams.gui.sub.TeamSettingsGUI;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamManager;
 import eu.kotori.donutTeams.team.TeamPlayer;
+import eu.kotori.donutTeams.team.TeamRole;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -68,21 +69,31 @@ public class TeamGUIListener implements Listener {
 
         if (clicked.getType() == Material.PLAYER_HEAD && clicked.getItemMeta() instanceof SkullMeta skullMeta) {
             if (skullMeta.getPlayerProfile() != null && skullMeta.getPlayerProfile().getId() != null) {
-                if (team.isOwner(player.getUniqueId()) && !team.isOwner(skullMeta.getPlayerProfile().getId())) {
-                    new MemberEditGUI(plugin, team, player, skullMeta.getPlayerProfile().getId()).open();
+                UUID targetUuid = skullMeta.getPlayerProfile().getId();
+                TeamPlayer target = team.getMember(targetUuid);
+                if (target == null) return;
+
+                if (team.isOwner(player.getUniqueId()) && target.getRole() != TeamRole.OWNER) {
+                    new MemberEditGUI(plugin, team, player, targetUuid).open();
+                } else if (team.getMember(player.getUniqueId()).getRole() == TeamRole.CO_OWNER && target.getRole() == TeamRole.MEMBER) {
+                    new MemberEditGUI(plugin, team, player, targetUuid).open();
                 }
             }
             return;
         }
 
         switch (clicked.getType()) {
-            case TNT -> teamManager.disbandTeam(player);
+            case TNT -> teamManager.disbandTeam(player, false);
             case BARRIER -> teamManager.leaveTeam(player);
             case ENDER_PEARL -> teamManager.teleportToHome(player);
             case GOLD_NUGGET -> new BankGUI(plugin, player, team).open();
             case ENDER_CHEST -> teamManager.openEnderChest(player);
             case HOPPER -> gui.cycleSort();
-            case COMPARATOR -> new TeamSettingsGUI(plugin, player, team).open();
+            case COMPARATOR -> {
+                if(team.hasElevatedPermissions(player.getUniqueId())) {
+                    new TeamSettingsGUI(plugin, player, team).open();
+                }
+            }
             case IRON_SWORD -> {
                 teamManager.togglePvp(player);
                 gui.initializeItems();
@@ -92,10 +103,18 @@ public class TeamGUIListener implements Listener {
     }
 
     private void onMemberEditGUIClick(InventoryClickEvent event, Player player, MemberEditGUI gui, ItemStack clicked) {
+        TeamPlayer targetMember = gui.getTargetMember();
+        if (targetMember == null) {
+            player.closeInventory();
+            return;
+        }
+
         switch (clicked.getType()) {
             case RED_WOOL -> teamManager.kickPlayer(player, gui.getTargetUuid());
             case BEACON -> teamManager.transferOwnership(player, gui.getTargetUuid());
             case ARROW -> new TeamGUI(plugin, gui.getTeam(), player).open();
+            case LIME_DYE -> teamManager.promotePlayer(player, gui.getTargetUuid());
+            case GRAY_DYE -> teamManager.demotePlayer(player, gui.getTargetUuid());
             default -> {}
         }
         if (clicked.getType() != Material.ARROW) player.closeInventory();
@@ -216,7 +235,7 @@ public class TeamGUIListener implements Listener {
             default -> { return; }
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getTaskRunner().runAsync(() -> {
             Map<Integer, Team> topTeams;
             switch(type) {
                 case KILLS -> topTeams = plugin.getStorageManager().getStorage().getTopTeamsByKills(10);
@@ -225,7 +244,7 @@ public class TeamGUIListener implements Listener {
                 default -> topTeams = Map.of();
             }
             Map<Integer, Team> finalTopTeams = topTeams;
-            Bukkit.getScheduler().runTask(plugin, () -> new LeaderboardViewGUI(plugin, player, title, finalTopTeams, type).open());
+            plugin.getTaskRunner().runOnEntity(player, () -> new LeaderboardViewGUI(plugin, player, title, finalTopTeams, type).open());
         });
     }
 

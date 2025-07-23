@@ -20,11 +20,11 @@ public class ConfigManager {
     }
 
     public String getMainColor() {
-        return config.getString("settings.main_color", "#95FD95");
+        return config.getString("settings.main_color", "#4C9DDE");
     }
 
     public String getAccentColor() {
-        return config.getString("settings.accent_color", "#FFFFFF");
+        return config.getString("settings.accent_color", "#4C96D2");
     }
 
     public int getMaxTeamSize() {
@@ -58,5 +58,33 @@ public class ConfigManager {
     public int getEnderChestRows() {
         int rows = config.getInt("team_enderchest.rows", 3);
         return Math.max(1, Math.min(6, rows));
+    }
+
+    public boolean isSoundsEnabled() {
+        return config.getBoolean("effects.sounds.enabled", true);
+    }
+
+    public String getSuccessSound() {
+        return config.getString("effects.sounds.success", "ENTITY_PLAYER_LEVELUP");
+    }
+
+    public String getErrorSound() {
+        return config.getString("effects.sounds.error", "ENTITY_VILLAGER_NO");
+    }
+
+    public String getTeleportSound() {
+        return config.getString("effects.sounds.teleport", "ENTITY_ENDERMAN_TELEPORT");
+    }
+
+    public boolean isParticlesEnabled() {
+        return config.getBoolean("effects.particles.enabled", true);
+    }
+
+    public String getWarmupParticle() {
+        return config.getString("effects.particles.teleport_warmup", "PORTAL");
+    }
+
+    public String getSuccessParticle() {
+        return config.getString("effects.particles.teleport_success", "END_ROD");
     }
 }

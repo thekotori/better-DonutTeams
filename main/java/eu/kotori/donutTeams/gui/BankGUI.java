@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class BankGUI implements InventoryHolder {
@@ -26,6 +27,11 @@ public class BankGUI implements InventoryHolder {
     }
 
     private void initializeItems() {
+        inventory.clear();
+        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
+        for (int i = 18; i < 27; i++) inventory.setItem(i, border);
+
         inventory.setItem(11, new ItemBuilder(Material.GREEN_WOOL)
                 .withName("<green><bold>ᴅᴇᴘᴏsɪᴛ</bold></green>")
                 .withLore(
@@ -48,7 +54,7 @@ public class BankGUI implements InventoryHolder {
                         "<yellow>You will be prompted in chat.</yellow>"
                 ).build());
 
-        inventory.setItem(26, new ItemBuilder(Material.ARROW)
+        inventory.setItem(22, new ItemBuilder(Material.ARROW)
                 .withName("<gray><bold>ʙᴀᴄᴋ</bold></gray>")
                 .withLore("<yellow>Click to return to the main menu.</yellow>").build());
     }

@@ -3,6 +3,7 @@ package eu.kotori.donutTeams.gui;
 import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamPlayer;
+import eu.kotori.donutTeams.team.TeamRole;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -75,11 +76,14 @@ public class TeamGUI implements InventoryHolder {
         inventory.setItem(49, createSortItem());
         inventory.setItem(50, createPvpItem());
 
-        if (team.isOwner(viewer.getUniqueId())) {
+        if (team.hasElevatedPermissions(viewer.getUniqueId())) {
             inventory.setItem(51, new ItemBuilder(Material.COMPARATOR)
                     .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs</bold></gradient>")
                     .withLore("<yellow>Click to manage team settings.</yellow>")
                     .build());
+        }
+
+        if (team.isOwner(viewer.getUniqueId())) {
             inventory.setItem(52, new ItemBuilder(Material.TNT)
                     .withName("<red><bold>ᴅɪsʙᴀɴᴅ ᴛᴇᴀᴍ</bold></red>")
                     .withLore(
@@ -101,9 +105,9 @@ public class TeamGUI implements InventoryHolder {
                 .withLore(
                         "<gray>Determines if members can damage each other.",
                         "",
-                        "Currently: " + (pvp ? "<green>ON" : "<red>OFF"),
+                        "<gray>Currently: " + (pvp ? "<green>ON" : "<red>OFF"),
                         "",
-                        viewer.getUniqueId().equals(team.getOwnerUuid()) ? "<yellow>Click to toggle" : "<red>Only the owner can change this."
+                        team.hasElevatedPermissions(viewer.getUniqueId()) ? "<yellow>Click to toggle" : "<red>Only the owner or co-owners can change this.</red>"
                 ).build();
     }
 
@@ -127,28 +131,39 @@ public class TeamGUI implements InventoryHolder {
 
     private ItemStack createMemberHead(TeamPlayer member) {
         String playerName = Bukkit.getOfflinePlayer(member.getPlayerUuid()).getName();
-        boolean isOwner = team.isOwner(member.getPlayerUuid());
+        TeamRole role = member.getRole();
+        String roleName = role.name().charAt(0) + role.name().substring(1).toLowerCase();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy").withZone(ZoneId.systemDefault());
 
         List<String> lore = new ArrayList<>();
-        lore.add("<gray>Role: <white>" + (isOwner ? "Owner" : "Member"));
-        lore.add("<gray>Joined: <white>" + formatter.format(member.getJoinDate()));
+        lore.add("<gray>Role: <white>" + roleName + "</white>");
+        lore.add("<gray>Joined: <white>" + formatter.format(member.getJoinDate()) + "</white>");
         lore.add("");
-        if (team.isOwner(viewer.getUniqueId()) && !isOwner) {
-            lore.add("<yellow>Click to edit this member.</yellow>");
+        if (team.hasElevatedPermissions(viewer.getUniqueId()) && role != TeamRole.OWNER) {
+            if (!(role == TeamRole.CO_OWNER && !team.isOwner(viewer.getUniqueId()))) {
+                lore.add("<yellow>Click to edit this member.</yellow>");
+            }
         }
 
         ItemBuilder itemBuilder = new ItemBuilder(Material.PLAYER_HEAD)
                 .asPlayerHead(member.getPlayerUuid())
-                .withName((member.isOnline() ? "<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + ">" : "<gray>") + (isOwner ? "⭐ " : "") + playerName)
+                .withName((member.isOnline() ? "<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + ">" : "<gray>") + (getRoleIcon(role)) + playerName)
                 .withLore(lore);
 
-        if (isOwner) {
+        if (role == TeamRole.OWNER) {
             itemBuilder.withGlow();
         }
 
         return itemBuilder.build();
+    }
+
+    private String getRoleIcon(TeamRole role) {
+        return switch(role) {
+            case OWNER -> "⭐ ";
+            case CO_OWNER -> "✦ ";
+            case MEMBER -> "";
+        };
     }
 
     public void open() {

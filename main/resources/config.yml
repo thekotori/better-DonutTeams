@@ -1,11 +1,11 @@
 # ----------------------------------------------------
-#  DonutTeams Configuration
+#  BetterDonutTeams Configuration
 # ----------------------------------------------------
 #  This file contains all the main settings for the plugin.
 #  For message customization, please see messages.yml.
 #
 #  CONFIG VERSION - DO NOT CHANGE THIS
-config-version: 3
+config-version: 4
 # ----------------------------------------------------
 
 # Storage settings
@@ -61,6 +61,25 @@ team_bank:
 team_enderchest:
   # Number of rows in the team ender chest. Must be between 1 and 6.
   rows: 3 # 3 rows = 27 slots
+
+# Visual and sound effects
+effects:
+  sounds:
+    enabled: true
+    # Sound played for successful actions (e.g., creating a team, depositing money).
+    # A list of sounds can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
+    success: "ENTITY_PLAYER_LEVELUP"
+    # Sound played for failed actions or errors.
+    error: "ENTITY_VILLAGER_NO"
+    # Sound played on teleportation.
+    teleport: "ENTITY_ENDERMAN_TELEPORT"
+  particles:
+    enabled: true
+    # Particle effect shown during teleport warmup.
+    # A list of particles can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+    teleport_warmup: "PORTAL"
+    # Particle effect shown upon successful teleportation.
+    teleport_success: "END_ROD"
 
 # Webhook settings
 # This feature sends anonymous startup statistics to the developer to help improve the plugin.

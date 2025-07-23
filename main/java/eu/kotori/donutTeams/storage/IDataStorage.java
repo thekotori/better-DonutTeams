@@ -2,6 +2,7 @@ package eu.kotori.donutTeams.storage;
 
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamPlayer;
+import eu.kotori.donutTeams.team.TeamRole;
 import org.bukkit.Location;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public interface IDataStorage {
     void saveEnderChest(int teamId, String serializedInventory);
     String getEnderChest(int teamId);
     void updateMemberPermissions(int teamId, UUID memberUuid, boolean canWithdraw, boolean canUseEnderChest);
+    void updateMemberRole(int teamId, UUID memberUuid, TeamRole role);
     Map<Integer, Team> getTopTeamsByKills(int limit);
     Map<Integer, Team> getTopTeamsByBalance(int limit);
     Map<Integer, Team> getTopTeamsByMembers(int limit);

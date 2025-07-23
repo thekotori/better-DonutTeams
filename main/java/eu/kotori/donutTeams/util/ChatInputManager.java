@@ -15,9 +15,11 @@ import java.util.function.Consumer;
 
 public class ChatInputManager implements Listener {
 
+    private final DonutTeams plugin;
     private final Map<UUID, Consumer<String>> pendingInput = new ConcurrentHashMap<>();
 
     public ChatInputManager(DonutTeams plugin) {
+        this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -35,9 +37,7 @@ public class ChatInputManager implements Listener {
             Consumer<String> consumer = pendingInput.remove(uuid);
             String message = PlainTextComponentSerializer.plainText().serialize(event.message());
 
-            DonutTeams.getInstance().getServer().getScheduler().runTask(DonutTeams.getInstance(), () -> {
-                consumer.accept(message);
-            });
+            plugin.getTaskRunner().runOnEntity(player, () -> consumer.accept(message));
         }
     }
 }

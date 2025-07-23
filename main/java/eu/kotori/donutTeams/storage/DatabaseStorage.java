@@ -393,6 +393,19 @@ public class DatabaseStorage implements IDataStorage {
     }
 
     @Override
+    public void updateMemberRole(int teamId, UUID memberUuid, TeamRole role) {
+        String sql = "UPDATE donut_team_members SET role = ? WHERE player_uuid = ? AND team_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, role.name());
+            stmt.setString(2, memberUuid.toString());
+            stmt.setInt(3, teamId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not update role for member " + memberUuid + ": " + e.getMessage());
+        }
+    }
+
+    @Override
     public void setPvpStatus(int teamId, boolean status) {
         String sql = "UPDATE donut_teams SET pvp_enabled = ? WHERE id = ?";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {

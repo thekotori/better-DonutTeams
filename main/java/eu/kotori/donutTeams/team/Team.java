@@ -37,7 +37,7 @@ public class Team implements InventoryHolder {
         this.pvpEnabled = pvpEnabled;
         this.members = new CopyOnWriteArrayList<>();
         this.balance = 0.0;
-        this.description = "A new DonutTeam!";
+        this.description = "A new Team!";
         this.kills = 0;
         this.deaths = 0;
     }
@@ -69,6 +69,10 @@ public class Team implements InventoryHolder {
     public Inventory getEnderChest() { return enderChest; }
     public void setEnderChest(Inventory enderChest) { this.enderChest = enderChest; }
 
+    public List<TeamPlayer> getCoOwners() {
+        return members.stream().filter(m -> m.getRole() == TeamRole.CO_OWNER).collect(Collectors.toList());
+    }
+
     public List<TeamPlayer> getSortedMembers(SortType sortType) {
         return members.stream().sorted(sortType.getComparator()).collect(Collectors.toList());
     }
@@ -87,6 +91,12 @@ public class Team implements InventoryHolder {
 
     public boolean isOwner(UUID playerUuid) {
         return this.ownerUuid.equals(playerUuid);
+    }
+
+    public boolean hasElevatedPermissions(UUID playerUuid) {
+        TeamPlayer member = getMember(playerUuid);
+        if (member == null) return false;
+        return member.getRole() == TeamRole.OWNER || member.getRole() == TeamRole.CO_OWNER;
     }
 
     public TeamPlayer getMember(UUID playerUuid) {

@@ -9,11 +9,7 @@ import eu.kotori.donutTeams.gui.TeamGUIListener;
 import eu.kotori.donutTeams.listeners.*;
 import eu.kotori.donutTeams.storage.StorageManager;
 import eu.kotori.donutTeams.team.TeamManager;
-import eu.kotori.donutTeams.util.ChatInputManager;
-import eu.kotori.donutTeams.util.ConfigUpdater;
-import eu.kotori.donutTeams.util.PAPIExpansion;
-import eu.kotori.donutTeams.util.StartupMessage;
-import eu.kotori.donutTeams.util.WebhookUtil;
+import eu.kotori.donutTeams.util.*;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -32,11 +28,24 @@ public final class DonutTeams extends JavaPlugin {
     private MiniMessage miniMessage;
     private Economy economy;
     private ChatInputManager chatInputManager;
+    private TaskRunner taskRunner;
+    private static boolean IS_FOLIA = false;
 
     @Override
     public void onEnable() {
         instance = this;
         this.miniMessage = MiniMessage.miniMessage();
+
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            IS_FOLIA = true;
+            getLogger().info("Folia detected. Enabling Folia support.");
+        } catch (ClassNotFoundException e) {
+            IS_FOLIA = false;
+            getLogger().info("Folia not detected. Using standard Bukkit scheduler.");
+        }
+
+        this.taskRunner = new TaskRunner(this);
 
         ConfigUpdater.update(this);
 
@@ -72,6 +81,9 @@ public final class DonutTeams extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (teamManager != null) {
+            teamManager.saveAllOnlineTeamEnderChests();
+        }
         if (storageManager != null) {
             storageManager.shutdown();
         }
@@ -112,6 +124,10 @@ public final class DonutTeams extends JavaPlugin {
         return instance;
     }
 
+    public static boolean isFolia() {
+        return IS_FOLIA;
+    }
+
     public ConfigManager getConfigManager() {
         return configManager;
     }
@@ -142,5 +158,9 @@ public final class DonutTeams extends JavaPlugin {
 
     public ChatInputManager getChatInputManager() {
         return chatInputManager;
+    }
+
+    public TaskRunner getTaskRunner() {
+        return taskRunner;
     }
 }
