@@ -35,29 +35,37 @@ public class TeamGUIListener implements Listener {
     @EventHandler
     public void onGUIClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (event.getClickedInventory() == null) return;
 
-        InventoryHolder holder = event.getInventory().getHolder();
+        InventoryHolder holder = event.getView().getTopInventory().getHolder();
+        boolean isOurGui = holder instanceof TeamGUI || holder instanceof BankGUI || holder instanceof MemberEditGUI ||
+                holder instanceof TeamSettingsGUI || holder instanceof MemberPermissionsListGUI ||
+                holder instanceof MemberPermissionsEditGUI || holder instanceof LeaderboardCategoryGUI ||
+                holder instanceof LeaderboardViewGUI;
 
-        if (holder instanceof Team) {
+        if (!isOurGui) {
             return;
         }
 
-        if (holder == null) return;
+        if (event.getClickedInventory() == null) {
+            return;
+        }
 
-        event.setCancelled(true);
+        if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            event.setCancelled(true);
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
 
-        ItemStack clickedItem = event.getCurrentItem();
-        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-
-        if (holder instanceof TeamGUI gui) onTeamGUIClick(event, player, gui, clickedItem);
-        else if (holder instanceof MemberEditGUI gui) onMemberEditGUIClick(event, player, gui, clickedItem);
-        else if (holder instanceof BankGUI gui) onBankGUIClick(player, gui, clickedItem);
-        else if (holder instanceof TeamSettingsGUI gui) onTeamSettingsGUIClick(player, gui, clickedItem);
-        else if (holder instanceof MemberPermissionsListGUI gui) onMemberPermissionsListGUIClick(player, gui, clickedItem);
-        else if (holder instanceof MemberPermissionsEditGUI gui) onMemberPermissionsEditGUIClick(player, gui, clickedItem);
-        else if (holder instanceof LeaderboardCategoryGUI gui) onLeaderboardCategoryGUIClick(player, gui, clickedItem);
-        else if (holder instanceof LeaderboardViewGUI) onLeaderboardViewGUIClick(player, clickedItem);
+            if (holder instanceof TeamGUI gui) onTeamGUIClick(event, player, gui, clickedItem);
+            else if (holder instanceof MemberEditGUI gui) onMemberEditGUIClick(event, player, gui, clickedItem);
+            else if (holder instanceof BankGUI gui) onBankGUIClick(player, gui, clickedItem);
+            else if (holder instanceof TeamSettingsGUI gui) onTeamSettingsGUIClick(player, gui, clickedItem);
+            else if (holder instanceof MemberPermissionsListGUI gui) onMemberPermissionsListGUIClick(player, gui, clickedItem);
+            else if (holder instanceof MemberPermissionsEditGUI gui) onMemberPermissionsEditGUIClick(player, gui, clickedItem);
+            else if (holder instanceof LeaderboardCategoryGUI gui) onLeaderboardCategoryGUIClick(player, gui, clickedItem);
+            else if (holder instanceof LeaderboardViewGUI) onLeaderboardViewGUIClick(player, clickedItem);
+        } else if (event.isShiftClick()) {
+            event.setCancelled(true);
+        }
     }
 
     private void onTeamGUIClick(InventoryClickEvent event, Player player, TeamGUI gui, ItemStack clicked) {

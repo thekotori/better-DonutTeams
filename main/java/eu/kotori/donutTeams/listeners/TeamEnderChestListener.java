@@ -22,7 +22,7 @@ public class TeamEnderChestListener implements Listener {
         if (holder instanceof Team team) {
             Player player = (Player) event.getPlayer();
 
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            plugin.getTaskRunner().runAsync(() -> {
                 plugin.getTeamManager().saveEnderChest(team);
             });
         }

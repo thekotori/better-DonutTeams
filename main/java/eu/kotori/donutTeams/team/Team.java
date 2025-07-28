@@ -45,9 +45,9 @@ public class Team implements InventoryHolder {
     public int getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public String getTag() { return tag; }
+    public String getTag() { return tag != null ? tag : ""; }
     public void setTag(String tag) { this.tag = tag; }
-    public String getDescription() { return description; }
+    public String getDescription() { return description != null ? description : "A new Team!"; }
     public void setDescription(String description) { this.description = description; }
     public UUID getOwnerUuid() { return ownerUuid; }
     public void setOwnerUuid(UUID ownerUuid) { this.ownerUuid = ownerUuid; }
@@ -119,7 +119,10 @@ public class Team implements InventoryHolder {
 
     public enum SortType {
         JOIN_DATE(Comparator.comparing(TeamPlayer::getJoinDate)),
-        ALPHABETICAL(Comparator.comparing(p -> Bukkit.getOfflinePlayer(p.getPlayerUuid()).getName() != null ? Bukkit.getOfflinePlayer(p.getPlayerUuid()).getName().toLowerCase() : "")),
+        ALPHABETICAL(Comparator.comparing(p -> {
+            String name = Bukkit.getOfflinePlayer(p.getPlayerUuid()).getName();
+            return name != null ? name.toLowerCase() : "";
+        })),
         ONLINE_STATUS(Comparator.comparing(TeamPlayer::isOnline).reversed());
 
         private final Comparator<TeamPlayer> comparator;

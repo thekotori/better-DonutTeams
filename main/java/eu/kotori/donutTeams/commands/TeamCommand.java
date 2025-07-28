@@ -11,6 +11,7 @@ import eu.kotori.donutTeams.team.TeamManager;
 import eu.kotori.donutTeams.team.TeamPlayer;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class TeamCommand implements CommandExecutor, TabCompleter {
@@ -75,120 +77,137 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void handleCreate(CommandSender sender, String[] args) {
+    private void executeOnPlayer(CommandSender sender, BiConsumer<Player, String[]> action, String[] args) {
         if (!(sender instanceof Player player)) {
             messageManager.sendMessage(sender, "player_only");
             return;
         }
-        if (args.length < 3) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team create <name> <tag>");
+        action.accept(player, args);
+    }
+
+    private void executeOnOfflinePlayer(CommandSender sender, String playerName, BiConsumer<Player, UUID> action) {
+        if (!(sender instanceof Player player)) {
+            messageManager.sendMessage(sender, "player_only");
             return;
         }
-        String name = args[1];
-        String tag = args[2];
-        teamManager.createTeam(player, name, tag);
+        plugin.getTaskRunner().runAsync(() -> {
+            OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+            if (!target.hasPlayedBefore() && target.getPlayer() == null) {
+                plugin.getTaskRunner().runOnEntity(player, () ->
+                        messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", playerName))
+                );
+                return;
+            }
+            plugin.getTaskRunner().runOnEntity(player, () -> action.accept(player, target.getUniqueId()));
+        });
+    }
+
+    private void handleCreate(CommandSender sender, String[] args) {
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            if (cmdArgs.length < 3) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team create <name> <tag>");
+                return;
+            }
+            String name = cmdArgs[1];
+            String tag = cmdArgs[2];
+            teamManager.createTeam(player, name, tag);
+        }, args);
     }
 
     private void handleDisband(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        boolean confirmed = args.length > 1 && args[1].equalsIgnoreCase("confirm");
-        teamManager.disbandTeam(player, confirmed);
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            boolean confirmed = cmdArgs.length > 1 && cmdArgs[1].equalsIgnoreCase("confirm");
+            teamManager.disbandTeam(player, confirmed);
+        }, args);
     }
 
     private void handleInvite(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team invite <player>");
-            return;
-        }
-        Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
-            messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", args[1]));
-            return;
-        }
-        teamManager.invitePlayer(player, target);
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            if (cmdArgs.length < 2) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team invite <player>");
+                return;
+            }
+            Player target = Bukkit.getPlayer(cmdArgs[1]);
+            if (target == null) {
+                messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", cmdArgs[1]));
+                return;
+            }
+            teamManager.invitePlayer(player, target);
+        }, args);
     }
 
     private void handleAccept(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team accept <teamName>");
-            return;
-        }
-        teamManager.acceptInvite(player, args[1]);
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            if (cmdArgs.length < 2) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team accept <teamName>");
+                return;
+            }
+            teamManager.acceptInvite(player, cmdArgs[1]);
+        }, args);
     }
 
     private void handleDeny(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team deny <teamName>");
-            return;
-        }
-        teamManager.denyInvite(player, args[1]);
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            if (cmdArgs.length < 2) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team deny <teamName>");
+                return;
+            }
+            teamManager.denyInvite(player, cmdArgs[1]);
+        }, args);
     }
 
     private void handleLeave(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        teamManager.leaveTeam(player);
+        executeOnPlayer(sender, (player, cmdArgs) -> teamManager.leaveTeam(player), null);
     }
 
     private void handleKick(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
         if (args.length < 2) {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team kick <player>");
             return;
         }
-        UUID targetUuid = Bukkit.getOfflinePlayer(args[1]).getUniqueId();
-        teamManager.kickPlayer(player, targetUuid);
+        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.kickPlayer(player, targetUuid));
     }
 
     private void handleInfo(CommandSender sender, String... args) {
-        Team team;
         if (args.length > 1) {
-            team = teamManager.getTeamByName(args[1]);
-            if (team == null) {
-                messageManager.sendMessage(sender, "team_not_found", Placeholder.unparsed("team", args[1]));
-                return;
-            }
+            plugin.getTaskRunner().runAsync(() -> {
+                Team team = teamManager.getTeamByName(args[1]);
+                plugin.getTaskRunner().run(() -> {
+                    if (team == null) {
+                        messageManager.sendMessage(sender, "team_not_found", Placeholder.unparsed("team", args[1]));
+                        return;
+                    }
+                    displayTeamInfo(sender, team);
+                });
+            });
         } else {
             if (!(sender instanceof Player player)) {
                 handleHelp(sender);
                 return;
             }
-            team = teamManager.getPlayerTeam(player.getUniqueId());
+            Team team = teamManager.getPlayerTeam(player.getUniqueId());
             if (team == null) {
                 messageManager.sendMessage(player, "player_not_in_team");
                 return;
             }
+            displayTeamInfo(sender, team);
         }
+    }
 
+    private void displayTeamInfo(CommandSender sender, Team team) {
         String ownerName = Bukkit.getOfflinePlayer(team.getOwnerUuid()).getName();
+        String safeOwnerName = ownerName != null ? ownerName : "Unknown";
+
         String coOwners = team.getCoOwners().stream()
                 .map(co -> Bukkit.getOfflinePlayer(co.getPlayerUuid()).getName())
+                .filter(name -> name != null)
                 .collect(Collectors.joining(", "));
 
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_header"), Placeholder.unparsed("team", team.getName()));
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_tag"), Placeholder.unparsed("tag", team.getTag()));
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_description"), Placeholder.unparsed("description", team.getDescription()));
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_owner"), Placeholder.unparsed("owner", ownerName != null ? ownerName : "Unknown"));
+        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_owner"), Placeholder.unparsed("owner", safeOwnerName));
+
         if (!coOwners.isEmpty()) {
             messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_co_owners"), Placeholder.unparsed("co_owners", coOwners));
         }
@@ -208,30 +227,26 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         for (TeamPlayer member : team.getMembers()) {
             String memberName = Bukkit.getOfflinePlayer(member.getPlayerUuid()).getName();
-            messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_member_list"), Placeholder.unparsed("player", memberName != null ? memberName : "Unknown"));
+            String safeMemberName = memberName != null ? memberName : "Unknown";
+            messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_member_list"), Placeholder.unparsed("player", safeMemberName));
         }
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_footer"));
     }
 
+
     private void handleChatToggle(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        teamChatListener.toggleTeamChat(player);
+        executeOnPlayer(sender, (player, args) -> teamChatListener.toggleTeamChat(player), null);
     }
 
     private void handleGui(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        Team team = teamManager.getPlayerTeam(player.getUniqueId());
-        if (team == null) {
-            messageManager.sendMessage(player, "player_not_in_team");
-            return;
-        }
-        new TeamGUI(plugin, team, player).open();
+        executeOnPlayer(sender, (player, args) -> {
+            Team team = teamManager.getPlayerTeam(player.getUniqueId());
+            if (team == null) {
+                messageManager.sendMessage(player, "player_not_in_team");
+                return;
+            }
+            new TeamGUI(plugin, team, player).open();
+        }, null);
     }
 
     private void handleReload(CommandSender sender) {
@@ -244,153 +259,100 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleSetHome(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        teamManager.setTeamHome(player);
+        executeOnPlayer(sender, (player, args) -> teamManager.setTeamHome(player), null);
     }
 
     private void handleHome(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        teamManager.teleportToHome(player);
+        executeOnPlayer(sender, (player, args) -> teamManager.teleportToHome(player), null);
     }
 
     private void handleSetTag(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team settag <newTag>");
-            return;
-        }
-        teamManager.setTeamTag(player, args[1]);
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            if (cmdArgs.length < 2) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team settag <newTag>");
+                return;
+            }
+            teamManager.setTeamTag(player, cmdArgs[1]);
+        }, args);
     }
 
     private void handleTransfer(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
         if (args.length < 2) {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team transfer <player>");
             return;
         }
-        Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
-            messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", args[1]));
-            return;
-        }
-        teamManager.transferOwnership(player, target.getUniqueId());
+        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.transferOwnership(player, targetUuid));
     }
 
     private void handlePvpToggle(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        teamManager.togglePvp(player);
+        executeOnPlayer(sender, (player, args) -> teamManager.togglePvp(player), null);
     }
 
     private void handleBank(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        Team team = teamManager.getPlayerTeam(player.getUniqueId());
-        if (team == null) {
-            messageManager.sendMessage(player, "player_not_in_team");
-            return;
-        }
-
-        if (args.length == 1) {
-            new BankGUI(plugin, player, team).open();
-            return;
-        }
-        if (args.length < 3) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount>");
-            return;
-        }
-
-        try {
-            double amount = Double.parseDouble(args[2]);
-            if (args[1].equalsIgnoreCase("deposit")) {
-                teamManager.deposit(player, amount);
-            } else if (args[1].equalsIgnoreCase("withdraw")) {
-                teamManager.withdraw(player, amount);
-            } else {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount>");
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            Team team = teamManager.getPlayerTeam(player.getUniqueId());
+            if (team == null) {
+                messageManager.sendMessage(player, "player_not_in_team");
+                return;
             }
-        } catch (NumberFormatException e) {
-            messageManager.sendMessage(player, "bank_invalid_amount");
-        }
+
+            if (cmdArgs.length == 1) {
+                new BankGUI(plugin, player, team).open();
+                return;
+            }
+            if (cmdArgs.length < 3) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount>");
+                return;
+            }
+
+            try {
+                double amount = Double.parseDouble(cmdArgs[2]);
+                if (cmdArgs[1].equalsIgnoreCase("deposit")) {
+                    teamManager.deposit(player, amount);
+                } else if (cmdArgs[1].equalsIgnoreCase("withdraw")) {
+                    teamManager.withdraw(player, amount);
+                } else {
+                    messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount>");
+                }
+            } catch (NumberFormatException e) {
+                messageManager.sendMessage(player, "bank_invalid_amount");
+            }
+        }, args);
     }
 
     private void handleLeaderboard(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        new LeaderboardCategoryGUI(plugin, player).open();
+        executeOnPlayer(sender, (player, args) -> new LeaderboardCategoryGUI(plugin, player).open(), null);
     }
 
     private void handleEnderChest(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        teamManager.openEnderChest(player);
+        executeOnPlayer(sender, (player, args) -> teamManager.openEnderChest(player), null);
     }
 
     private void handleSetDescription(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
-        if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team setdescription <description...>");
-            return;
-        }
-        String description = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-        teamManager.setTeamDescription(player, description);
+        executeOnPlayer(sender, (player, cmdArgs) -> {
+            if (cmdArgs.length < 2) {
+                messageManager.sendRawMessage(sender, "<gray>Usage: /team setdescription <description...>");
+                return;
+            }
+            String description = String.join(" ", Arrays.copyOfRange(cmdArgs, 1, cmdArgs.length));
+            teamManager.setTeamDescription(player, description);
+        }, args);
     }
 
     private void handlePromote(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
         if (args.length < 2) {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team promote <player>");
             return;
         }
-        Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
-            messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", args[1]));
-            return;
-        }
-        teamManager.promotePlayer(player, target.getUniqueId());
+        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.promotePlayer(player, targetUuid));
     }
 
     private void handleDemote(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
-            return;
-        }
         if (args.length < 2) {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team demote <player>");
             return;
         }
-        Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
-            messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", args[1]));
-            return;
-        }
-        teamManager.demotePlayer(player, target.getUniqueId());
+        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.demotePlayer(player, targetUuid));
     }
 
     private void handleHelp(CommandSender sender) {

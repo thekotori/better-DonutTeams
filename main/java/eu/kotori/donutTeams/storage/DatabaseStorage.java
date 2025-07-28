@@ -183,7 +183,7 @@ public class DatabaseStorage implements IDataStorage {
     }
 
     private String serializeLocation(Location loc) {
-        if (loc == null) return null;
+        if (loc == null || loc.getWorld() == null) return null;
         return loc.getWorld().getName() + "," + loc.getX() + "," + loc.getY() + "," + loc.getZ() + "," + loc.getYaw() + "," + loc.getPitch();
     }
 
@@ -213,7 +213,9 @@ public class DatabaseStorage implements IDataStorage {
 
         Team team = new Team(id, name, tag, ownerUuid, pvpEnabled);
         team.setHomeLocation(deserializeLocation(rs.getString("home_location")));
-        team.setDescription(description);
+        if (description != null) {
+            team.setDescription(description);
+        }
         team.setBalance(balance);
         team.setKills(kills);
         team.setDeaths(deaths);

@@ -45,7 +45,7 @@ public class MemberPermissionsEditGUI implements InventoryHolder {
         inventory.setItem(12, new ItemBuilder(targetMember.canWithdraw() ? Material.LIME_DYE : Material.GRAY_DYE)
                 .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ʙᴀɴᴋ ᴡɪᴛʜᴅʀᴀᴡ</bold></gradient>")
                 .withLore(
-                        "<gray>Allows this member to withdraw from the team bank.",
+                        "<gray>Allows this member to withdraw from the team bank.</gray>",
                         "<gray>Status: " + (targetMember.canWithdraw() ? "<green>ENABLED" : "<red>DISABLED"),
                         "",
                         "<yellow>Click to toggle.</yellow>"
@@ -54,7 +54,7 @@ public class MemberPermissionsEditGUI implements InventoryHolder {
         inventory.setItem(14, new ItemBuilder(targetMember.canUseEnderChest() ? Material.LIME_DYE : Material.GRAY_DYE)
                 .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴇɴᴅᴇʀ ᴄʜᴇsᴛ ᴀᴄᴄᴇss</bold></gradient>")
                 .withLore(
-                        "<gray>Allows this member to use the team ender chest.",
+                        "<gray>Allows this member to use the team ender chest.</gray>",
                         "<gray>Status: " + (targetMember.canUseEnderChest() ? "<green>ENABLED" : "<red>DISABLED"),
                         "",
                         "<yellow>Click to toggle.</yellow>"

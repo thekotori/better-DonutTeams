@@ -5,7 +5,7 @@
 #  For message customization, please see messages.yml.
 #
 #  CONFIG VERSION - DO NOT CHANGE THIS
-config-version: 4
+config-version: 5
 # ----------------------------------------------------
 
 # Storage settings
@@ -83,6 +83,8 @@ effects:
 
 # Webhook settings
 # This feature sends anonymous startup statistics to the developer to help improve the plugin.
-# IP and Port is being sent to us. You can disable it at any time.
+# You can disable it at any time.
 webhook:
   enabled: true
+  # You can optionally set a server name to distinguish it in the statistics.
+  server-name: "ServerName"
