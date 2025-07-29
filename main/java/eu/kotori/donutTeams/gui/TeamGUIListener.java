@@ -40,7 +40,7 @@ public class TeamGUIListener implements Listener {
         boolean isOurGui = holder instanceof TeamGUI || holder instanceof BankGUI || holder instanceof MemberEditGUI ||
                 holder instanceof TeamSettingsGUI || holder instanceof MemberPermissionsListGUI ||
                 holder instanceof MemberPermissionsEditGUI || holder instanceof LeaderboardCategoryGUI ||
-                holder instanceof LeaderboardViewGUI;
+                holder instanceof LeaderboardViewGUI || holder instanceof NoTeamGUI;
 
         if (!isOurGui) {
             return;
@@ -63,8 +63,42 @@ public class TeamGUIListener implements Listener {
             else if (holder instanceof MemberPermissionsEditGUI gui) onMemberPermissionsEditGUIClick(player, gui, clickedItem);
             else if (holder instanceof LeaderboardCategoryGUI gui) onLeaderboardCategoryGUIClick(player, gui, clickedItem);
             else if (holder instanceof LeaderboardViewGUI) onLeaderboardViewGUIClick(player, clickedItem);
+            else if (holder instanceof NoTeamGUI) onNoTeamGUIClick(player, clickedItem);
+
         } else if (event.isShiftClick()) {
             event.setCancelled(true);
+        }
+    }
+
+    private void onNoTeamGUIClick(Player player, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case WRITABLE_BOOK -> {
+                player.closeInventory();
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team name in chat, or type 'cancel' to abort.");
+                plugin.getChatInputManager().awaitInput(player, teamName -> {
+                    if (teamName.equalsIgnoreCase("cancel")) {
+                        plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.");
+                        return;
+                    }
+
+                    String validationError = teamManager.validateTeamName(teamName);
+                    if (validationError != null) {
+                        plugin.getMessageManager().sendRawMessage(player, plugin.getMessageManager().getRawMessage("prefix") + validationError);
+                        return;
+                    }
+
+                    plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team tag in chat, or type 'cancel' to abort.");
+                    plugin.getChatInputManager().awaitInput(player, teamTag -> {
+                        if (teamTag.equalsIgnoreCase("cancel")) {
+                            plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.");
+                            return;
+                        }
+                        teamManager.createTeam(player, teamName, teamTag);
+                    });
+                });
+            }
+            case EMERALD -> new LeaderboardCategoryGUI(plugin, player).open();
+            default -> {}
         }
     }
 
@@ -213,9 +247,9 @@ public class TeamGUIListener implements Listener {
         boolean canWithdraw = target.canWithdraw();
         boolean canUseEC = target.canUseEnderChest();
 
-        if (clicked.getItemMeta().getDisplayName().contains("BANK WITHDRAW")) {
+        if (clicked.getType() == Material.GOLD_INGOT) {
             canWithdraw = !canWithdraw;
-        } else if (clicked.getItemMeta().getDisplayName().contains("ENDER CHEST ACCESS")) {
+        } else if (clicked.getType() == Material.ENDER_CHEST) {
             canUseEC = !canUseEC;
         }
 

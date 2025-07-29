@@ -4,6 +4,7 @@ import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.config.MessageManager;
 import eu.kotori.donutTeams.gui.BankGUI;
 import eu.kotori.donutTeams.gui.LeaderboardCategoryGUI;
+import eu.kotori.donutTeams.gui.NoTeamGUI;
 import eu.kotori.donutTeams.gui.TeamGUI;
 import eu.kotori.donutTeams.listeners.TeamChatListener;
 import eu.kotori.donutTeams.team.Team;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -44,7 +46,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
-            handleInfo(sender);
+            handleBaseCommand(sender);
             return true;
         }
 
@@ -59,7 +61,6 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             case "kick" -> handleKick(sender, args);
             case "info" -> handleInfo(sender, args);
             case "chat", "c" -> handleChatToggle(sender);
-            case "gui" -> handleGui(sender);
             case "reload" -> handleReload(sender);
             case "sethome" -> handleSetHome(sender);
             case "home" -> handleHome(sender);
@@ -77,17 +78,25 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void executeOnPlayer(CommandSender sender, BiConsumer<Player, String[]> action, String[] args) {
+    private void executeOnPlayer(CommandSender sender, String permission, BiConsumer<Player, String[]> action, String[] args) {
         if (!(sender instanceof Player player)) {
             messageManager.sendMessage(sender, "player_only");
+            return;
+        }
+        if (!player.hasPermission(permission)) {
+            messageManager.sendMessage(player, "no_permission");
             return;
         }
         action.accept(player, args);
     }
 
-    private void executeOnOfflinePlayer(CommandSender sender, String playerName, BiConsumer<Player, UUID> action) {
+    private void executeOnOfflinePlayer(CommandSender sender, String permission, String playerName, BiConsumer<Player, UUID> action) {
         if (!(sender instanceof Player player)) {
             messageManager.sendMessage(sender, "player_only");
+            return;
+        }
+        if (!player.hasPermission(permission)) {
+            messageManager.sendMessage(player, "no_permission");
             return;
         }
         plugin.getTaskRunner().runAsync(() -> {
@@ -102,8 +111,21 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         });
     }
 
+    private void handleBaseCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            handleHelp(sender);
+            return;
+        }
+        Team team = teamManager.getPlayerTeam(player.getUniqueId());
+        if (team == null) {
+            new NoTeamGUI(plugin, player).open();
+        } else {
+            new TeamGUI(plugin, team, player).open();
+        }
+    }
+
     private void handleCreate(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.create", (player, cmdArgs) -> {
             if (cmdArgs.length < 3) {
                 messageManager.sendRawMessage(sender, "<gray>Usage: /team create <name> <tag>");
                 return;
@@ -115,14 +137,14 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleDisband(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.disband", (player, cmdArgs) -> {
             boolean confirmed = cmdArgs.length > 1 && cmdArgs[1].equalsIgnoreCase("confirm");
             teamManager.disbandTeam(player, confirmed);
         }, args);
     }
 
     private void handleInvite(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.invite", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
                 messageManager.sendRawMessage(sender, "<gray>Usage: /team invite <player>");
                 return;
@@ -137,7 +159,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleAccept(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.accept", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
                 messageManager.sendRawMessage(sender, "<gray>Usage: /team accept <teamName>");
                 return;
@@ -147,7 +169,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleDeny(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.deny", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
                 messageManager.sendRawMessage(sender, "<gray>Usage: /team deny <teamName>");
                 return;
@@ -157,7 +179,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleLeave(CommandSender sender) {
-        executeOnPlayer(sender, (player, cmdArgs) -> teamManager.leaveTeam(player), null);
+        executeOnPlayer(sender, "donutteams.command.leave", (player, cmdArgs) -> teamManager.leaveTeam(player), null);
     }
 
     private void handleKick(CommandSender sender, String[] args) {
@@ -165,10 +187,14 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team kick <player>");
             return;
         }
-        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.kickPlayer(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.kick", args[1], (player, targetUuid) -> teamManager.kickPlayer(player, targetUuid));
     }
 
     private void handleInfo(CommandSender sender, String... args) {
+        if (!sender.hasPermission("donutteams.command.info")) {
+            messageManager.sendMessage(sender, "no_permission");
+            return;
+        }
         if (args.length > 1) {
             plugin.getTaskRunner().runAsync(() -> {
                 Team team = teamManager.getTeamByName(args[1]);
@@ -181,16 +207,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 });
             });
         } else {
-            if (!(sender instanceof Player player)) {
-                handleHelp(sender);
-                return;
-            }
-            Team team = teamManager.getPlayerTeam(player.getUniqueId());
-            if (team == null) {
-                messageManager.sendMessage(player, "player_not_in_team");
-                return;
-            }
-            displayTeamInfo(sender, team);
+            handleBaseCommand(sender);
         }
     }
 
@@ -200,7 +217,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         String coOwners = team.getCoOwners().stream()
                 .map(co -> Bukkit.getOfflinePlayer(co.getPlayerUuid()).getName())
-                .filter(name -> name != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.joining(", "));
 
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_header"), Placeholder.unparsed("team", team.getName()));
@@ -233,24 +250,12 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_footer"));
     }
 
-
     private void handleChatToggle(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> teamChatListener.toggleTeamChat(player), null);
-    }
-
-    private void handleGui(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> {
-            Team team = teamManager.getPlayerTeam(player.getUniqueId());
-            if (team == null) {
-                messageManager.sendMessage(player, "player_not_in_team");
-                return;
-            }
-            new TeamGUI(plugin, team, player).open();
-        }, null);
+        executeOnPlayer(sender, "donutteams.command.chat", (player, args) -> teamChatListener.toggleTeamChat(player), null);
     }
 
     private void handleReload(CommandSender sender) {
-        if (!sender.hasPermission("donutteams.admin.reload")) {
+        if (!sender.hasPermission("donutteams.command.reload")) {
             messageManager.sendMessage(sender, "no_permission");
             return;
         }
@@ -259,15 +264,15 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleSetHome(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> teamManager.setTeamHome(player), null);
+        executeOnPlayer(sender, "donutteams.command.sethome", (player, args) -> teamManager.setTeamHome(player), null);
     }
 
     private void handleHome(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> teamManager.teleportToHome(player), null);
+        executeOnPlayer(sender, "donutteams.command.home", (player, args) -> teamManager.teleportToHome(player), null);
     }
 
     private void handleSetTag(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.settag", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
                 messageManager.sendRawMessage(sender, "<gray>Usage: /team settag <newTag>");
                 return;
@@ -281,15 +286,19 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team transfer <player>");
             return;
         }
-        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.transferOwnership(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.transfer", args[1], (player, targetUuid) -> teamManager.transferOwnership(player, targetUuid));
     }
 
     private void handlePvpToggle(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> teamManager.togglePvp(player), null);
+        executeOnPlayer(sender, "donutteams.command.pvp", (player, args) -> teamManager.togglePvp(player), null);
     }
 
     private void handleBank(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.bank", (player, cmdArgs) -> {
+            if (!plugin.getConfigManager().isBankEnabled()) {
+                messageManager.sendRawMessage(player, "<red>The team bank feature is currently disabled.");
+                return;
+            }
             Team team = teamManager.getPlayerTeam(player.getUniqueId());
             if (team == null) {
                 messageManager.sendMessage(player, "player_not_in_team");
@@ -321,15 +330,21 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleLeaderboard(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> new LeaderboardCategoryGUI(plugin, player).open(), null);
+        executeOnPlayer(sender, "donutteams.command.top", (player, args) -> new LeaderboardCategoryGUI(plugin, player).open(), null);
     }
 
     private void handleEnderChest(CommandSender sender) {
-        executeOnPlayer(sender, (player, args) -> teamManager.openEnderChest(player), null);
+        executeOnPlayer(sender, "donutteams.command.enderchest", (player, args) -> {
+            if (!plugin.getConfigManager().isEnderChestEnabled()) {
+                messageManager.sendRawMessage(player, "<red>The team ender chest feature is currently disabled.");
+                return;
+            }
+            teamManager.openEnderChest(player);
+        }, null);
     }
 
     private void handleSetDescription(CommandSender sender, String[] args) {
-        executeOnPlayer(sender, (player, cmdArgs) -> {
+        executeOnPlayer(sender, "donutteams.command.setdescription", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
                 messageManager.sendRawMessage(sender, "<gray>Usage: /team setdescription <description...>");
                 return;
@@ -344,7 +359,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team promote <player>");
             return;
         }
-        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.promotePlayer(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.promote", args[1], (player, targetUuid) -> teamManager.promotePlayer(player, targetUuid));
     }
 
     private void handleDemote(CommandSender sender, String[] args) {
@@ -352,7 +367,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             messageManager.sendRawMessage(sender, "<gray>Usage: /team demote <player>");
             return;
         }
-        executeOnOfflinePlayer(sender, args[1], (player, targetUuid) -> teamManager.demotePlayer(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.demote", args[1], (player, targetUuid) -> teamManager.demotePlayer(player, targetUuid));
     }
 
     private void handleHelp(CommandSender sender) {
@@ -360,6 +375,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         String accentColor = plugin.getConfigManager().getAccentColor();
 
         messageManager.sendRawMessage(sender, "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <gradient:" + mainColor + ":" + accentColor + "><bold>BetterDonutTeams Help</bold></gradient> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯");
+        messageManager.sendRawMessage(sender, "<gray>/team <white>- Opens the team GUI.");
         messageManager.sendRawMessage(sender, "<gray>/team create <name> <tag> <white>- Creates a team.");
         messageManager.sendRawMessage(sender, "<gray>/team disband [confirm] <white>- Disbands your team.");
         messageManager.sendRawMessage(sender, "<gray>/team invite <player> <white>- Invites a player.");
@@ -377,14 +393,13 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         messageManager.sendRawMessage(sender, "<gray>/team bank [deposit|withdraw] [amount] <white>- Manage team bank.");
         messageManager.sendRawMessage(sender, "<gray>/team enderchest <white>- Opens the team enderchest.");
         messageManager.sendRawMessage(sender, "<gray>/team top <white>- Shows leaderboards.");
-        messageManager.sendRawMessage(sender, "<gray>/team gui <white>- Opens the team GUI.");
     }
 
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> subcommands = new ArrayList<>(Arrays.asList("create", "disband", "invite", "accept", "deny", "kick", "leave", "info", "gui", "chat", "sethome", "home", "settag", "transfer", "pvp", "bank", "top", "enderchest", "setdescription", "promote", "demote"));
+            List<String> subcommands = new ArrayList<>(Arrays.asList("create", "disband", "invite", "accept", "deny", "kick", "leave", "info", "chat", "sethome", "home", "settag", "transfer", "pvp", "bank", "top", "enderchest", "setdescription", "promote", "demote"));
             if (sender.hasPermission("donutteams.admin.reload")) {
                 subcommands.add("reload");
             }

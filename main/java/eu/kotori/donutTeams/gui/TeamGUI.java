@@ -49,29 +49,60 @@ public class TeamGUI implements InventoryHolder {
             inventory.setItem(memberSlot++, createMemberHead(member));
         }
 
-        inventory.setItem(46, new ItemBuilder(Material.GOLD_NUGGET)
-                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʙᴀɴᴋ</bold></gradient>")
-                .withLore(
-                        "<gray>Balance: <white>" + String.format("%,.2f", team.getBalance()) + "</white>",
-                        "",
-                        "<yellow>Click to manage the bank.</yellow>"
-                ).build());
+        TeamPlayer viewerMember = team.getMember(viewer.getUniqueId());
+        if (viewerMember == null) {
+            viewer.closeInventory();
+            return;
+        }
+
+        boolean hasBankAccess = plugin.getConfigManager().isBankEnabled() &&
+                (viewer.hasPermission("donutteams.bank.withdraw.bypass") || viewerMember.canWithdraw());
+
+        if (hasBankAccess) {
+            inventory.setItem(46, new ItemBuilder(Material.GOLD_NUGGET)
+                    .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʙᴀɴᴋ</bold></gradient>")
+                    .withLore(
+                            "<gray>Balance: <white>" + String.format("%,.2f", team.getBalance()) + "</white>",
+                            "",
+                            "<yellow>Click to manage the bank.</yellow>"
+                    ).build());
+        } else {
+            inventory.setItem(46, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
+                    .withName("<red><bold>BANK LOCKED</bold></red>")
+                    .withLore(
+                            "<gray>You do not have permission to access the team bank.",
+                            "<gray>Ask the team owner to grant you access."
+                    ).build());
+        }
+
 
         inventory.setItem(47, new ItemBuilder(Material.ENDER_PEARL)
                 .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʜᴏᴍᴇ</bold></gradient>")
                 .withLore(
-                        "<gray>Click to teleport to your team's home.",
+                        "<gray>Click to teleport to your team's home.</gray>",
                         "",
                         team.getHomeLocation() == null ? "<red>Home not set." : "<yellow>Click to teleport!</yellow>"
                 ).build());
 
-        inventory.setItem(48, new ItemBuilder(Material.ENDER_CHEST)
-                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ</bold></gradient>")
-                .withLore(
-                        "<gray>A shared inventory for your team.",
-                        "",
-                        "<yellow>Click to open.</yellow>"
-                ).build());
+        boolean hasECAccess = plugin.getConfigManager().isEnderChestEnabled() &&
+                (viewer.hasPermission("donutteams.enderchest.bypass") || viewerMember.canUseEnderChest());
+
+        if (hasECAccess) {
+            inventory.setItem(48, new ItemBuilder(Material.ENDER_CHEST)
+                    .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ</bold></gradient>")
+                    .withLore(
+                            "<gray>A shared inventory for your team.</gray>",
+                            "",
+                            "<yellow>Click to open.</yellow>"
+                    ).build());
+        } else {
+            inventory.setItem(48, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
+                    .withName("<red><bold>ENDER CHEST LOCKED</bold></red>")
+                    .withLore(
+                            "<gray>You do not have permission to access the team ender chest.",
+                            "<gray>Ask the team owner to grant you access."
+                    ).build());
+        }
 
         inventory.setItem(49, createSortItem());
         inventory.setItem(50, createPvpItem());
@@ -87,7 +118,7 @@ public class TeamGUI implements InventoryHolder {
             inventory.setItem(52, new ItemBuilder(Material.TNT)
                     .withName("<red><bold>ᴅɪsʙᴀɴᴅ ᴛᴇᴀᴍ</bold></red>")
                     .withLore(
-                            "<gray>Permanently deletes the team.",
+                            "<gray>Permanently deletes the team.</gray>",
                             "<dark_red>This action cannot be undone!</dark_red>"
                     ).build());
         } else {
@@ -103,7 +134,7 @@ public class TeamGUI implements InventoryHolder {
         return new ItemBuilder(Material.IRON_SWORD)
                 .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴘᴠᴘ</bold></gradient>")
                 .withLore(
-                        "<gray>Determines if members can damage each other.",
+                        "<gray>Determines if members can damage each other.</gray>",
                         "",
                         "<gray>Currently: " + (pvp ? "<green>ON" : "<red>OFF"),
                         "",
@@ -115,7 +146,7 @@ public class TeamGUI implements InventoryHolder {
         return new ItemBuilder(Material.HOPPER)
                 .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>sᴏʀᴛ ᴍᴇᴍʙᴇʀs</bold></gradient>")
                 .withLore(
-                        "<gray>Click to change the sorting.",
+                        "<gray>Click to change the sorting.</gray>",
                         "",
                         getSortLore(Team.SortType.JOIN_DATE),
                         getSortLore(Team.SortType.ALPHABETICAL),

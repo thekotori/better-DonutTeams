@@ -38,11 +38,10 @@ public class MemberPermissionsEditGUI implements InventoryHolder {
         for (int i = 0; i < 9; i++) inventory.setItem(i, border);
         for (int i = 18; i < 27; i++) inventory.setItem(i, border);
 
-
         String mainColor = plugin.getConfigManager().getMainColor();
         String accentColor = plugin.getConfigManager().getAccentColor();
 
-        inventory.setItem(12, new ItemBuilder(targetMember.canWithdraw() ? Material.LIME_DYE : Material.GRAY_DYE)
+        inventory.setItem(12, new ItemBuilder(Material.GOLD_INGOT)
                 .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ʙᴀɴᴋ ᴡɪᴛʜᴅʀᴀᴡ</bold></gradient>")
                 .withLore(
                         "<gray>Allows this member to withdraw from the team bank.</gray>",
@@ -51,7 +50,7 @@ public class MemberPermissionsEditGUI implements InventoryHolder {
                         "<yellow>Click to toggle.</yellow>"
                 ).build());
 
-        inventory.setItem(14, new ItemBuilder(targetMember.canUseEnderChest() ? Material.LIME_DYE : Material.GRAY_DYE)
+        inventory.setItem(14, new ItemBuilder(Material.ENDER_CHEST)
                 .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴇɴᴅᴇʀ ᴄʜᴇsᴛ ᴀᴄᴄᴇss</bold></gradient>")
                 .withLore(
                         "<gray>Allows this member to use the team ender chest.</gray>",

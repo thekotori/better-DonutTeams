@@ -51,8 +51,16 @@ public class ConfigManager {
         return config.getBoolean("settings.default_pvp_status", true);
     }
 
+    public boolean isBankEnabled() {
+        return config.getBoolean("team_bank.enabled", true);
+    }
+
     public double getMaxBankBalance() {
         return config.getDouble("team_bank.max_balance", 1000000.0);
+    }
+
+    public boolean isEnderChestEnabled() {
+        return config.getBoolean("team_enderchest.enabled", true);
     }
 
     public int getEnderChestRows() {

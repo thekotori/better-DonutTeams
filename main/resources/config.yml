@@ -5,7 +5,7 @@
 #  For message customization, please see messages.yml.
 #
 #  CONFIG VERSION - DO NOT CHANGE THIS
-config-version: 5
+config-version: 6
 # ----------------------------------------------------
 
 # Storage settings
@@ -54,11 +54,15 @@ team_home:
 
 # Team Bank feature settings
 team_bank:
+  # Set to false to completely disable the team bank feature.
+  enabled: true
   # Maximum balance a team bank can hold. Set to -1 for unlimited.
   max_balance: 1000000.0
 
 # Team Ender Chest feature settings
 team_enderchest:
+  # Set to false to completely disable the team ender chest feature.
+  enabled: true
   # Number of rows in the team ender chest. Must be between 1 and 6.
   rows: 3 # 3 rows = 27 slots
 

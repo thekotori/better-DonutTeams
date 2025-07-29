@@ -190,14 +190,19 @@ public class DatabaseStorage implements IDataStorage {
     private Location deserializeLocation(String s) {
         if (s == null || s.isEmpty()) return null;
         String[] parts = s.split(",");
+        if (parts.length != 6) return null;
         World w = Bukkit.getWorld(parts[0]);
         if (w == null) return null;
-        double x = Double.parseDouble(parts[1]);
-        double y = Double.parseDouble(parts[2]);
-        double z = Double.parseDouble(parts[3]);
-        float yaw = Float.parseFloat(parts[4]);
-        float pitch = Float.parseFloat(parts[5]);
-        return new Location(w, x, y, z, yaw, pitch);
+        try {
+            double x = Double.parseDouble(parts[1]);
+            double y = Double.parseDouble(parts[2]);
+            double z = Double.parseDouble(parts[3]);
+            float yaw = Float.parseFloat(parts[4]);
+            float pitch = Float.parseFloat(parts[5]);
+            return new Location(w, x, y, z, yaw, pitch);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Team mapTeamFromResultSet(ResultSet rs) throws SQLException {
@@ -363,8 +368,8 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public void transferOwnership(int teamId, UUID newOwnerUuid, UUID oldOwnerUuid) {
         String updateTeamOwner = "UPDATE donut_teams SET owner_uuid = ? WHERE id = ?";
-        String updateNewOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE WHERE player_uuid = ?";
-        String updateOldOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE WHERE player_uuid = ?";
+        String updateNewOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE WHERE player_uuid = ?";
+        String updateOldOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE WHERE player_uuid = ?";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -396,7 +401,13 @@ public class DatabaseStorage implements IDataStorage {
 
     @Override
     public void updateMemberRole(int teamId, UUID memberUuid, TeamRole role) {
-        String sql = "UPDATE donut_team_members SET role = ? WHERE player_uuid = ? AND team_id = ?";
+        String sql;
+        if (role == TeamRole.CO_OWNER) {
+            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE WHERE player_uuid = ? AND team_id = ?";
+        } else {
+            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE WHERE player_uuid = ? AND team_id = ?";
+        }
+
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, role.name());
             stmt.setString(2, memberUuid.toString());
@@ -446,7 +457,13 @@ public class DatabaseStorage implements IDataStorage {
 
     @Override
     public void saveEnderChest(int teamId, String serializedInventory) {
-        String sql = "INSERT INTO donut_team_enderchest (team_id, inventory_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE inventory_data = VALUES(inventory_data)";
+        String sql;
+        if ("mysql".equals(storageType)) {
+            sql = "INSERT INTO donut_team_enderchest (team_id, inventory_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE inventory_data = VALUES(inventory_data)";
+        } else {
+            sql = "MERGE INTO donut_team_enderchest KEY(team_id) VALUES (?, ?)";
+        }
+
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, teamId);
             stmt.setString(2, serializedInventory);
