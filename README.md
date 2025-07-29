@@ -143,11 +143,45 @@ invite_received: |
 
 ### 🔐 Permissions
 
-| Permission | Description |
-|------------|-------------|
-| `donutteams.user` | Grants access to all player commands. |
-| `donutteams.admin` | Grants access to all admin commands. |
-| `donutteams.command.*` | Wildcard for all command permissions. |
+DonutTeams uses a hybrid permission system:
+
+1.  **Bukkit Permissions (plugin.yml):** These control *access* to commands. If a player doesn't have the permission for a command (e.g., `donutteams.command.invite`), they can't use it at all.
+2.  **Internal Team Roles (Owner, Co-Owner, Member):** These control what actions a player can perform *within their team*. For example, only an Owner or Co-Owner can invite players, regardless of Bukkit permissions.
+3.  **Internal Member Flags:** These are specific permissions (like bank withdrawal) that the team Owner can grant to individual members via the GUI.
+4.  **Bypass Permissions:** Admin-level nodes that override all internal checks (e.g., `donutteams.bank.withdraw.bypass`).
+
+### 🔧 Bukkit Permission Nodes
+
+| Permission                       | Description                                         | Default |
+| -------------------------------- | --------------------------------------------------- | ------- |
+| `donutteams.*`                   | Grants all permissions.                             | op      |
+| `donutteams.admin`               | Grants all admin commands and bypass permissions.   | op      |
+| `donutteams.user`                | Grants access to all standard player commands.      | true    |
+| `donutteams.bank.withdraw.bypass`| Allows bypassing team withdrawal restrictions.      | op      |
+| `donutteams.enderchest.bypass`   | Allows bypassing team ender chest restrictions.     | op      |
+| `donutteams.command.create`      | Allows `/team create`.                              | true    |
+| `donutteams.command.disband`     | Allows `/team disband`.                             | true    |
+| `donutteams.command.invite`      | Allows `/team invite`.                              | true    |
+| `donutteams.command.accept`      | Allows `/team accept`.                              | true    |
+| `donutteams.command.deny`        | Allows `/team deny`.                                | true    |
+| `donutteams.command.leave`       | Allows `/team leave`.                               | true    |
+| `donutteams.command.kick`        | Allows `/team kick`.                                | true    |
+| `donutteams.command.info`        | Allows `/team info`.                                | true    |
+| `donutteams.command.chat`        | Allows `/team chat`.                                | true    |
+| `donutteams.command.gui`         | Allows `/team gui`.                                 | true    |
+| `donutteams.command.sethome`     | Allows `/team sethome`.                             | true    |
+| `donutteams.command.home`        | Allows `/team home`.                                | true    |
+| `donutteams.command.settag`      | Allows `/team settag`.                              | true    |
+| `donutteams.command.setdescription`| Allows `/team setdescription`.                    | true    |
+| `donutteams.command.transfer`    | Allows `/team transfer`.                            | true    |
+| `donutteams.command.promote`     | Allows `/team promote`.                             | true    |
+| `donutteams.command.demote`      | Allows `/team demote`.                              | true    |
+| `donutteams.command.pvp`         | Allows `/team pvp`.                                 | true    |
+| `donutteams.command.bank`        | Allows `/team bank`.                                | true    |
+| `donutteams.command.enderchest`  | Allows `/team enderchest`.                          | true    |
+| `donutteams.command.top`         | Allows `/team top`.                                 | true    |
+| `donutteams.command.teammsg`     | Allows `/teammsg`.                                  | true    |
+| `donutteams.command.reload`      | Allows `/team reload`.                              | op      |
 
 **Recommended Setup:**
 
