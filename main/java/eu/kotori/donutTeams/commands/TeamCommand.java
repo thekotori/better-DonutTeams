@@ -276,7 +276,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             messageManager.sendMessage(sender, "no_permission");
             return;
         }
-        plugin.getConfigManager().reloadConfig();
+        plugin.reloadPluginConfigs();
         messageManager.sendMessage(sender, "reload");
     }
 

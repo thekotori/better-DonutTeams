@@ -95,6 +95,12 @@ public final class DonutTeams extends JavaPlugin {
         }
     }
 
+    public void reloadPluginConfigs() {
+        configManager.reloadConfig();
+        messageConfig.reload();
+        messageManager.reload();
+    }
+
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             return false;

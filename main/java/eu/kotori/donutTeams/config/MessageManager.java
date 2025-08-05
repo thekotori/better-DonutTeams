@@ -9,12 +9,18 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class MessageManager {
 
+    private final DonutTeams plugin;
     private final MiniMessage miniMessage;
-    private final FileConfiguration messagesConfig;
-    private final String prefix;
+    private FileConfiguration messagesConfig;
+    private String prefix;
 
     public MessageManager(DonutTeams plugin) {
+        this.plugin = plugin;
         this.miniMessage = plugin.getMiniMessage();
+        reload();
+    }
+
+    public void reload() {
         this.messagesConfig = plugin.getMessageConfig().getCustomConfig();
         this.prefix = messagesConfig.getString("prefix", "<gradient:#ff8c9f:#ffc2cd><bold>TEAMS</bold></gradient> <dark_gray>| <gray>");
     }

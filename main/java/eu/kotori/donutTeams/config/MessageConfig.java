@@ -23,6 +23,11 @@ public class MessageConfig {
         return this.customConfig;
     }
 
+    public void reload() {
+        customConfigFile = new File(plugin.getDataFolder(), "messages.yml");
+        customConfig = YamlConfiguration.loadConfiguration(customConfigFile);
+    }
+
     private void createCustomConfig() {
         customConfigFile = new File(plugin.getDataFolder(), "messages.yml");
         if (!customConfigFile.exists()) {
