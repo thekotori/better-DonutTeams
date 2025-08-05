@@ -18,6 +18,11 @@ target_not_in_your_team: "<red><white><target></white> is not in your team.</red
 not_owner: "<red>Only the team owner can do that.</red>"
 owner_must_disband: "<red>As the owner, you must disband the team instead of leaving.</red>"
 must_be_owner_or_co_owner: "<red>Only the team owner or a co-owner can do that.</red>"
+no_team_placeholder: "No Team"
+
+# --- Admin Messages ---
+admin_team_disbanded: "<green>You have disbanded the team <white><team></white>.</green>"
+admin_team_disbanded_broadcast: "<red>Your team has been disbanded by an administrator.</red>"
 
 # --- Team Creation ---
 team_created: "<green>You have successfully created the team <white><team></white>.</green>"

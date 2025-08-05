@@ -4,7 +4,6 @@ import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
@@ -46,7 +45,7 @@ public class PAPIExpansion extends PlaceholderExpansion {
 
         Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
         if (team == null) {
-            return "No Team";
+            return plugin.getMessageManager().getRawMessage("no_team_placeholder");
         }
 
         switch (params.toLowerCase()) {

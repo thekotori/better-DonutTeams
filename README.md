@@ -138,7 +138,7 @@ invite_received: |
 | `/team bank <deposit/withdraw> <amount>` | - | Quick bank actions. |
 | `/team enderchest` | `ec` | Open shared ender chest. |
 | `/team top` | `leaderboard` | View team leaderboard. |
-| `/team reload` | - | Reload config (admin only). |
+| `/team reload` | - | Reload config (eu.kotori.donutTeams.gui.admin only). |
 | `/teammsg <message>` | `tm, tmsg` | Send message to team chat. |
 
 ### 🔐 Permissions
@@ -155,7 +155,7 @@ DonutTeams uses a hybrid permission system:
 | Permission                       | Description                                         | Default |
 | -------------------------------- | --------------------------------------------------- | ------- |
 | `donutteams.*`                   | Grants all permissions.                             | op      |
-| `donutteams.admin`               | Grants all admin commands and bypass permissions.   | op      |
+| `donutteams.eu.kotori.donutTeams.gui.admin`               | Grants all eu.kotori.donutTeams.gui.admin commands and bypass permissions.   | op      |
 | `donutteams.user`                | Grants access to all standard player commands.      | true    |
 | `donutteams.bank.withdraw.bypass`| Allows bypassing team withdrawal restrictions.      | op      |
 | `donutteams.enderchest.bypass`   | Allows bypassing team ender chest restrictions.     | op      |
@@ -186,7 +186,7 @@ DonutTeams uses a hybrid permission system:
 **Recommended Setup:**
 
 - Players: `donutteams.user`
-- Admins: `donutteams.admin`
+- Admins: `donutteams.eu.kotori.donutTeams.gui.admin`
 
 ---
 

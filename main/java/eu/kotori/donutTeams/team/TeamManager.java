@@ -54,6 +54,33 @@ public class TeamManager {
                 .build();
     }
 
+    public List<Team> getAllTeams() {
+        return storage.getAllTeams();
+    }
+
+    public void adminDisbandTeam(Player admin, String teamName) {
+        plugin.getTaskRunner().runAsync(() -> {
+            Optional<Team> teamOpt = storage.findTeamByName(teamName);
+            plugin.getTaskRunner().runOnEntity(admin, () -> {
+                if (teamOpt.isEmpty()) {
+                    messageManager.sendMessage(admin, "team_not_found");
+                    return;
+                }
+                Team team = teamOpt.get();
+
+                plugin.getTaskRunner().runAsync(() -> {
+                    storage.deleteTeam(team.getId());
+                    plugin.getTaskRunner().run(() -> {
+                        team.broadcast("admin_team_disbanded_broadcast");
+                        uncacheTeam(team);
+                        messageManager.sendMessage(admin, "admin_team_disbanded", Placeholder.unparsed("team", team.getName()));
+                        EffectsUtil.playSound(admin, EffectsUtil.SoundType.SUCCESS);
+                    });
+                });
+            });
+        });
+    }
+
     private void loadTeamIntoCache(Team team) {
         String lowerCaseName = team.getName().toLowerCase();
         if (teamNameCache.containsKey(lowerCaseName)) {

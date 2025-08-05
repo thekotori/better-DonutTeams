@@ -1,0 +1,18 @@
+# ----------------------------------------------------
+#  BetterDonutTeams Command Configuration
+# ----------------------------------------------------
+#  This file controls which commands are active on your server.
+#
+#  primary-command:
+#    This is the main command players will use (e.g., /guild).
+#    All other commands listed in 'secondary-commands' will become aliases for this one.
+#    Valid options are: team, guild, clan, party
+#
+#  primary-message-command:
+#    This is the main command for team chat messages (e.g., /guildmsg).
+#    All other message commands will become aliases for this one.
+#    Valid options are: teammsg, guildmsg, clanmsg, partymsg
+# ----------------------------------------------------
+
+primary-command: "team"
+primary-message-command: "teammsg"

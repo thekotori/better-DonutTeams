@@ -1,6 +1,10 @@
 package eu.kotori.donutTeams.gui;
 
 import eu.kotori.donutTeams.DonutTeams;
+import eu.kotori.donutTeams.gui.admin.AdminDisbandConfirmGUI;
+import eu.kotori.donutTeams.gui.admin.AdminGUI;
+import eu.kotori.donutTeams.gui.admin.AdminTeamListGUI;
+import eu.kotori.donutTeams.gui.admin.AdminTeamManageGUI;
 import eu.kotori.donutTeams.gui.sub.MemberEditGUI;
 import eu.kotori.donutTeams.gui.sub.MemberPermissionsEditGUI;
 import eu.kotori.donutTeams.gui.sub.MemberPermissionsListGUI;
@@ -9,6 +13,8 @@ import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamManager;
 import eu.kotori.donutTeams.team.TeamPlayer;
 import eu.kotori.donutTeams.team.TeamRole;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -19,6 +25,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,7 +47,9 @@ public class TeamGUIListener implements Listener {
         boolean isOurGui = holder instanceof TeamGUI || holder instanceof BankGUI || holder instanceof MemberEditGUI ||
                 holder instanceof TeamSettingsGUI || holder instanceof MemberPermissionsListGUI ||
                 holder instanceof MemberPermissionsEditGUI || holder instanceof LeaderboardCategoryGUI ||
-                holder instanceof LeaderboardViewGUI || holder instanceof NoTeamGUI;
+                holder instanceof LeaderboardViewGUI || holder instanceof NoTeamGUI ||
+                holder instanceof AdminGUI || holder instanceof AdminTeamListGUI ||
+                holder instanceof AdminTeamManageGUI || holder instanceof AdminDisbandConfirmGUI;
 
         if (!isOurGui) {
             return;
@@ -64,6 +73,10 @@ public class TeamGUIListener implements Listener {
             else if (holder instanceof LeaderboardCategoryGUI gui) onLeaderboardCategoryGUIClick(player, gui, clickedItem);
             else if (holder instanceof LeaderboardViewGUI) onLeaderboardViewGUIClick(player, clickedItem);
             else if (holder instanceof NoTeamGUI) onNoTeamGUIClick(player, clickedItem);
+            else if (holder instanceof AdminGUI) onAdminGUIClick(player, clickedItem);
+            else if (holder instanceof AdminTeamListGUI gui) onAdminTeamListGUIClick(player, gui, clickedItem);
+            else if (holder instanceof AdminTeamManageGUI gui) onAdminTeamManageGUIClick(player, gui, clickedItem);
+            else if (holder instanceof AdminDisbandConfirmGUI gui) onAdminDisbandConfirmGUIClick(player, gui, clickedItem);
 
         } else if (event.isShiftClick()) {
             event.setCancelled(true);
@@ -293,6 +306,65 @@ public class TeamGUIListener implements Listener {
     private void onLeaderboardViewGUIClick(Player player, ItemStack clicked) {
         if (clicked.getType() == Material.ARROW) {
             new LeaderboardCategoryGUI(plugin, player).open();
+        }
+    }
+
+    private void onAdminGUIClick(Player player, ItemStack clicked) {
+        if (clicked.getType() == Material.ANVIL) {
+            plugin.getTaskRunner().runAsync(() -> {
+                List<Team> allTeams = teamManager.getAllTeams();
+                plugin.getTaskRunner().runOnEntity(player, () -> new AdminTeamListGUI(plugin, player, allTeams, 0).open());
+            });
+        }
+    }
+
+    private void onAdminTeamListGUIClick(Player player, AdminTeamListGUI gui, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case ARROW -> {
+                Component displayName = clicked.getItemMeta().displayName();
+                if (displayName == null) return;
+                String name = PlainTextComponentSerializer.plainText().serialize(displayName);
+                if (name.contains("Next")) {
+                    new AdminTeamListGUI(plugin, player, gui.getAllTeams(), gui.getPage() + 1).open();
+                } else if (name.contains("Previous")) {
+                    new AdminTeamListGUI(plugin, player, gui.getAllTeams(), gui.getPage() - 1).open();
+                }
+            }
+            case BARRIER -> new AdminGUI(plugin, player).open();
+            case PLAYER_HEAD -> {
+                Component displayName = clicked.getItemMeta().displayName();
+                if (displayName == null) return;
+                String plainName = PlainTextComponentSerializer.plainText().serialize(displayName);
+                plugin.getTaskRunner().runAsync(() -> {
+                    Team targetTeam = teamManager.getTeamByName(plainName);
+                    if (targetTeam != null) {
+                        plugin.getTaskRunner().runOnEntity(player, () -> new AdminTeamManageGUI(plugin, player, targetTeam).open());
+                    }
+                });
+            }
+            default -> {}
+        }
+    }
+
+    private void onAdminTeamManageGUIClick(Player player, AdminTeamManageGUI gui, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case ARROW -> plugin.getTaskRunner().runAsync(() -> {
+                List<Team> allTeams = teamManager.getAllTeams();
+                plugin.getTaskRunner().runOnEntity(player, () -> new AdminTeamListGUI(plugin, player, allTeams, 0).open());
+            });
+            case TNT -> new AdminDisbandConfirmGUI(player, gui.getTargetTeam()).open();
+            default -> {}
+        }
+    }
+
+    private void onAdminDisbandConfirmGUIClick(Player player, AdminDisbandConfirmGUI gui, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case RED_WOOL -> new AdminTeamManageGUI(plugin, player, gui.getTargetTeam()).open();
+            case GREEN_WOOL -> {
+                player.closeInventory();
+                teamManager.adminDisbandTeam(player, gui.getTargetTeam().getName());
+            }
+            default -> {}
         }
     }
 }

@@ -6,6 +6,7 @@ import eu.kotori.donutTeams.gui.BankGUI;
 import eu.kotori.donutTeams.gui.LeaderboardCategoryGUI;
 import eu.kotori.donutTeams.gui.NoTeamGUI;
 import eu.kotori.donutTeams.gui.TeamGUI;
+import eu.kotori.donutTeams.gui.admin.AdminGUI;
 import eu.kotori.donutTeams.listeners.TeamChatListener;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamManager;
@@ -62,6 +63,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             case "info" -> handleInfo(sender, args);
             case "chat", "c" -> handleChatToggle(sender);
             case "reload" -> handleReload(sender);
+            case "admin" -> handleAdmin(sender, args);
             case "sethome" -> handleSetHome(sender);
             case "home" -> handleHome(sender);
             case "settag" -> handleSetTag(sender, args);
@@ -122,6 +124,21 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         } else {
             new TeamGUI(plugin, team, player).open();
         }
+    }
+
+    private void handleAdmin(CommandSender sender, String[] args) {
+        executeOnPlayer(sender, "donutteams.command.admin", (player, cmdArgs) -> {
+            if (cmdArgs.length == 1) {
+                new AdminGUI(plugin, player).open();
+                return;
+            }
+            if (cmdArgs.length == 3 && cmdArgs[1].equalsIgnoreCase("disband")) {
+                String teamName = cmdArgs[2];
+                teamManager.adminDisbandTeam(player, teamName);
+            } else {
+                messageManager.sendRawMessage(player, "<gray>Usage: /team admin [disband <teamName>]");
+            }
+        }, args);
     }
 
     private void handleCreate(CommandSender sender, String[] args) {
@@ -400,11 +417,14 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
             List<String> subcommands = new ArrayList<>(Arrays.asList("create", "disband", "invite", "accept", "deny", "kick", "leave", "info", "chat", "sethome", "home", "settag", "transfer", "pvp", "bank", "top", "enderchest", "setdescription", "promote", "demote"));
-            if (sender.hasPermission("donutteams.admin.reload")) {
+            if (sender.hasPermission("donutteams.command.admin")) {
+                subcommands.add("admin");
+            }
+            if (sender.hasPermission("donutteams.command.reload")) {
                 subcommands.add("reload");
             }
             return subcommands.stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
+                    .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
 
@@ -414,6 +434,20 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 return Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName)
                         .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+            if (subCommand.equals("admin") && sender.hasPermission("donutteams.command.admin")) {
+                return List.of("disband").stream()
+                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        if (args.length == 3) {
+            if (args[0].equalsIgnoreCase("admin") && args[1].equalsIgnoreCase("disband") && sender.hasPermission("donutteams.command.admin")) {
+                return teamManager.getAllTeams().stream()
+                        .map(Team::getName)
+                        .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());
             }
         }

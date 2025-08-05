@@ -5,16 +5,42 @@ api-version: '1.21'
 folia-supported: true
 authors: [ kotori ]
 description: A powerful teams plugin replica for DonutSMP, now with Folia support and more features.
-softdepend: [ Vault, PlaceholderAPI ]
+softdepend: [ Vault, PlaceholderAPI, PvPManager ]
+
 commands:
   team:
     description: Main command for BetterDonutTeams.
     usage: /<command> [subcommand]
-    aliases: [t, clan, party]
+    aliases: [t]
+  guild:
+    description: Main command for BetterDonutTeams.
+    usage: /<command> [subcommand]
+    aliases: [g]
+  clan:
+    description: Main command for BetterDonutTeams.
+    usage: /<command> [subcommand]
+    aliases: [c]
+  party:
+    description: Main command for BetterDonutTeams.
+    usage: /<command> [subcommand]
+    aliases: [p]
   teammsg:
     description: Sends a message to your team.
     usage: /<command> <message>
     aliases: [tm, tmsg]
+  guildmsg:
+    description: Sends a message to your team.
+    usage: /<command> <message>
+    aliases: [gmsg]
+  clanmsg:
+    description: Sends a message to your team.
+    usage: /<command> <message>
+    aliases: [cmsg]
+  partymsg:
+    description: Sends a message to your team.
+    usage: /<command> <message>
+    aliases: [pmsg]
+
 permissions:
   donutteams.*:
     description: Grants all permissions for the plugin.
@@ -25,6 +51,7 @@ permissions:
     description: Grants access to all admin commands and bypasses.
     children:
       - donutteams.command.reload
+      - donutteams.command.admin
       - donutteams.bank.withdraw.bypass
       - donutteams.enderchest.bypass
   donutteams.user:
@@ -39,7 +66,6 @@ permissions:
       - donutteams.command.kick
       - donutteams.command.info
       - donutteams.command.chat
-      - donutteams.command.gui
       - donutteams.command.sethome
       - donutteams.command.home
       - donutteams.command.settag
@@ -57,6 +83,9 @@ permissions:
     default: op
   donutteams.enderchest.bypass:
     description: Allows bypassing team-specific ender chest permissions.
+    default: op
+  donutteams.command.admin:
+    description: Allows access to the /team admin command and GUI.
     default: op
   donutteams.command.create:
     description: Allows creating a team.
@@ -84,9 +113,6 @@ permissions:
     default: true
   donutteams.command.chat:
     description: Allows toggling team chat.
-    default: true
-  donutteams.command.gui:
-    description: Allows opening the team GUI.
     default: true
   donutteams.command.sethome:
     description: Allows setting the team home.

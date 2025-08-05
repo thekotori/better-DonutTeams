@@ -330,6 +330,21 @@ public class DatabaseStorage implements IDataStorage {
     }
 
     @Override
+    public List<Team> getAllTeams() {
+        List<Team> teams = new ArrayList<>();
+        String sql = "SELECT * FROM donut_teams ORDER BY created_at DESC";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                teams.add(mapTeamFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error getting all teams: " + e.getMessage());
+        }
+        return teams;
+    }
+
+    @Override
     public void setTeamHome(int teamId, Location location) {
         String sql = "UPDATE donut_teams SET home_location = ? WHERE id = ?";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
