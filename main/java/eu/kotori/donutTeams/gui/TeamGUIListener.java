@@ -49,7 +49,8 @@ public class TeamGUIListener implements Listener {
                 holder instanceof MemberPermissionsEditGUI || holder instanceof LeaderboardCategoryGUI ||
                 holder instanceof LeaderboardViewGUI || holder instanceof NoTeamGUI ||
                 holder instanceof AdminGUI || holder instanceof AdminTeamListGUI ||
-                holder instanceof AdminTeamManageGUI || holder instanceof AdminDisbandConfirmGUI;
+                holder instanceof AdminTeamManageGUI || holder instanceof AdminDisbandConfirmGUI ||
+                holder instanceof ConfirmGUI;
 
         if (!isOurGui) {
             return;
@@ -77,9 +78,19 @@ public class TeamGUIListener implements Listener {
             else if (holder instanceof AdminTeamListGUI gui) onAdminTeamListGUIClick(player, gui, clickedItem);
             else if (holder instanceof AdminTeamManageGUI gui) onAdminTeamManageGUIClick(player, gui, clickedItem);
             else if (holder instanceof AdminDisbandConfirmGUI gui) onAdminDisbandConfirmGUIClick(player, gui, clickedItem);
+            else if (holder instanceof ConfirmGUI gui) onConfirmGUIClick(gui, clickedItem);
+
 
         } else if (event.isShiftClick()) {
             event.setCancelled(true);
+        }
+    }
+
+    private void onConfirmGUIClick(ConfirmGUI gui, ItemStack clicked) {
+        if (clicked.getType() == Material.GREEN_WOOL) {
+            gui.handleConfirm();
+        } else if (clicked.getType() == Material.RED_WOOL) {
+            gui.handleCancel();
         }
     }
 
@@ -87,10 +98,10 @@ public class TeamGUIListener implements Listener {
         switch (clicked.getType()) {
             case WRITABLE_BOOK -> {
                 player.closeInventory();
-                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team name in chat, or type 'cancel' to abort.");
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team name in chat, or type 'cancel' to abort.</gray>");
                 plugin.getChatInputManager().awaitInput(player, teamName -> {
                     if (teamName.equalsIgnoreCase("cancel")) {
-                        plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.");
+                        plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.</red>");
                         return;
                     }
 
@@ -100,10 +111,10 @@ public class TeamGUIListener implements Listener {
                         return;
                     }
 
-                    plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team tag in chat, or type 'cancel' to abort.");
+                    plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team tag in chat, or type 'cancel' to abort.</gray>");
                     plugin.getChatInputManager().awaitInput(player, teamTag -> {
                         if (teamTag.equalsIgnoreCase("cancel")) {
-                            plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.");
+                            plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.</red>");
                             return;
                         }
                         teamManager.createTeam(player, teamName, teamTag);
@@ -138,7 +149,7 @@ public class TeamGUIListener implements Listener {
         }
 
         switch (clicked.getType()) {
-            case TNT -> teamManager.disbandTeam(player, false);
+            case TNT -> teamManager.disbandTeam(player);
             case BARRIER -> teamManager.leaveTeam(player);
             case ENDER_PEARL -> teamManager.teleportToHome(player);
             case GOLD_NUGGET -> new BankGUI(plugin, player, team).open();
@@ -185,11 +196,11 @@ public class TeamGUIListener implements Listener {
         boolean isDeposit = clicked.getType() == Material.GREEN_WOOL;
         String action = isDeposit ? "deposit" : "withdraw";
 
-        plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the amount to " + action + " in chat, or type 'cancel' to abort.");
+        plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the amount to " + action + " in chat, or type 'cancel' to abort.</gray>");
 
         plugin.getChatInputManager().awaitInput(player, input -> {
             if (input.equalsIgnoreCase("cancel")) {
-                plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.");
+                plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
                 return;
             }
             try {
@@ -220,11 +231,11 @@ public class TeamGUIListener implements Listener {
         boolean isTag = clicked.getType() == Material.NAME_TAG;
         String action = isTag ? "tag" : "description";
 
-        plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the new team " + action + " in chat, or type 'cancel' to abort.");
+        plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the new team " + action + " in chat, or type 'cancel' to abort.</gray>");
 
         plugin.getChatInputManager().awaitInput(player, input -> {
             if (input.equalsIgnoreCase("cancel")) {
-                plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.");
+                plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
                 return;
             }
             if (isTag) {

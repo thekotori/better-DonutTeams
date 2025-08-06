@@ -6,7 +6,6 @@ folia-supported: true
 authors: [ kotori ]
 description: A powerful teams plugin replica for DonutSMP, now with Folia support and more features.
 softdepend: [ Vault, PlaceholderAPI, PvPManager ]
-
 commands:
   team:
     description: Main command for BetterDonutTeams.
@@ -40,7 +39,6 @@ commands:
     description: Sends a message to your team.
     usage: /<command> <message>
     aliases: [pmsg]
-
 permissions:
   donutteams.*:
     description: Grants all permissions for the plugin.

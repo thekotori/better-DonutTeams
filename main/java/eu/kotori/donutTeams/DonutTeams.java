@@ -44,10 +44,10 @@ public final class DonutTeams extends JavaPlugin {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             IS_FOLIA = true;
-            getLogger().info("Folia detected. Enabling Folia support.");
+            getLogger().info("Folia detected. Enabling Folia-compatible schedulers.");
         } catch (ClassNotFoundException e) {
             IS_FOLIA = false;
-            getLogger().info("Folia not detected. Using standard Bukkit scheduler.");
+            getLogger().info("Folia not detected. Using standard Bukkit schedulers.");
         }
 
         this.taskRunner = new TaskRunner(this);

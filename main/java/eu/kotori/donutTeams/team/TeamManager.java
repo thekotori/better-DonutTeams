@@ -5,6 +5,10 @@ import com.google.common.cache.CacheBuilder;
 import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.config.ConfigManager;
 import eu.kotori.donutTeams.config.MessageManager;
+import eu.kotori.donutTeams.gui.ConfirmGUI;
+import eu.kotori.donutTeams.gui.TeamGUI;
+import eu.kotori.donutTeams.gui.admin.AdminGUI;
+import eu.kotori.donutTeams.gui.sub.MemberEditGUI;
 import eu.kotori.donutTeams.storage.IDataStorage;
 import eu.kotori.donutTeams.util.EffectsUtil;
 import eu.kotori.donutTeams.util.InventoryUtil;
@@ -36,7 +40,6 @@ public class TeamManager {
     private final Map<String, Team> teamNameCache = new ConcurrentHashMap<>();
     private final Map<UUID, Team> playerTeamCache = new ConcurrentHashMap<>();
     private final Cache<UUID, List<String>> teamInvites;
-    private final Cache<UUID, Long> disbandConfirmations;
     private final Map<UUID, Instant> homeCooldowns = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> teleportTasks = new ConcurrentHashMap<>();
 
@@ -48,9 +51,6 @@ public class TeamManager {
         this.economy = plugin.getEconomy();
         this.teamInvites = CacheBuilder.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build();
-        this.disbandConfirmations = CacheBuilder.newBuilder()
-                .expireAfterWrite(60, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -68,15 +68,21 @@ public class TeamManager {
                 }
                 Team team = teamOpt.get();
 
-                plugin.getTaskRunner().runAsync(() -> {
-                    storage.deleteTeam(team.getId());
-                    plugin.getTaskRunner().run(() -> {
-                        team.broadcast("admin_team_disbanded_broadcast");
-                        uncacheTeam(team);
-                        messageManager.sendMessage(admin, "admin_team_disbanded", Placeholder.unparsed("team", team.getName()));
-                        EffectsUtil.playSound(admin, EffectsUtil.SoundType.SUCCESS);
-                    });
-                });
+                new ConfirmGUI(admin, "Disband " + team.getName() + "?", (confirmed) -> {
+                    if (confirmed) {
+                        plugin.getTaskRunner().runAsync(() -> {
+                            storage.deleteTeam(team.getId());
+                            plugin.getTaskRunner().run(() -> {
+                                team.broadcast("admin_team_disbanded_broadcast");
+                                uncacheTeam(team);
+                                messageManager.sendMessage(admin, "admin_team_disbanded", Placeholder.unparsed("team", team.getName()));
+                                EffectsUtil.playSound(admin, EffectsUtil.SoundType.SUCCESS);
+                            });
+                        });
+                    } else {
+                        new AdminGUI(plugin, admin).open();
+                    }
+                }).open();
             });
         });
     }
@@ -199,7 +205,7 @@ public class TeamManager {
         });
     }
 
-    public void disbandTeam(Player owner, boolean confirmed) {
+    public void disbandTeam(Player owner) {
         Team team = getPlayerTeam(owner.getUniqueId());
         if (team == null) {
             messageManager.sendMessage(owner, "player_not_in_team");
@@ -212,27 +218,21 @@ public class TeamManager {
             return;
         }
 
-        if (!confirmed) {
-            disbandConfirmations.put(owner.getUniqueId(), System.currentTimeMillis());
-            messageManager.sendMessage(owner, "disband_confirm");
-            return;
-        }
-
-        if (disbandConfirmations.getIfPresent(owner.getUniqueId()) == null) {
-            messageManager.sendMessage(owner, "disband_confirm");
-            return;
-        }
-
-        disbandConfirmations.invalidate(owner.getUniqueId());
-        plugin.getTaskRunner().runAsync(() -> {
-            storage.deleteTeam(team.getId());
-            plugin.getTaskRunner().run(() -> {
-                team.broadcast("team_disbanded_broadcast", Placeholder.unparsed("team", team.getName()));
-                uncacheTeam(team);
-                messageManager.sendMessage(owner, "team_disbanded");
-                EffectsUtil.playSound(owner, EffectsUtil.SoundType.SUCCESS);
-            });
-        });
+        new ConfirmGUI(owner, "Disband " + team.getName() + "?", confirmed -> {
+            if (confirmed) {
+                plugin.getTaskRunner().runAsync(() -> {
+                    storage.deleteTeam(team.getId());
+                    plugin.getTaskRunner().run(() -> {
+                        team.broadcast("team_disbanded_broadcast", Placeholder.unparsed("team", team.getName()));
+                        uncacheTeam(team);
+                        messageManager.sendMessage(owner, "team_disbanded");
+                        EffectsUtil.playSound(owner, EffectsUtil.SoundType.SUCCESS);
+                    });
+                });
+            } else {
+                new TeamGUI(plugin, team, owner).open();
+            }
+        }).open();
     }
 
     public void invitePlayer(Player inviter, Player target) {
@@ -398,9 +398,11 @@ public class TeamManager {
         }
 
         TeamPlayer targetMember = team.getMember(targetUuid);
+        String targetName = Bukkit.getOfflinePlayer(targetUuid).getName();
+        String safeTargetName = targetName != null ? targetName : "Unknown";
+
         if (targetMember == null) {
-            String targetName = Bukkit.getOfflinePlayer(targetUuid).getName();
-            messageManager.sendMessage(kicker, "target_not_in_your_team", Placeholder.unparsed("target", targetName != null ? targetName : "Unknown"));
+            messageManager.sendMessage(kicker, "target_not_in_your_team", Placeholder.unparsed("target", safeTargetName));
             EffectsUtil.playSound(kicker, EffectsUtil.SoundType.ERROR);
             return;
         }
@@ -417,26 +419,29 @@ public class TeamManager {
             return;
         }
 
-        plugin.getTaskRunner().runAsync(() -> {
-            storage.removeMemberFromTeam(targetUuid);
-            plugin.getTaskRunner().run(() -> {
-                team.removeMember(targetUuid);
-                playerTeamCache.remove(targetUuid);
+        new ConfirmGUI(kicker, "Kick " + safeTargetName + "?", confirmed -> {
+            if (confirmed) {
+                plugin.getTaskRunner().runAsync(() -> {
+                    storage.removeMemberFromTeam(targetUuid);
+                    plugin.getTaskRunner().run(() -> {
+                        team.removeMember(targetUuid);
+                        playerTeamCache.remove(targetUuid);
 
-                String targetName = Bukkit.getOfflinePlayer(targetUuid).getName();
-                String finalTargetName = targetName != null ? targetName : "Unknown";
+                        messageManager.sendMessage(kicker, "player_kicked", Placeholder.unparsed("target", safeTargetName));
+                        team.broadcast("player_left_broadcast", Placeholder.unparsed("player", safeTargetName));
+                        EffectsUtil.playSound(kicker, EffectsUtil.SoundType.SUCCESS);
 
-                messageManager.sendMessage(kicker, "player_kicked", Placeholder.unparsed("target", finalTargetName));
-                team.broadcast("player_left_broadcast", Placeholder.unparsed("player", finalTargetName));
-                EffectsUtil.playSound(kicker, EffectsUtil.SoundType.SUCCESS);
-
-                Player targetPlayer = Bukkit.getPlayer(targetUuid);
-                if (targetPlayer != null) {
-                    messageManager.sendMessage(targetPlayer, "you_were_kicked", Placeholder.unparsed("team", team.getName()));
-                    EffectsUtil.playSound(targetPlayer, EffectsUtil.SoundType.ERROR);
-                }
-            });
-        });
+                        Player targetPlayer = Bukkit.getPlayer(targetUuid);
+                        if (targetPlayer != null) {
+                            messageManager.sendMessage(targetPlayer, "you_were_kicked", Placeholder.unparsed("team", team.getName()));
+                            EffectsUtil.playSound(targetPlayer, EffectsUtil.SoundType.ERROR);
+                        }
+                    });
+                });
+            } else {
+                new MemberEditGUI(plugin, team, kicker, targetUuid).open();
+            }
+        }).open();
     }
 
     public void promotePlayer(Player promoter, UUID targetUuid) {
@@ -715,7 +720,7 @@ public class TeamManager {
 
     public void deposit(Player player, double amount) {
         if (!configManager.isBankEnabled()) {
-            messageManager.sendRawMessage(player, "<red>The team bank feature is currently disabled.");
+            messageManager.sendMessage(player, "feature_disabled");
             return;
         }
         if (economy == null) {
@@ -731,7 +736,7 @@ public class TeamManager {
             messageManager.sendMessage(player, "bank_invalid_amount");
             return;
         }
-        if (economy.getBalance(player) < amount) {
+        if (!economy.has(player, amount)) {
             messageManager.sendMessage(player, "player_insufficient_funds");
             return;
         }
@@ -741,16 +746,20 @@ public class TeamManager {
             return;
         }
 
-        economy.withdrawPlayer(player, amount);
-        team.addBalance(amount);
-        plugin.getTaskRunner().runAsync(() -> storage.updateTeamBalance(team.getId(), team.getBalance()));
-        messageManager.sendMessage(player, "bank_deposit_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
-        EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
+        if (economy.withdrawPlayer(player, amount).transactionSuccess()) {
+            team.addBalance(amount);
+            plugin.getTaskRunner().runAsync(() -> storage.updateTeamBalance(team.getId(), team.getBalance()));
+            messageManager.sendMessage(player, "bank_deposit_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
+            EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
+        } else {
+            messageManager.sendMessage(player, "player_insufficient_funds");
+            EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
+        }
     }
 
     public void withdraw(Player player, double amount) {
         if (!configManager.isBankEnabled()) {
-            messageManager.sendRawMessage(player, "<red>The team bank feature is currently disabled.");
+            messageManager.sendMessage(player, "feature_disabled");
             return;
         }
         if (economy == null) {
@@ -777,16 +786,20 @@ public class TeamManager {
             return;
         }
 
-        team.removeBalance(amount);
-        economy.depositPlayer(player, amount);
-        plugin.getTaskRunner().runAsync(() -> storage.updateTeamBalance(team.getId(), team.getBalance()));
-        messageManager.sendMessage(player, "bank_withdraw_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
-        EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
+        if (economy.depositPlayer(player, amount).transactionSuccess()) {
+            team.removeBalance(amount);
+            plugin.getTaskRunner().runAsync(() -> storage.updateTeamBalance(team.getId(), team.getBalance()));
+            messageManager.sendMessage(player, "bank_withdraw_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
+            EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
+        } else {
+            messageManager.sendRawMessage(player, "<red>An unexpected error occurred with the economy.</red>");
+            EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
+        }
     }
 
     public void openEnderChest(Player player) {
         if (!configManager.isEnderChestEnabled()) {
-            messageManager.sendRawMessage(player, "<red>The team ender chest feature is currently disabled.");
+            messageManager.sendMessage(player, "feature_disabled");
             return;
         }
         Team team = getPlayerTeam(player.getUniqueId());

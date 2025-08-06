@@ -1,12 +1,14 @@
 package eu.kotori.donutTeams.util;
 
 import eu.kotori.donutTeams.DonutTeams;
+import eu.kotori.donutTeams.gui.IRefreshableGUI;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.InventoryHolder;
 
 import java.util.Map;
 import java.util.UUID;
@@ -16,7 +18,7 @@ import java.util.function.Consumer;
 public class ChatInputManager implements Listener {
 
     private final DonutTeams plugin;
-    private final Map<UUID, Consumer<String>> pendingInput = new ConcurrentHashMap<>();
+    private final Map<UUID, InputData> pendingInput = new ConcurrentHashMap<>();
 
     public ChatInputManager(DonutTeams plugin) {
         this.plugin = plugin;
@@ -24,7 +26,8 @@ public class ChatInputManager implements Listener {
     }
 
     public void awaitInput(Player player, Consumer<String> onInput) {
-        pendingInput.put(player.getUniqueId(), onInput);
+        InventoryHolder previousGui = player.getOpenInventory().getTopInventory().getHolder();
+        pendingInput.put(player.getUniqueId(), new InputData(onInput, previousGui));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -34,10 +37,37 @@ public class ChatInputManager implements Listener {
 
         if (pendingInput.containsKey(uuid)) {
             event.setCancelled(true);
-            Consumer<String> consumer = pendingInput.remove(uuid);
+            InputData data = pendingInput.remove(uuid);
             String message = PlainTextComponentSerializer.plainText().serialize(event.message());
 
-            plugin.getTaskRunner().runOnEntity(player, () -> consumer.accept(message));
+            plugin.getTaskRunner().runOnEntity(player, () -> {
+                if (message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("abort")) {
+                    plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
+                    if (data.getPreviousGui() instanceof IRefreshableGUI refreshableGui) {
+                        refreshableGui.open();
+                    }
+                    return;
+                }
+                data.getOnInput().accept(message);
+            });
+        }
+    }
+
+    private static class InputData {
+        private final Consumer<String> onInput;
+        private final InventoryHolder previousGui;
+
+        public InputData(Consumer<String> onInput, InventoryHolder previousGui) {
+            this.onInput = onInput;
+            this.previousGui = previousGui;
+        }
+
+        public Consumer<String> getOnInput() {
+            return onInput;
+        }
+
+        public InventoryHolder getPreviousGui() {
+            return previousGui;
         }
     }
 }

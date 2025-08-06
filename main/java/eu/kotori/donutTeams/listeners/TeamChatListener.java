@@ -6,7 +6,6 @@ import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.entity.Player;
@@ -46,7 +45,7 @@ public class TeamChatListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
         if (!teamChatEnabled.contains(player.getUniqueId())) {
@@ -60,8 +59,6 @@ public class TeamChatListener implements Listener {
         }
 
         event.setCancelled(true);
-
-        String plainMessage = PlainTextComponentSerializer.plainText().serialize(event.message());
 
         String format = messageManager.getRawMessage("team_chat_format");
         Component formattedMessage = miniMessage.deserialize(format,

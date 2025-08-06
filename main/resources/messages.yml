@@ -19,8 +19,11 @@ not_owner: "<red>Only the team owner can do that.</red>"
 owner_must_disband: "<red>As the owner, you must disband the team instead of leaving.</red>"
 must_be_owner_or_co_owner: "<red>Only the team owner or a co-owner can do that.</red>"
 no_team_placeholder: "No Team"
+feature_disabled: "<red>This feature is currently disabled.</red>"
 
 # --- Admin Messages ---
+# This message is now just a prompt, as the GUI will handle confirmation.
+admin_disband_confirm: "<yellow>Are you sure you want to disband the team <white><team></white>? This cannot be undone.</yellow>"
 admin_team_disbanded: "<green>You have disbanded the team <white><team></white>.</green>"
 admin_team_disbanded_broadcast: "<red>Your team has been disbanded by an administrator.</red>"
 
@@ -33,8 +36,10 @@ name_invalid: "<red>The team name can only contain letters, numbers, and undersc
 tag_too_long: "<red>The team tag cannot be longer than <white><max_length></white> characters.</red>"
 team_name_exists: "<red>A team with the name <white><team></white> already exists.</red>"
 
-# --- Team Disband / Leave ---
-disband_confirm: "<yellow>Are you sure you want to disband your team? This cannot be undone. Type <gold>/team disband confirm</gold> to proceed.</yellow>"
+# --- Team Disband / Leave / Kick ---
+# This message is now just a prompt, as the GUI will handle confirmation.
+disband_confirm: "<yellow>Are you sure you want to disband your team? This cannot be undone.</yellow>"
+kick_confirm: "<yellow>Are you sure you want to kick <white><target></white>?</yellow>"
 team_disbanded: "<green>You have successfully disbanded your team.</green>"
 team_disbanded_broadcast: "<gray>The team <white><team></white> has been disbanded.</gray>"
 you_left_team: "<green>You have left the team <white><team></white>.</green>"

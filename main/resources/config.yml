@@ -3,6 +3,7 @@
 # ----------------------------------------------------
 #  This file contains all the main settings for the plugin.
 #  For message customization, please see messages.yml.
+#  You can use /team reload to apply changes without a server restart.
 #
 #  CONFIG VERSION - DO NOT CHANGE THIS
 config-version: 6
@@ -12,7 +13,8 @@ config-version: 6
 # Configure how the plugin stores its data.
 storage:
   # Can be "mysql" for a central database or "h2" for local file-based storage.
-  # H2 is recommended for smaller servers as it requires no setup.
+  # H2 is recommended for single-server setups as it requires no configuration.
+  # MySQL is required for multi-server networks (e.g., BungeeCord/Velocity) to sync data.
   type: "h2"
 
   # MySQL database settings.
@@ -27,9 +29,9 @@ storage:
 
 # General team settings
 settings:
-  # The main color used in GUIs and messages.
+  # The main color used in GUIs and messages. Must be a hex code (e.g., "#4C9DDE").
   main_color: "#4C9DDE"
-  # The accent color used for highlights.
+  # The accent color used for highlights and gradients.
   accent_color: "#4C96D2"
   # Maximum number of players allowed in a single team.
   max_team_size: 10
@@ -41,7 +43,7 @@ settings:
   max_tag_length: 6
   # Maximum character length for a team description.
   max_description_length: 64
-  # Default PvP status for newly created teams. If true, members can hurt each other.
+  # Default PvP status for newly created teams. If false, members cannot hurt each other by default.
   default_pvp_status: true
 
 # Team Home feature settings
@@ -53,6 +55,7 @@ team_home:
   cooldown_seconds: 300 # 5 minutes
 
 # Team Bank feature settings
+# Requires Vault and an economy plugin (e.g., EssentialsX) to be installed.
 team_bank:
   # Set to false to completely disable the team bank feature.
   enabled: true
@@ -71,7 +74,7 @@ effects:
   sounds:
     enabled: true
     # Sound played for successful actions (e.g., creating a team, depositing money).
-    # A list of sounds can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
+    # A list of valid sound names can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
     success: "ENTITY_PLAYER_LEVELUP"
     # Sound played for failed actions or errors.
     error: "ENTITY_VILLAGER_NO"
@@ -80,15 +83,16 @@ effects:
   particles:
     enabled: true
     # Particle effect shown during teleport warmup.
-    # A list of particles can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+    # A list of valid particle names can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
     teleport_warmup: "PORTAL"
     # Particle effect shown upon successful teleportation.
     teleport_success: "END_ROD"
 
 # Webhook settings
 # This feature sends anonymous startup statistics to the developer to help improve the plugin.
+# It helps track usage and prioritize updates. No player data is ever sent.
 # You can disable it at any time.
 webhook:
   enabled: true
   # You can optionally set a server name to distinguish it in the statistics.
-  server-name: "ServerName"
+  server-name: "My DonutSMP Server"
