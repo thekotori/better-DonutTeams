@@ -1,0 +1,386 @@
+# ---------------------------------------------------- #
+#           BetterDonutTeams GUI Configuration         #
+# ---------------------------------------------------- #
+# This file allows you to customize every aspect of the plugin's GUIs.
+#
+# CUSTOMIZATION:
+# - Use standard Bukkit Material names (e.g., DIAMOND_SWORD, PLAYER_HEAD).
+# - A full list can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
+# - Names and lores support MiniMessage formatting for colors and effects.
+# - Placeholders like <player>, <balance>, <kills> will be replaced automatically where applicable.
+# ---------------------------------------------------- #
+
+# GUI for players who are NOT in a team
+no-team-gui:
+  title: "ᴛᴇᴀᴍ ᴍᴇɴᴜ"
+  size: 27
+  items:
+    create-team:
+      slot: 12
+      material: "WRITABLE_BOOK"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴄʀᴇᴀᴛᴇ ᴀ ᴛᴇᴀᴍ</bold></gradient>"
+      lore:
+        - "<gray>Start your own team and invite your friends!</gray>"
+        - ""
+        - "<yellow>Click to begin the creation process.</yellow>"
+    leaderboards:
+      slot: 14
+      material: "EMERALD"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴠɪᴇᴡ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅs</bold></gradient>"
+      lore:
+        - "<gray>See the top teams on the server.</gray>"
+        - ""
+        - "<yellow>Click to view leaderboards.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# Main GUI for players who ARE in a team
+team-gui:
+  title: "ᴛᴇᴀᴍ - <members>/<max_members>"
+  size: 54
+  items:
+    player-head:
+      online-name-format: "<gradient:#4C9DDE:#4C96D2><role_icon><player></gradient>"
+      offline-name-format: "<gray><role_icon><player>"
+      lore:
+        - "<gray>Role: <white><role>"
+        - "<gray>Joined: <white><joindate>"
+        - ""
+        - "<permission_prompt>"
+      can-edit-prompt: "<yellow>Click to edit this member.</yellow>"
+      cannot-edit-prompt: ""
+    bank:
+      slot: 46
+      material: "GOLD_NUGGET"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴇᴀᴍ ʙᴀɴᴋ</bold></gradient>"
+      lore:
+        - "<gray>Balance: <white><balance></white>"
+        - ""
+        - "<yellow>Click to manage the bank.</yellow>"
+    bank-locked:
+      slot: 46
+      material: "BARRIER"
+      name: "<red><bold>BANK DISABLED</bold></red>"
+      lore:
+        - "<gray>This feature is disabled in the config.</gray>"
+    home:
+      slot: 47
+      material: "ENDER_PEARL"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴇᴀᴍ ʜᴏᴍᴇ</bold></gradient>"
+      lore-set:
+        - "<gray>Click to teleport to your team's home.</gray>"
+        - ""
+        - "<yellow>Click to teleport!</yellow>"
+      lore-not-set:
+        - "<gray>Click to teleport to your team's home.</gray>"
+        - ""
+        - "<red>Home not set.</red>"
+    ender-chest:
+      slot: 48
+      material: "ENDER_CHEST"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ</bold></gradient>"
+      lore:
+        - "<gray>A shared inventory for your team.</gray>"
+        - ""
+        - "<yellow>Click to open.</yellow>"
+    ender-chest-locked:
+      slot: 48
+      material: "BARRIER"
+      name: "<red><bold>ENDER CHEST LOCKED</bold></red>"
+      lore:
+        - "<gray>You do not have permission for the ender chest.</gray>"
+        - "<gray>Ask an Owner/Co-Owner to grant you access.</gray>"
+    sort:
+      slot: 49
+      material: "HOPPER"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>sᴏʀᴛ ᴍᴇᴍʙᴇʀs</bold></gradient>"
+      lore:
+        - "<gray>Click to change the sorting.</gray>"
+        - ""
+        - "<sort_status_join_date>"
+        - "<sort_status_alphabetical>"
+        - "<sort_status_online_status>"
+    pvp-toggle:
+      slot: 50
+      material: "IRON_SWORD"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴇᴀᴍ ᴘᴠᴘ</bold></gradient>"
+      lore:
+        - "<gray>Determines if members can damage each other.</gray>"
+        - ""
+        - "<gray>Currently: <status>"
+        - ""
+        - "<permission_prompt>"
+      status-on: "<green>ON"
+      status-off: "<red>OFF"
+      can-toggle-prompt: "<yellow>Click to toggle"
+      cannot-toggle-prompt: "<red>Only an Owner or Co-Owner can change this.</red>"
+    settings:
+      slot: 51
+      material: "COMPARATOR"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs</bold></gradient>"
+      lore:
+        - "<yellow>Click to manage team settings.</yellow>"
+    settings-locked:
+      slot: 51
+      material: "GRAY_STAINED_GLASS_PANE"
+      name: "<red><bold>ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs</bold></red>"
+      lore:
+        - "<red>Only the owner or co-owners can access this.</red>"
+    disband-button:
+      slot: 52
+      material: "TNT"
+      name: "<red><bold>ᴅɪsʙᴀɴᴅ ᴛᴇᴀᴍ</bold></red>"
+      lore:
+        - "<gray>Permanently deletes the team.</gray>"
+        - "<dark_red>This action cannot be undone!</dark_red>"
+    leave-button:
+      slot: 52
+      material: "BARRIER"
+      name: "<red><bold>ʟᴇᴀᴠᴇ ᴛᴇᴀᴍ</bold></red>"
+      lore:
+        - "<yellow>Click to leave the team.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for team settings (tag, description)
+team-settings-gui:
+  title: "ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs"
+  size: 27
+  items:
+    change-tag:
+      slot: 12
+      material: "NAME_TAG"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴄʜᴀɴɢᴇ ᴛᴇᴀᴍ ᴛᴀɢ</bold></gradient>"
+      lore:
+        - "<gray>Current: <white><team_tag></white>"
+        - ""
+        - "<yellow>Click to change the team tag.</yellow>"
+    change-description:
+      slot: 14
+      material: "OAK_SIGN"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴄʜᴀɴɢᴇ ᴛᴇᴀᴍ ᴅᴇsᴄʀɪᴘᴛɪᴏɴ</bold></gradient>"
+      lore:
+        - "<gray>Current: <white><team_description></white>"
+        - ""
+        - "<yellow>Click to change the team description.</yellow>"
+    back-button:
+      slot: 22
+      material: "ARROW"
+      name: "<gray><bold>ʙᴀᴄᴋ</bold></gray>"
+      lore:
+        - "<yellow>Click to return to the main menu.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for editing a specific member's roles and permissions
+member-edit-gui:
+  title: "Edit: <player_name>"
+  size: 54
+  items:
+    player-info-head:
+      slot: 4
+      material: "PLAYER_HEAD"
+      name: "<gold><bold><player_name></bold></gold>"
+      lore:
+        - "<gray>Role: <white><role>"
+        - "<gray>Joined: <white><joindate>"
+    promote-button:
+      slot: 19
+      material: "LIME_DYE"
+      name: "<green><bold>PROMOTE TO CO-OWNER</bold></green>"
+      lore:
+        - "<gray>Gives this player more permissions.</gray>"
+        - ""
+        - "<yellow>Click to promote.</yellow>"
+    demote-button:
+      slot: 19
+      material: "GRAY_DYE"
+      name: "<gray><bold>DEMOTE TO MEMBER</bold></gray>"
+      lore:
+        - "<gray>Removes co-owner permissions.</gray>"
+        - ""
+        - "<yellow>Click to demote.</yellow>"
+    kick-button:
+      slot: 22
+      material: "RED_WOOL"
+      name: "<red><bold>KICK MEMBER</bold></red>"
+      lore:
+        - "<gray>Removes this player from the team.</gray>"
+        - ""
+        - "<yellow>Click to kick</yellow>"
+    transfer-button:
+      slot: 25
+      material: "BEACON"
+      name: "<gold><bold>TRANSFER OWNERSHIP</bold></gold>"
+      lore:
+        - "<gray>Makes this player the new team owner.</gray>"
+        - "<dark_red>You will become a regular member!</dark_red>"
+        - ""
+        - "<yellow>Click to transfer</yellow>"
+    withdraw-permission:
+      slot: 37
+      material: "GOLD_INGOT"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ʙᴀɴᴋ ᴡɪᴛʜᴅʀᴀᴡ</bold></gradient>"
+      lore:
+        - "<gray>Allow this member to withdraw from the team bank."
+        - "<gray>Status: <withdraw_status>"
+    enderchest-permission:
+      slot: 39
+      material: "ENDER_CHEST"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴜsᴇ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ</bold></gradient>"
+      lore:
+        - "<gray>Allow this member to use the team ender chest."
+        - "<gray>Status: <enderchest_status>"
+    sethome-permission:
+      slot: 41
+      material: "GRASS_BLOCK"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>sᴇᴛ ᴛᴇᴀᴍ ʜᴏᴍᴇ</bold></gradient>"
+      lore:
+        - "<gray>Allow this member to set the team home location."
+        - "<gray>Status: <set_home_status>"
+    usehome-permission:
+      slot: 43
+      material: "ENDER_PEARL"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴜsᴇ ᴛᴇᴀᴍ ʜᴏᴍᴇ</bold></gradient>"
+      lore:
+        - "<gray>Allow this member to teleport to the team home."
+        - "<gray>Status: <use_home_status>"
+    back-button:
+      slot: 49
+      material: "ARROW"
+      name: "<gray><bold>BACK</bold></gray>"
+      lore:
+        - "<yellow>Click to return to the main menu.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for the team bank
+bank-gui:
+  title: "ᴛᴇᴀᴍ ʙᴀɴᴋ"
+  size: 27
+  items:
+    deposit:
+      slot: 11
+      material: "GREEN_WOOL"
+      name: "<green><bold>ᴅᴇᴘᴏsɪᴛ</bold></green>"
+      lore:
+        - "<gray>Click to deposit money into the team bank.</gray>"
+        - ""
+        - "<yellow>You will be prompted in chat.</yellow>"
+    balance:
+      slot: 13
+      material: "GOLD_INGOT"
+      name: "<gold><bold>ᴄᴜʀʀᴇɴᴛ ʙᴀʟᴀɴᴄᴇ</bold></gold>"
+      lore:
+        - "<gray>Balance: <white><balance></white>"
+    withdraw:
+      slot: 15
+      material: "RED_WOOL"
+      name: "<red><bold>ᴡɪᴛʜᴅʀᴀᴡ</bold></red>"
+      lore:
+        - "<gray>Click to withdraw money from the team bank.</gray>"
+        - ""
+        - "<yellow>You will be prompted in chat.</yellow>"
+    withdraw-locked:
+      slot: 15
+      material: "BARRIER"
+      name: "<red><bold>WITHDRAW LOCKED</bold></red>"
+      lore:
+        - "<gray>You do not have permission to withdraw from the bank.</gray>"
+        - "<gray>Ask the team owner to grant you access.</gray>"
+    back-button:
+      slot: 22
+      material: "ARROW"
+      name: "<gray><bold>ʙᴀᴄᴋ</bold></gray>"
+      lore:
+        - "<yellow>Click to return to the main menu.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for confirming a dangerous action
+confirm-gui:
+  size: 27
+  items:
+    confirm:
+      slot: 11
+      material: "GREEN_WOOL"
+      name: "<green><bold>CONFIRM</bold></green>"
+      lore:
+        - "<gray>This action cannot be undone.</gray>"
+    cancel:
+      slot: 15
+      material: "RED_WOOL"
+      name: "<red><bold>CANCEL</bold></red>"
+      lore:
+        - "<gray>Return to the previous menu.</gray>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for choosing a leaderboard category
+leaderboard-category-gui:
+  title: "ᴛᴇᴀᴍ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ"
+  size: 27
+  items:
+    top-kills:
+      slot: 11
+      material: "DIAMOND_SWORD"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴏᴘ ᴋɪʟʟs</bold></gradient>"
+      lore:
+        - "<gray>Shows the top 10 teams with the most kills.</gray>"
+    top-balance:
+      slot: 13
+      material: "GOLD_INGOT"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴏᴘ ʙᴀʟᴀɴᴄᴇ</bold></gradient>"
+      lore:
+        - "<gray>Shows the top 10 richest teams.</gray>"
+    top-members:
+      slot: 15
+      material: "PLAYER_HEAD"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴛᴏᴘ ᴍᴇᴍʙᴇʀs</bold></gradient>"
+      lore:
+        - "<gray>Shows the top 10 teams with the most members.</gray>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for viewing a specific leaderboard
+leaderboard-view-gui:
+  size: 54
+  items:
+    team-head:
+      name: "<gradient:#4C9DDE:#4C96D2><bold>#<rank> <team_name></bold></gradient>"
+      lore:
+        - "<gray>Tag: <white><team_tag>"
+        - "<gray><statistic_name>: <white><statistic_value>"
+    back-button:
+      slot: 49
+      material: "ARROW"
+      name: "<gray><bold>ʙᴀᴄᴋ</bold></gray>"
+      lore:
+        - "<yellow>Click to return to category selection.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+
+# GUI for the main admin panel
+admin-gui:
+  title: "ᴛᴇᴀᴍ ᴀᴅᴍɪɴ ᴘᴀɴᴇʟ"
+  size: 27
+  items:
+    manage-teams:
+      slot: 13
+      material: "ANVIL"
+      name: "<gradient:#4C9DDE:#4C96D2><bold>ᴍᴀɴᴀɢᴇ ᴛᴇᴀᴍs</bold></gradient>"
+      lore:
+        - "<gray>View, manage, or disband all teams.</gray>"
+        - ""
+        - "<yellow>Click to view the team list.</yellow>"
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "

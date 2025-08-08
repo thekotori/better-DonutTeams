@@ -1,18 +1,15 @@
 package eu.kotori.donutTeams.gui;
 
 import eu.kotori.donutTeams.DonutTeams;
-import eu.kotori.donutTeams.gui.admin.AdminDisbandConfirmGUI;
 import eu.kotori.donutTeams.gui.admin.AdminGUI;
 import eu.kotori.donutTeams.gui.admin.AdminTeamListGUI;
 import eu.kotori.donutTeams.gui.admin.AdminTeamManageGUI;
-import eu.kotori.donutTeams.gui.sub.MemberEditGUI;
-import eu.kotori.donutTeams.gui.sub.MemberPermissionsEditGUI;
-import eu.kotori.donutTeams.gui.sub.MemberPermissionsListGUI;
 import eu.kotori.donutTeams.gui.sub.TeamSettingsGUI;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamManager;
 import eu.kotori.donutTeams.team.TeamPlayer;
 import eu.kotori.donutTeams.team.TeamRole;
+import eu.kotori.donutTeams.util.EffectsUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
@@ -44,89 +41,37 @@ public class TeamGUIListener implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         InventoryHolder holder = event.getView().getTopInventory().getHolder();
-        boolean isOurGui = holder instanceof TeamGUI || holder instanceof BankGUI || holder instanceof MemberEditGUI ||
-                holder instanceof TeamSettingsGUI || holder instanceof MemberPermissionsListGUI ||
-                holder instanceof MemberPermissionsEditGUI || holder instanceof LeaderboardCategoryGUI ||
-                holder instanceof LeaderboardViewGUI || holder instanceof NoTeamGUI ||
-                holder instanceof AdminGUI || holder instanceof AdminTeamListGUI ||
-                holder instanceof AdminTeamManageGUI || holder instanceof AdminDisbandConfirmGUI ||
-                holder instanceof ConfirmGUI;
+        boolean isOurGui = holder instanceof IRefreshableGUI || holder instanceof NoTeamGUI || holder instanceof ConfirmGUI ||
+                holder instanceof AdminGUI || holder instanceof AdminTeamListGUI || holder instanceof AdminTeamManageGUI ||
+                holder instanceof TeamSettingsGUI || holder instanceof LeaderboardCategoryGUI || holder instanceof LeaderboardViewGUI;
 
         if (!isOurGui) {
             return;
         }
 
-        if (event.getClickedInventory() == null) {
+        event.setCancelled(true);
+
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(event.getView().getTopInventory())) {
             return;
         }
 
-        if (event.getClickedInventory().equals(event.getView().getTopInventory())) {
-            event.setCancelled(true);
-            ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
+        ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
 
-            if (holder instanceof TeamGUI gui) onTeamGUIClick(event, player, gui, clickedItem);
-            else if (holder instanceof MemberEditGUI gui) onMemberEditGUIClick(event, player, gui, clickedItem);
-            else if (holder instanceof BankGUI gui) onBankGUIClick(player, gui, clickedItem);
-            else if (holder instanceof TeamSettingsGUI gui) onTeamSettingsGUIClick(player, gui, clickedItem);
-            else if (holder instanceof MemberPermissionsListGUI gui) onMemberPermissionsListGUIClick(player, gui, clickedItem);
-            else if (holder instanceof MemberPermissionsEditGUI gui) onMemberPermissionsEditGUIClick(player, gui, clickedItem);
-            else if (holder instanceof LeaderboardCategoryGUI gui) onLeaderboardCategoryGUIClick(player, gui, clickedItem);
-            else if (holder instanceof LeaderboardViewGUI) onLeaderboardViewGUIClick(player, clickedItem);
-            else if (holder instanceof NoTeamGUI) onNoTeamGUIClick(player, clickedItem);
-            else if (holder instanceof AdminGUI) onAdminGUIClick(player, clickedItem);
-            else if (holder instanceof AdminTeamListGUI gui) onAdminTeamListGUIClick(player, gui, clickedItem);
-            else if (holder instanceof AdminTeamManageGUI gui) onAdminTeamManageGUIClick(player, gui, clickedItem);
-            else if (holder instanceof AdminDisbandConfirmGUI gui) onAdminDisbandConfirmGUIClick(player, gui, clickedItem);
-            else if (holder instanceof ConfirmGUI gui) onConfirmGUIClick(gui, clickedItem);
-
-
-        } else if (event.isShiftClick()) {
-            event.setCancelled(true);
-        }
+        if (holder instanceof TeamGUI gui) onTeamGUIClick(player, gui, clickedItem);
+        else if (holder instanceof MemberEditGUI gui) onMemberEditGUIClick(player, gui, clickedItem);
+        else if (holder instanceof BankGUI gui) onBankGUIClick(player, gui, clickedItem);
+        else if (holder instanceof TeamSettingsGUI gui) onTeamSettingsGUIClick(player, gui, clickedItem);
+        else if (holder instanceof LeaderboardCategoryGUI) onLeaderboardCategoryGUIClick(player, clickedItem);
+        else if (holder instanceof LeaderboardViewGUI) onLeaderboardViewGUIClick(player, clickedItem);
+        else if (holder instanceof NoTeamGUI) onNoTeamGUIClick(player, clickedItem);
+        else if (holder instanceof AdminGUI) onAdminGUIClick(player, clickedItem);
+        else if (holder instanceof AdminTeamListGUI gui) onAdminTeamListGUIClick(player, gui, clickedItem);
+        else if (holder instanceof AdminTeamManageGUI gui) onAdminTeamManageGUIClick(player, gui, clickedItem);
+        else if (holder instanceof ConfirmGUI gui) onConfirmGUIClick(gui, clickedItem);
     }
 
-    private void onConfirmGUIClick(ConfirmGUI gui, ItemStack clicked) {
-        if (clicked.getType() == Material.GREEN_WOOL) {
-            gui.handleConfirm();
-        } else if (clicked.getType() == Material.RED_WOOL) {
-            gui.handleCancel();
-        }
-    }
-
-    private void onNoTeamGUIClick(Player player, ItemStack clicked) {
-        switch (clicked.getType()) {
-            case WRITABLE_BOOK -> {
-                player.closeInventory();
-                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team name in chat, or type 'cancel' to abort.</gray>");
-                plugin.getChatInputManager().awaitInput(player, teamName -> {
-                    if (teamName.equalsIgnoreCase("cancel")) {
-                        plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.</red>");
-                        return;
-                    }
-
-                    String validationError = teamManager.validateTeamName(teamName);
-                    if (validationError != null) {
-                        plugin.getMessageManager().sendRawMessage(player, plugin.getMessageManager().getRawMessage("prefix") + validationError);
-                        return;
-                    }
-
-                    plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team tag in chat, or type 'cancel' to abort.</gray>");
-                    plugin.getChatInputManager().awaitInput(player, teamTag -> {
-                        if (teamTag.equalsIgnoreCase("cancel")) {
-                            plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.</red>");
-                            return;
-                        }
-                        teamManager.createTeam(player, teamName, teamTag);
-                    });
-                });
-            }
-            case EMERALD -> new LeaderboardCategoryGUI(plugin, player).open();
-            default -> {}
-        }
-    }
-
-    private void onTeamGUIClick(InventoryClickEvent event, Player player, TeamGUI gui, ItemStack clicked) {
+    private void onTeamGUIClick(Player player, TeamGUI gui, ItemStack clicked) {
         Team team = gui.getTeam();
         if (team == null) {
             player.closeInventory();
@@ -139,9 +84,13 @@ public class TeamGUIListener implements Listener {
                 TeamPlayer target = team.getMember(targetUuid);
                 if (target == null) return;
 
-                if (team.isOwner(player.getUniqueId()) && target.getRole() != TeamRole.OWNER) {
-                    new MemberEditGUI(plugin, team, player, targetUuid).open();
-                } else if (team.getMember(player.getUniqueId()).getRole() == TeamRole.CO_OWNER && target.getRole() == TeamRole.MEMBER) {
+                TeamPlayer viewerMember = team.getMember(player.getUniqueId());
+                if (viewerMember == null) return;
+
+                boolean canEdit = (viewerMember.getRole() == TeamRole.OWNER && target.getRole() != TeamRole.OWNER) ||
+                        (viewerMember.getRole() == TeamRole.CO_OWNER && target.getRole() == TeamRole.MEMBER);
+
+                if (canEdit) {
                     new MemberEditGUI(plugin, team, player, targetUuid).open();
                 }
             }
@@ -158,6 +107,9 @@ public class TeamGUIListener implements Listener {
             case COMPARATOR -> {
                 if(team.hasElevatedPermissions(player.getUniqueId())) {
                     new TeamSettingsGUI(plugin, player, team).open();
+                } else {
+                    plugin.getMessageManager().sendMessage(player, "gui_action_locked");
+                    EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
                 }
             }
             case IRON_SWORD -> {
@@ -168,7 +120,45 @@ public class TeamGUIListener implements Listener {
         }
     }
 
-    private void onMemberEditGUIClick(InventoryClickEvent event, Player player, MemberEditGUI gui, ItemStack clicked) {
+    private void onConfirmGUIClick(ConfirmGUI gui, ItemStack clicked) {
+        if (clicked.getType() == Material.GREEN_WOOL) {
+            gui.handleConfirm();
+        } else if (clicked.getType() == Material.RED_WOOL) {
+            gui.handleCancel();
+        }
+    }
+
+    private void onNoTeamGUIClick(Player player, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case WRITABLE_BOOK -> {
+                player.closeInventory();
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team name in chat, or type 'cancel' to abort.</gray>");
+                plugin.getChatInputManager().awaitInput(player, new NoTeamGUI(plugin, player), teamName -> {
+                    if (teamName.equalsIgnoreCase("cancel")) {
+                        plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.</red>");
+                        return;
+                    }
+                    String validationError = teamManager.validateTeamName(teamName);
+                    if (validationError != null) {
+                        plugin.getMessageManager().sendRawMessage(player, plugin.getMessageManager().getRawMessage("prefix") + validationError);
+                        return;
+                    }
+                    plugin.getMessageManager().sendRawMessage(player, "<gray>Please type your desired team tag in chat, or type 'cancel' to abort.</gray>");
+                    plugin.getChatInputManager().awaitInput(player, new NoTeamGUI(plugin, player), teamTag -> {
+                        if (teamTag.equalsIgnoreCase("cancel")) {
+                            plugin.getMessageManager().sendRawMessage(player, "<red>Team creation cancelled.</red>");
+                            return;
+                        }
+                        teamManager.createTeam(player, teamName, teamTag);
+                    });
+                });
+            }
+            case EMERALD -> new LeaderboardCategoryGUI(plugin, player).open();
+            default -> {}
+        }
+    }
+
+    private void onMemberEditGUIClick(Player player, MemberEditGUI gui, ItemStack clicked) {
         TeamPlayer targetMember = gui.getTargetMember();
         if (targetMember == null) {
             player.closeInventory();
@@ -176,112 +166,102 @@ public class TeamGUIListener implements Listener {
         }
 
         switch (clicked.getType()) {
+            case LIME_DYE -> teamManager.promotePlayer(player, gui.getTargetUuid());
+            case GRAY_DYE -> teamManager.demotePlayer(player, gui.getTargetUuid());
             case RED_WOOL -> teamManager.kickPlayer(player, gui.getTargetUuid());
             case BEACON -> teamManager.transferOwnership(player, gui.getTargetUuid());
             case ARROW -> new TeamGUI(plugin, gui.getTeam(), player).open();
-            case LIME_DYE -> teamManager.promotePlayer(player, gui.getTargetUuid());
-            case GRAY_DYE -> teamManager.demotePlayer(player, gui.getTargetUuid());
-            default -> {}
-        }
-        if (clicked.getType() != Material.ARROW) player.closeInventory();
-    }
+            case GOLD_INGOT, ENDER_CHEST, GRASS_BLOCK, ENDER_PEARL -> {
+                boolean canWithdraw = targetMember.canWithdraw();
+                boolean canUseEC = targetMember.canUseEnderChest();
+                boolean canSetHome = targetMember.canSetHome();
+                boolean canUseHome = targetMember.canUseHome();
 
-    private void onBankGUIClick(Player player, BankGUI gui, ItemStack clicked) {
-        if (clicked.getType() == Material.ARROW) {
-            new TeamGUI(plugin, gui.getTeam(), player).open();
-            return;
-        }
+                if (clicked.getType() == Material.GOLD_INGOT) canWithdraw = !canWithdraw;
+                if (clicked.getType() == Material.ENDER_CHEST) canUseEC = !canUseEC;
+                if (clicked.getType() == Material.GRASS_BLOCK) canSetHome = !canSetHome;
+                if (clicked.getType() == Material.ENDER_PEARL) canUseHome = !canUseHome;
 
-        player.closeInventory();
-        boolean isDeposit = clicked.getType() == Material.GREEN_WOOL;
-        String action = isDeposit ? "deposit" : "withdraw";
-
-        plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the amount to " + action + " in chat, or type 'cancel' to abort.</gray>");
-
-        plugin.getChatInputManager().awaitInput(player, input -> {
-            if (input.equalsIgnoreCase("cancel")) {
-                plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
-                return;
+                teamManager.updateMemberPermissions(player, targetMember.getPlayerUuid(), canWithdraw, canUseEC, canSetHome, canUseHome);
             }
-            try {
-                double amount = Double.parseDouble(input);
-                if (isDeposit) {
-                    teamManager.deposit(player, amount);
-                } else {
-                    teamManager.withdraw(player, amount);
-                }
-            } catch (NumberFormatException e) {
-                plugin.getMessageManager().sendMessage(player, "bank_invalid_amount");
-            }
-        });
-    }
-
-    private void onTeamSettingsGUIClick(Player player, TeamSettingsGUI gui, ItemStack clicked) {
-        if (clicked.getType() == Material.ARROW) {
-            new TeamGUI(plugin, gui.getTeam(), player).open();
-            return;
+            default -> { return; }
         }
-
-        if (clicked.getType() == Material.COMPARATOR) {
-            new MemberPermissionsListGUI(player, gui.getTeam()).open();
-            return;
-        }
-
-        player.closeInventory();
-        boolean isTag = clicked.getType() == Material.NAME_TAG;
-        String action = isTag ? "tag" : "description";
-
-        plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the new team " + action + " in chat, or type 'cancel' to abort.</gray>");
-
-        plugin.getChatInputManager().awaitInput(player, input -> {
-            if (input.equalsIgnoreCase("cancel")) {
-                plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
-                return;
-            }
-            if (isTag) {
-                teamManager.setTeamTag(player, input);
-            } else {
-                teamManager.setTeamDescription(player, input);
-            }
-        });
-    }
-
-    private void onMemberPermissionsListGUIClick(Player player, MemberPermissionsListGUI gui, ItemStack clicked) {
-        if (clicked.getType() == Material.ARROW) {
-            new TeamSettingsGUI(plugin, player, gui.getTeam()).open();
-            return;
-        }
-        if (clicked.getType() == Material.PLAYER_HEAD && clicked.getItemMeta() instanceof SkullMeta skullMeta) {
-            if (skullMeta.getPlayerProfile() != null && skullMeta.getPlayerProfile().getId() != null) {
-                UUID targetUuid = skullMeta.getPlayerProfile().getId();
-                new MemberPermissionsEditGUI(plugin, player, gui.getTeam(), targetUuid).open();
-            }
-        }
-    }
-
-    private void onMemberPermissionsEditGUIClick(Player player, MemberPermissionsEditGUI gui, ItemStack clicked) {
-        if (clicked.getType() == Material.ARROW) {
-            new MemberPermissionsListGUI(player, gui.getTeam()).open();
-            return;
-        }
-
-        TeamPlayer target = gui.getTargetMember();
-        if (target == null) return;
-
-        boolean canWithdraw = target.canWithdraw();
-        boolean canUseEC = target.canUseEnderChest();
-
-        if (clicked.getType() == Material.GOLD_INGOT) {
-            canWithdraw = !canWithdraw;
-        } else if (clicked.getType() == Material.ENDER_CHEST) {
-            canUseEC = !canUseEC;
-        }
-
-        teamManager.updateMemberPermissions(player, target.getPlayerUuid(), canWithdraw, canUseEC);
         gui.initializeItems();
     }
 
-    private void onLeaderboardCategoryGUIClick(Player player, LeaderboardCategoryGUI gui, ItemStack clicked) {
+    private void onBankGUIClick(Player player, BankGUI gui, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case ARROW -> {
+                new TeamGUI(plugin, gui.getTeam(), player).open();
+                return;
+            }
+            case BARRIER -> {
+                plugin.getMessageManager().sendMessage(player, "gui_action_locked");
+                EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
+                return;
+            }
+            case GREEN_WOOL, RED_WOOL -> {
+                player.closeInventory();
+                boolean isDeposit = clicked.getType() == Material.GREEN_WOOL;
+                String action = isDeposit ? "deposit" : "withdraw";
+
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the amount to " + action + " in chat, or type 'cancel' to abort.</gray>");
+
+                plugin.getChatInputManager().awaitInput(player, gui, input -> {
+                    if (input.equalsIgnoreCase("cancel")) {
+                        plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
+                        gui.open();
+                        return;
+                    }
+                    try {
+                        double amount = Double.parseDouble(input);
+                        if (isDeposit) {
+                            teamManager.deposit(player, amount);
+                        } else {
+                            teamManager.withdraw(player, amount);
+                        }
+                    } catch (NumberFormatException e) {
+                        plugin.getMessageManager().sendMessage(player, "bank_invalid_amount");
+                    }
+                    Bukkit.getScheduler().runTask(plugin, gui::open);
+                });
+            }
+            default -> {}
+        }
+    }
+
+    private void onTeamSettingsGUIClick(Player player, TeamSettingsGUI gui, ItemStack clicked) {
+        switch (clicked.getType()) {
+            case ARROW -> {
+                new TeamGUI(plugin, gui.getTeam(), player).open();
+                return;
+            }
+            case NAME_TAG, OAK_SIGN -> {
+                player.closeInventory();
+                boolean isTag = clicked.getType() == Material.NAME_TAG;
+                String action = isTag ? "tag" : "description";
+
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Please type the new team " + action + " in chat, or type 'cancel' to abort.</gray>");
+
+                plugin.getChatInputManager().awaitInput(player, gui, input -> {
+                    if (input.equalsIgnoreCase("cancel")) {
+                        plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
+                        gui.open();
+                        return;
+                    }
+                    if (isTag) {
+                        teamManager.setTeamTag(player, input);
+                    } else {
+                        teamManager.setTeamDescription(player, input);
+                    }
+                    Bukkit.getScheduler().runTask(plugin, gui::open);
+                });
+            }
+            default -> {}
+        }
+    }
+
+    private void onLeaderboardCategoryGUIClick(Player player, ItemStack clicked) {
         LeaderboardViewGUI.LeaderboardType type;
         String title;
 
@@ -363,18 +343,13 @@ public class TeamGUIListener implements Listener {
                 List<Team> allTeams = teamManager.getAllTeams();
                 plugin.getTaskRunner().runOnEntity(player, () -> new AdminTeamListGUI(plugin, player, allTeams, 0).open());
             });
-            case TNT -> new AdminDisbandConfirmGUI(player, gui.getTargetTeam()).open();
-            default -> {}
-        }
-    }
-
-    private void onAdminDisbandConfirmGUIClick(Player player, AdminDisbandConfirmGUI gui, ItemStack clicked) {
-        switch (clicked.getType()) {
-            case RED_WOOL -> new AdminTeamManageGUI(plugin, player, gui.getTargetTeam()).open();
-            case GREEN_WOOL -> {
-                player.closeInventory();
-                teamManager.adminDisbandTeam(player, gui.getTargetTeam().getName());
-            }
+            case TNT -> new ConfirmGUI(plugin, player, "Disband " + gui.getTargetTeam().getName() + "?", confirmed -> {
+                if (confirmed) {
+                    teamManager.adminDisbandTeam(player, gui.getTargetTeam().getName());
+                } else {
+                    gui.open();
+                }
+            }).open();
             default -> {}
         }
     }

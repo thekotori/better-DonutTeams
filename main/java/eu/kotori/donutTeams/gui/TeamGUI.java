@@ -4,10 +4,12 @@ import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamPlayer;
 import eu.kotori.donutTeams.team.TeamRole;
+import eu.kotori.donutTeams.util.GuiConfigManager;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -18,8 +20,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class TeamGUI implements InventoryHolder {
+public class TeamGUI implements IRefreshableGUI, InventoryHolder {
 
     private final DonutTeams plugin;
     private final Team team;
@@ -32,21 +35,37 @@ public class TeamGUI implements InventoryHolder {
         this.team = team;
         this.viewer = viewer;
         this.currentSort = Team.SortType.JOIN_DATE;
-        String title = "ᴛᴇᴀᴍ - " + team.getMembers().size() + "/" + plugin.getConfigManager().getMaxTeamSize();
-        this.inventory = Bukkit.createInventory(this, 54, Component.text(title));
+
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("team-gui");
+        String title = guiConfig.getString("title", "Team")
+                .replace("<members>", String.valueOf(team.getMembers().size()))
+                .replace("<max_members>", String.valueOf(plugin.getConfigManager().getMaxTeamSize()));
+        int size = guiConfig.getInt("size", 54);
+
+        this.inventory = Bukkit.createInventory(this, size, plugin.getMiniMessage().deserialize(title));
         initializeItems();
     }
 
     public void initializeItems() {
         inventory.clear();
-        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("team-gui");
+        if (guiConfig == null) return;
+        ConfigurationSection itemsConfig = guiConfig.getConfigurationSection("items");
+        if (itemsConfig == null) return;
+
+        ItemStack border = new ItemBuilder(guiManager.getMaterial("team-gui.fill-item.material", Material.GRAY_STAINED_GLASS_PANE))
+                .withName(guiManager.getString("team-gui.fill-item.name", " "))
+                .build();
+
         for (int i = 0; i < 9; i++) inventory.setItem(i, border);
         for (int i = 45; i < 54; i++) inventory.setItem(i, border);
 
         int memberSlot = 9;
         for (TeamPlayer member : team.getSortedMembers(currentSort)) {
             if (memberSlot >= 45) break;
-            inventory.setItem(memberSlot++, createMemberHead(member));
+            inventory.setItem(memberSlot++, createMemberHead(member, itemsConfig.getConfigurationSection("player-head")));
         }
 
         TeamPlayer viewerMember = team.getMember(viewer.getUniqueId());
@@ -55,148 +74,139 @@ public class TeamGUI implements InventoryHolder {
             return;
         }
 
-        boolean hasBankAccess = plugin.getConfigManager().isBankEnabled() &&
-                (viewer.hasPermission("donutteams.bank.withdraw.bypass") || viewerMember.canWithdraw());
+        setItemFromConfig(itemsConfig, "sort");
+        setItemFromConfig(itemsConfig, "pvp-toggle");
 
-        if (hasBankAccess) {
-            inventory.setItem(46, new ItemBuilder(Material.GOLD_NUGGET)
-                    .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʙᴀɴᴋ</bold></gradient>")
-                    .withLore(
-                            "<gray>Balance: <white>" + String.format("%,.2f", team.getBalance()) + "</white>",
-                            "",
-                            "<yellow>Click to manage the bank.</yellow>"
-                    ).build());
+        if(team.hasElevatedPermissions(viewer.getUniqueId())) {
+            setItemFromConfig(itemsConfig, "settings");
         } else {
-            inventory.setItem(46, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
-                    .withName("<red><bold>BANK LOCKED</bold></red>")
-                    .withLore(
-                            "<gray>You do not have permission to access the team bank.",
-                            "<gray>Ask the team owner to grant you access."
-                    ).build());
+            setItemFromConfig(itemsConfig, "settings-locked");
         }
 
+        setItemFromConfig(itemsConfig, team.isOwner(viewer.getUniqueId()) ? "disband-button" : "leave-button");
 
-        inventory.setItem(47, new ItemBuilder(Material.ENDER_PEARL)
-                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ʜᴏᴍᴇ</bold></gradient>")
-                .withLore(
-                        "<gray>Click to teleport to your team's home.</gray>",
-                        "",
-                        team.getHomeLocation() == null ? "<red>Home not set." : "<yellow>Click to teleport!</yellow>"
-                ).build());
-
-        boolean hasECAccess = plugin.getConfigManager().isEnderChestEnabled() &&
-                (viewer.hasPermission("donutteams.enderchest.bypass") || viewerMember.canUseEnderChest());
-
-        if (hasECAccess) {
-            inventory.setItem(48, new ItemBuilder(Material.ENDER_CHEST)
-                    .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ</bold></gradient>")
-                    .withLore(
-                            "<gray>A shared inventory for your team.</gray>",
-                            "",
-                            "<yellow>Click to open.</yellow>"
-                    ).build());
+        if (plugin.getConfigManager().isBankEnabled()) {
+            setItemFromConfig(itemsConfig, "bank");
         } else {
-            inventory.setItem(48, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
-                    .withName("<red><bold>ENDER CHEST LOCKED</bold></red>")
-                    .withLore(
-                            "<gray>You do not have permission to access the team ender chest.",
-                            "<gray>Ask the team owner to grant you access."
-                    ).build());
+            setItemFromConfig(itemsConfig, "bank-locked");
         }
 
-        inventory.setItem(49, createSortItem());
-        inventory.setItem(50, createPvpItem());
-
-        if (team.hasElevatedPermissions(viewer.getUniqueId())) {
-            inventory.setItem(51, new ItemBuilder(Material.COMPARATOR)
-                    .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs</bold></gradient>")
-                    .withLore("<yellow>Click to manage team settings.</yellow>")
-                    .build());
-        }
-
-        if (team.isOwner(viewer.getUniqueId())) {
-            inventory.setItem(52, new ItemBuilder(Material.TNT)
-                    .withName("<red><bold>ᴅɪsʙᴀɴᴅ ᴛᴇᴀᴍ</bold></red>")
-                    .withLore(
-                            "<gray>Permanently deletes the team.</gray>",
-                            "<dark_red>This action cannot be undone!</dark_red>"
-                    ).build());
+        if (plugin.getConfigManager().isEnderChestEnabled()) {
+            boolean hasAccess = viewer.hasPermission("donutteams.bypass.enderchest.use") || viewerMember.canUseEnderChest();
+            setItemFromConfig(itemsConfig, hasAccess ? "ender-chest" : "ender-chest-locked");
         } else {
-            inventory.setItem(52, new ItemBuilder(Material.BARRIER)
-                    .withName("<red><bold>ʟᴇᴀᴠᴇ ᴛᴇᴀᴍ</bold></red>")
-                    .withLore("<yellow>Click to leave the team.</yellow>")
-                    .build());
+            setItemFromConfig(itemsConfig, "ender-chest-locked");
         }
+
+        setItemFromConfig(itemsConfig, "home");
     }
 
-    private ItemStack createPvpItem() {
-        boolean pvp = team.isPvpEnabled();
-        return new ItemBuilder(Material.IRON_SWORD)
-                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>ᴛᴇᴀᴍ ᴘᴠᴘ</bold></gradient>")
-                .withLore(
-                        "<gray>Determines if members can damage each other.</gray>",
-                        "",
-                        "<gray>Currently: " + (pvp ? "<green>ON" : "<red>OFF"),
-                        "",
-                        team.hasElevatedPermissions(viewer.getUniqueId()) ? "<yellow>Click to toggle" : "<red>Only the owner or co-owners can change this.</red>"
-                ).build();
+    private void setItemFromConfig(ConfigurationSection itemsConfig, String key) {
+        ConfigurationSection itemConfig = itemsConfig.getConfigurationSection(key);
+        if (itemConfig == null) return;
+
+        int slot = itemConfig.getInt("slot", -1);
+        if (slot == -1) return;
+
+        Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
+        ItemBuilder builder = new ItemBuilder(material);
+
+        String name = replacePlaceholders(itemConfig.getString("name", ""));
+        builder.withName(name);
+
+        List<String> lore = new ArrayList<>();
+        if (key.equals("home")) {
+            lore.addAll(itemConfig.getStringList(team.getHomeLocation() == null ? "lore-not-set" : "lore-set"));
+        } else {
+            lore.addAll(itemConfig.getStringList("lore"));
+        }
+        builder.withLore(lore.stream().map(this::replacePlaceholders).collect(Collectors.toList()));
+
+        inventory.setItem(slot, builder.build());
     }
 
-    private ItemStack createSortItem() {
-        return new ItemBuilder(Material.HOPPER)
-                .withName("<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + "><bold>sᴏʀᴛ ᴍᴇᴍʙᴇʀs</bold></gradient>")
-                .withLore(
-                        "<gray>Click to change the sorting.</gray>",
-                        "",
-                        getSortLore(Team.SortType.JOIN_DATE),
-                        getSortLore(Team.SortType.ALPHABETICAL),
-                        getSortLore(Team.SortType.ONLINE_STATUS)
-                ).build();
+    private String replacePlaceholders(String text) {
+        if (text == null) return "";
+        String pvpStatus = team.isPvpEnabled() ?
+                plugin.getGuiConfigManager().getString("team-gui.items.pvp-toggle.status-on", "<green>ON") :
+                plugin.getGuiConfigManager().getString("team-gui.items.pvp-toggle.status-off", "<red>OFF");
+
+        String pvpPrompt = team.hasElevatedPermissions(viewer.getUniqueId()) ?
+                plugin.getGuiConfigManager().getString("team-gui.items.pvp-toggle.can-toggle-prompt", "<yellow>Click to toggle") :
+                plugin.getGuiConfigManager().getString("team-gui.items.pvp-toggle.cannot-toggle-prompt", "<red>Permission denied");
+
+        return text
+                .replace("<balance>", String.format("%,.2f", team.getBalance()))
+                .replace("<status>", pvpStatus)
+                .replace("<permission_prompt>", pvpPrompt)
+                .replace("<sort_status_join_date>", getSortLore(Team.SortType.JOIN_DATE))
+                .replace("<sort_status_alphabetical>", getSortLore(Team.SortType.ALPHABETICAL))
+                .replace("<sort_status_online_status>", getSortLore(Team.SortType.ONLINE_STATUS));
+    }
+
+    private ItemStack createMemberHead(TeamPlayer member, ConfigurationSection headConfig) {
+        String playerName = Bukkit.getOfflinePlayer(member.getPlayerUuid()).getName();
+        String nameFormat = member.isOnline() ?
+                headConfig.getString("online-name-format", "<green><player>") :
+                headConfig.getString("offline-name-format", "<gray><player>");
+
+        String name = nameFormat
+                .replace("<role_icon>", getRoleIcon(member.getRole()))
+                .replace("<player>", playerName != null ? playerName : "Unknown");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy").withZone(ZoneId.systemDefault());
+
+        TeamPlayer viewerMember = team.getMember(viewer.getUniqueId());
+        boolean canEdit = false;
+        if (viewerMember != null) {
+            canEdit = (viewerMember.getRole() == TeamRole.OWNER && member.getRole() != TeamRole.OWNER) ||
+                    (viewerMember.getRole() == TeamRole.CO_OWNER && member.getRole() == TeamRole.MEMBER);
+        }
+
+        String permissionPrompt = canEdit ?
+                headConfig.getString("can-edit-prompt", "<yellow>Click to edit.") :
+                headConfig.getString("cannot-edit-prompt", "");
+
+        List<String> lore = headConfig.getStringList("lore").stream()
+                .map(line -> line
+                        .replace("<role>", getRoleName(member.getRole()))
+                        .replace("<joindate>", formatter.format(member.getJoinDate()))
+                        .replace("<permission_prompt>", permissionPrompt))
+                .collect(Collectors.toList());
+
+        ItemBuilder builder = new ItemBuilder(Material.PLAYER_HEAD)
+                .asPlayerHead(member.getPlayerUuid())
+                .withName(name)
+                .withLore(lore);
+
+        if (member.getRole() == TeamRole.OWNER) {
+            builder.withGlow();
+        }
+
+        return builder.build();
     }
 
     private String getSortLore(Team.SortType type) {
         String name = type.name().replace("_", " ").toLowerCase();
         name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-        return (currentSort == type ? "<green>▪ <white>" : "<gray>▪ <white>") + name;
-    }
-
-    private ItemStack createMemberHead(TeamPlayer member) {
-        String playerName = Bukkit.getOfflinePlayer(member.getPlayerUuid()).getName();
-        TeamRole role = member.getRole();
-        String roleName = role.name().charAt(0) + role.name().substring(1).toLowerCase();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy").withZone(ZoneId.systemDefault());
-
-        List<String> lore = new ArrayList<>();
-        lore.add("<gray>Role: <white>" + roleName + "</white>");
-        lore.add("<gray>Joined: <white>" + formatter.format(member.getJoinDate()) + "</white>");
-        lore.add("");
-        if (team.hasElevatedPermissions(viewer.getUniqueId()) && role != TeamRole.OWNER) {
-            if (!(role == TeamRole.CO_OWNER && !team.isOwner(viewer.getUniqueId()))) {
-                lore.add("<yellow>Click to edit this member.</yellow>");
-            }
-        }
-
-        ItemBuilder itemBuilder = new ItemBuilder(Material.PLAYER_HEAD)
-                .asPlayerHead(member.getPlayerUuid())
-                .withName((member.isOnline() ? "<gradient:" + plugin.getConfigManager().getMainColor() + ":" + plugin.getConfigManager().getAccentColor() + ">" : "<gray>") + (getRoleIcon(role)) + playerName)
-                .withLore(lore);
-
-        if (role == TeamRole.OWNER) {
-            itemBuilder.withGlow();
-        }
-
-        return itemBuilder.build();
+        String prefix = (currentSort == type ? "<green>▪ <white>" : "<gray>▪ <white>");
+        return prefix + name;
     }
 
     private String getRoleIcon(TeamRole role) {
-        return switch(role) {
+        return switch (role) {
             case OWNER -> "⭐ ";
             case CO_OWNER -> "✦ ";
             case MEMBER -> "";
         };
     }
 
+    private String getRoleName(TeamRole role) {
+        String name = role.name().toLowerCase();
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
+    @Override
     public void open() {
         viewer.openInventory(inventory);
     }

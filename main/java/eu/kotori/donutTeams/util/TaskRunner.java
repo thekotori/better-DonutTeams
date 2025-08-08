@@ -5,8 +5,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.function.Consumer;
-
 public class TaskRunner {
 
     private final DonutTeams plugin;
@@ -45,6 +43,10 @@ public class TaskRunner {
         } else {
             run(task);
         }
+    }
+
+    public BukkitTask runTaskLater(Runnable task, long delay) {
+        return plugin.getServer().getScheduler().runTaskLater(plugin, task, delay);
     }
 
     public BukkitTask runTaskTimer(Runnable task, long delay, long period) {

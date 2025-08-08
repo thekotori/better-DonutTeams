@@ -5,12 +5,18 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.io.IOException;
 
 public class MessageManager {
 
     private final DonutTeams plugin;
     private final MiniMessage miniMessage;
+    private File messagesFile;
     private FileConfiguration messagesConfig;
     private String prefix;
 
@@ -21,8 +27,18 @@ public class MessageManager {
     }
 
     public void reload() {
-        this.messagesConfig = plugin.getMessageConfig().getCustomConfig();
-        this.prefix = messagesConfig.getString("prefix", "<gradient:#ff8c9f:#ffc2cd><bold>TEAMS</bold></gradient> <dark_gray>| <gray>");
+        messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+        if (!messagesFile.exists()) {
+            plugin.saveResource("messages.yml", false);
+        }
+        messagesConfig = new YamlConfiguration();
+        try {
+            messagesConfig.load(messagesFile);
+        } catch (IOException | InvalidConfigurationException e) {
+            plugin.getLogger().severe("Could not load messages.yml!");
+            e.printStackTrace();
+        }
+        this.prefix = messagesConfig.getString("prefix", "<bold><gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍs</gradient></bold> <dark_gray>| <gray>");
     }
 
     public void sendMessage(CommandSender target, String key, TagResolver... resolvers) {

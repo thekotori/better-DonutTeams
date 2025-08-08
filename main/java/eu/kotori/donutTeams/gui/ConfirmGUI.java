@@ -1,46 +1,72 @@
 package eu.kotori.donutTeams.gui;
 
+import eu.kotori.donutTeams.DonutTeams;
+import eu.kotori.donutTeams.util.GuiConfigManager;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class ConfirmGUI implements InventoryHolder {
 
+    private final DonutTeams plugin;
     private final Player viewer;
     private final Inventory inventory;
     private final Consumer<Boolean> callback;
 
-    public ConfirmGUI(Player viewer, String title, Consumer<Boolean> callback) {
+    public ConfirmGUI(DonutTeams plugin, Player viewer, String title, Consumer<Boolean> callback) {
+        this.plugin = plugin;
         this.viewer = viewer;
         this.callback = callback;
-        this.inventory = Bukkit.createInventory(this, 27, Component.text(title));
-        initializeItems();
+
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("confirm-gui");
+        int size = guiConfig.getInt("size", 27);
+
+        this.inventory = Bukkit.createInventory(this, size, Component.text(title));
+        initializeItems(guiConfig);
     }
 
-    private void initializeItems() {
+    private void initializeItems(ConfigurationSection guiConfig) {
         inventory.clear();
-        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
-        for (int i = 0; i < 27; i++) {
-            inventory.setItem(i, border);
+        ConfigurationSection itemsSection = guiConfig.getConfigurationSection("items");
+        if (itemsSection == null) return;
+
+        setItemFromConfig(itemsSection, "confirm");
+        setItemFromConfig(itemsSection, "cancel");
+
+        ConfigurationSection fillConfig = guiConfig.getConfigurationSection("fill-item");
+        if (fillConfig != null) {
+            ItemStack fillItem = new ItemBuilder(Material.matchMaterial(fillConfig.getString("material", "GRAY_STAINED_GLASS_PANE")))
+                    .withName(fillConfig.getString("name", " "))
+                    .build();
+            for (int i = 0; i < inventory.getSize(); i++) {
+                if (inventory.getItem(i) == null) {
+                    inventory.setItem(i, fillItem);
+                }
+            }
         }
+    }
 
-        inventory.setItem(11, new ItemBuilder(Material.GREEN_WOOL)
-                .withName("<green><bold>CONFIRM</bold></green>")
-                .withLore("<gray>This action cannot be undone.")
-                .build());
+    private void setItemFromConfig(ConfigurationSection itemsSection, String key) {
+        ConfigurationSection itemConfig = itemsSection.getConfigurationSection(key);
+        if (itemConfig == null) return;
 
-        inventory.setItem(15, new ItemBuilder(Material.RED_WOOL)
-                .withName("<red><bold>CANCEL</bold></red>")
-                .withLore("<gray>Return to the previous menu.")
-                .build());
+        int slot = itemConfig.getInt("slot");
+        Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
+        String name = itemConfig.getString("name", "");
+        List<String> lore = itemConfig.getStringList("lore");
+
+        inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).build());
     }
 
     public void open() {

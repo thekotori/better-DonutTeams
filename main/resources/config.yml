@@ -1,15 +1,19 @@
-# ----------------------------------------------------
-#  BetterDonutTeams Configuration
-# ----------------------------------------------------
-#  This file contains all the main settings for the plugin.
-#  For message customization, please see messages.yml.
-#  You can use /team reload to apply changes without a server restart.
+# ---------------------------------------------------- #
+#           BetterDonutTeams Configuration             #
+# ---------------------------------------------------- #
+# This file contains all the main settings for the plugin.
+# For message customization, please see messages.yml.
+# For GUI customization, please see gui.yml.
 #
-#  CONFIG VERSION - DO NOT CHANGE THIS
-config-version: 6
-# ----------------------------------------------------
+# You can use /team reload to apply changes without a server restart.
+# ---------------------------------------------------- #
 
-# Storage settings
+# CONFIG VERSION - DO NOT CHANGE THIS
+config-version: 7
+
+# ---------------------------------------------------- #
+#                  Storage Settings                    #
+# ---------------------------------------------------- #
 # Configure how the plugin stores its data.
 storage:
   # Can be "mysql" for a central database or "h2" for local file-based storage.
@@ -27,7 +31,9 @@ storage:
     username: "root"
     password: ""
 
-# General team settings
+# ---------------------------------------------------- #
+#                   General Settings                   #
+# ---------------------------------------------------- #
 settings:
   # The main color used in GUIs and messages. Must be a hex code (e.g., "#4C9DDE").
   main_color: "#4C9DDE"
@@ -46,15 +52,20 @@ settings:
   # Default PvP status for newly created teams. If false, members cannot hurt each other by default.
   default_pvp_status: true
 
-# Team Home feature settings
+# ---------------------------------------------------- #
+#                 Team Home Settings                   #
+# ---------------------------------------------------- #
 team_home:
   # Time in seconds a player must stand still before being teleported.
   # Set to 0 to disable the warmup.
   warmup_seconds: 5
   # Cooldown in seconds before a player can use /team home again.
+  # Players with the 'donutteams.bypass.home.cooldown' permission ignore this.
   cooldown_seconds: 300 # 5 minutes
 
-# Team Bank feature settings
+# ---------------------------------------------------- #
+#                  Team Bank Settings                  #
+# ---------------------------------------------------- #
 # Requires Vault and an economy plugin (e.g., EssentialsX) to be installed.
 team_bank:
   # Set to false to completely disable the team bank feature.
@@ -62,14 +73,18 @@ team_bank:
   # Maximum balance a team bank can hold. Set to -1 for unlimited.
   max_balance: 1000000.0
 
-# Team Ender Chest feature settings
+# ---------------------------------------------------- #
+#              Team Ender Chest Settings               #
+# ---------------------------------------------------- #
 team_enderchest:
   # Set to false to completely disable the team ender chest feature.
   enabled: true
   # Number of rows in the team ender chest. Must be between 1 and 6.
   rows: 3 # 3 rows = 27 slots
 
-# Visual and sound effects
+# ---------------------------------------------------- #
+#              Visual and Sound Effects                #
+# ---------------------------------------------------- #
 effects:
   sounds:
     enabled: true
@@ -88,11 +103,13 @@ effects:
     # Particle effect shown upon successful teleportation.
     teleport_success: "END_ROD"
 
-# Webhook settings
+# ---------------------------------------------------- #
+#                   Webhook Settings                   #
+# ---------------------------------------------------- #
 # This feature sends anonymous startup statistics to the developer to help improve the plugin.
-# It helps track usage and prioritize updates. No player data is ever sent.
+# It helps track usage and prioritize updates. No player or server IP data is ever sent.
 # You can disable it at any time.
 webhook:
   enabled: true
   # You can optionally set a server name to distinguish it in the statistics.
-  server-name: "My DonutSMP Server"
+  server-name: "ServerName"

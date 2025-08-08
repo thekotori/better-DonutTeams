@@ -3,7 +3,6 @@ package eu.kotori.donutTeams;
 import eu.kotori.donutTeams.commands.TeamCommand;
 import eu.kotori.donutTeams.commands.TeamMessageCommand;
 import eu.kotori.donutTeams.config.ConfigManager;
-import eu.kotori.donutTeams.config.MessageConfig;
 import eu.kotori.donutTeams.config.MessageManager;
 import eu.kotori.donutTeams.gui.TeamGUIListener;
 import eu.kotori.donutTeams.listeners.*;
@@ -24,10 +23,11 @@ public final class DonutTeams extends JavaPlugin {
 
     private static DonutTeams instance;
     private ConfigManager configManager;
-    private MessageConfig messageConfig;
     private MessageManager messageManager;
+    private GuiConfigManager guiConfigManager;
     private StorageManager storageManager;
     private TeamManager teamManager;
+    private AliasManager aliasManager;
     private TeamChatListener teamChatListener;
     private MiniMessage miniMessage;
     private Economy economy;
@@ -35,6 +35,8 @@ public final class DonutTeams extends JavaPlugin {
     private TaskRunner taskRunner;
     private PvPManager pvpManager;
     private static boolean IS_FOLIA = false;
+    public boolean updateAvailable = false;
+    public String latestVersion = "";
 
     @Override
     public void onEnable() {
@@ -44,10 +46,10 @@ public final class DonutTeams extends JavaPlugin {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             IS_FOLIA = true;
-            getLogger().info("Folia detected. Enabling Folia-compatible schedulers.");
+            getLogger().info("Folia detected. Enabling Folia support.");
         } catch (ClassNotFoundException e) {
             IS_FOLIA = false;
-            getLogger().info("Folia not detected. Using standard Bukkit schedulers.");
+            getLogger().info("Folia not detected. Using standard Bukkit scheduler.");
         }
 
         this.taskRunner = new TaskRunner(this);
@@ -55,8 +57,9 @@ public final class DonutTeams extends JavaPlugin {
         ConfigUpdater.update(this);
 
         this.configManager = new ConfigManager(this);
-        this.messageConfig = new MessageConfig(this);
         this.messageManager = new MessageManager(this);
+        this.guiConfigManager = new GuiConfigManager(this);
+        this.aliasManager = new AliasManager(this);
 
         if (!setupEconomy()) {
             getLogger().warning("Vault or an Economy plugin not found! The team bank feature will be disabled.");
@@ -81,6 +84,8 @@ public final class DonutTeams extends JavaPlugin {
             getLogger().info("Successfully hooked into PlaceholderAPI.");
         }
 
+        new VersionChecker(this).check();
+
         StartupMessage.send();
         WebhookUtil.sendStartupNotification(this);
     }
@@ -97,8 +102,9 @@ public final class DonutTeams extends JavaPlugin {
 
     public void reloadPluginConfigs() {
         configManager.reloadConfig();
-        messageConfig.reload();
         messageManager.reload();
+        guiConfigManager.reload();
+        aliasManager.reload();
     }
 
     private boolean setupEconomy() {
@@ -141,7 +147,6 @@ public final class DonutTeams extends JavaPlugin {
             }
         }
 
-        AliasManager aliasManager = new AliasManager(this);
         aliasManager.registerAliases();
     }
 
@@ -167,12 +172,12 @@ public final class DonutTeams extends JavaPlugin {
         return configManager;
     }
 
-    public MessageConfig getMessageConfig() {
-        return messageConfig;
-    }
-
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public GuiConfigManager getGuiConfigManager() {
+        return guiConfigManager;
     }
 
     public StorageManager getStorageManager() {
@@ -181,6 +186,10 @@ public final class DonutTeams extends JavaPlugin {
 
     public TeamManager getTeamManager() {
         return teamManager;
+    }
+
+    public AliasManager getAliasManager() {
+        return aliasManager;
     }
 
     public TeamChatListener getTeamChatListener() {

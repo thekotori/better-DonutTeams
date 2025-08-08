@@ -33,14 +33,10 @@ import java.util.stream.Collectors;
 public class TeamCommand implements CommandExecutor, TabCompleter {
 
     private final DonutTeams plugin;
-    private final TeamManager teamManager;
-    private final MessageManager messageManager;
     private final TeamChatListener teamChatListener;
 
     public TeamCommand(DonutTeams plugin, TeamChatListener teamChatListener) {
         this.plugin = plugin;
-        this.teamManager = plugin.getTeamManager();
-        this.messageManager = plugin.getMessageManager();
         this.teamChatListener = teamChatListener;
     }
 
@@ -82,11 +78,11 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
     private void executeOnPlayer(CommandSender sender, String permission, BiConsumer<Player, String[]> action, String[] args) {
         if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
+            plugin.getMessageManager().sendMessage(sender, "player_only");
             return;
         }
         if (!player.hasPermission(permission)) {
-            messageManager.sendMessage(player, "no_permission");
+            plugin.getMessageManager().sendMessage(player, "no_permission");
             return;
         }
         action.accept(player, args);
@@ -94,18 +90,18 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
     private void executeOnOfflinePlayer(CommandSender sender, String permission, String playerName, BiConsumer<Player, UUID> action) {
         if (!(sender instanceof Player player)) {
-            messageManager.sendMessage(sender, "player_only");
+            plugin.getMessageManager().sendMessage(sender, "player_only");
             return;
         }
         if (!player.hasPermission(permission)) {
-            messageManager.sendMessage(player, "no_permission");
+            plugin.getMessageManager().sendMessage(player, "no_permission");
             return;
         }
         plugin.getTaskRunner().runAsync(() -> {
             OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
             if (!target.hasPlayedBefore() && target.getPlayer() == null) {
                 plugin.getTaskRunner().runOnEntity(player, () ->
-                        messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", playerName))
+                        plugin.getMessageManager().sendMessage(player, "player_not_found", Placeholder.unparsed("target", playerName))
                 );
                 return;
             }
@@ -118,7 +114,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             handleHelp(sender);
             return;
         }
-        Team team = teamManager.getPlayerTeam(player.getUniqueId());
+        Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
         if (team == null) {
             new NoTeamGUI(plugin, player).open();
         } else {
@@ -134,9 +130,9 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             }
             if (cmdArgs.length >= 3 && cmdArgs[1].equalsIgnoreCase("disband")) {
                 String teamName = cmdArgs[2];
-                teamManager.adminDisbandTeam(player, teamName);
+                plugin.getTeamManager().adminDisbandTeam(player, teamName);
             } else {
-                messageManager.sendRawMessage(player, "<gray>Usage: /team admin [disband <teamName>]</gray>");
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Usage: /team admin [disband <teamName>]</gray>");
             }
         }, args);
     }
@@ -144,81 +140,81 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     private void handleCreate(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.create", (player, cmdArgs) -> {
             if (cmdArgs.length < 3) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team create <name> <tag></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team create <name> <tag></gray>");
                 return;
             }
             String name = cmdArgs[1];
             String tag = cmdArgs[2];
-            teamManager.createTeam(player, name, tag);
+            plugin.getTeamManager().createTeam(player, name, tag);
         }, args);
     }
 
     private void handleDisband(CommandSender sender) {
         executeOnPlayer(sender, "donutteams.command.disband", (player, cmdArgs) -> {
-            teamManager.disbandTeam(player);
+            plugin.getTeamManager().disbandTeam(player);
         }, null);
     }
 
     private void handleInvite(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.invite", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team invite <player></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team invite <player></gray>");
                 return;
             }
             Player target = Bukkit.getPlayer(cmdArgs[1]);
             if (target == null) {
-                messageManager.sendMessage(player, "player_not_found", Placeholder.unparsed("target", cmdArgs[1]));
+                plugin.getMessageManager().sendMessage(player, "player_not_found", Placeholder.unparsed("target", cmdArgs[1]));
                 return;
             }
-            teamManager.invitePlayer(player, target);
+            plugin.getTeamManager().invitePlayer(player, target);
         }, args);
     }
 
     private void handleAccept(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.accept", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team accept <teamName></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team accept <teamName></gray>");
                 return;
             }
-            teamManager.acceptInvite(player, cmdArgs[1]);
+            plugin.getTeamManager().acceptInvite(player, cmdArgs[1]);
         }, args);
     }
 
     private void handleDeny(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.deny", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team deny <teamName></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team deny <teamName></gray>");
                 return;
             }
-            teamManager.denyInvite(player, cmdArgs[1]);
+            plugin.getTeamManager().denyInvite(player, cmdArgs[1]);
         }, args);
     }
 
     private void handleLeave(CommandSender sender) {
-        executeOnPlayer(sender, "donutteams.command.leave", (player, cmdArgs) -> teamManager.leaveTeam(player), null);
+        executeOnPlayer(sender, "donutteams.command.leave", (player, cmdArgs) -> plugin.getTeamManager().leaveTeam(player), null);
     }
 
     private void handleKick(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team kick <player></gray>");
+            plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team kick <player></gray>");
             return;
         }
         executeOnOfflinePlayer(sender, "donutteams.command.kick", args[1], (player, targetUuid) -> {
-            teamManager.kickPlayer(player, targetUuid);
+            plugin.getTeamManager().kickPlayer(player, targetUuid);
         });
     }
 
     private void handleInfo(CommandSender sender, String... args) {
         if (!sender.hasPermission("donutteams.command.info")) {
-            messageManager.sendMessage(sender, "no_permission");
+            plugin.getMessageManager().sendMessage(sender, "no_permission");
             return;
         }
         if (args.length > 1) {
             plugin.getTaskRunner().runAsync(() -> {
-                Team team = teamManager.getTeamByName(args[1]);
+                Team team = plugin.getTeamManager().getTeamByName(args[1]);
                 plugin.getTaskRunner().run(() -> {
                     if (team == null) {
-                        messageManager.sendMessage(sender, "team_not_found", Placeholder.unparsed("team", args[1]));
+                        plugin.getMessageManager().sendMessage(sender, "team_not_found", Placeholder.unparsed("team", args[1]));
                         return;
                     }
                     displayTeamInfo(sender, team);
@@ -238,24 +234,24 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining(", "));
 
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_header"), Placeholder.unparsed("team", team.getName()));
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_tag"), Placeholder.unparsed("tag", team.getTag()));
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_description"), Placeholder.unparsed("description", team.getDescription()));
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_owner"), Placeholder.unparsed("owner", safeOwnerName));
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_header"), Placeholder.unparsed("team", team.getName()));
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_tag"), Placeholder.unparsed("tag", team.getTag()));
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_description"), Placeholder.unparsed("description", team.getDescription()));
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_owner"), Placeholder.unparsed("owner", safeOwnerName));
 
         if (!coOwners.isEmpty()) {
-            messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_co_owners"), Placeholder.unparsed("co_owners", coOwners));
+            plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_co_owners"), Placeholder.unparsed("co_owners", coOwners));
         }
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_bank"), Placeholder.unparsed("balance", String.format("%,.2f", team.getBalance())));
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_bank"), Placeholder.unparsed("balance", String.format("%,.2f", team.getBalance())));
 
         double kdr = (team.getDeaths() == 0) ? team.getKills() : (double) team.getKills() / team.getDeaths();
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_stats"),
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_stats"),
                 Placeholder.unparsed("kills", String.valueOf(team.getKills())),
                 Placeholder.unparsed("deaths", String.valueOf(team.getDeaths())),
                 Placeholder.unparsed("kdr", String.format("%.2f", kdr))
         );
 
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_members"),
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_members"),
                 Placeholder.unparsed("member_count", String.valueOf(team.getMembers().size())),
                 Placeholder.unparsed("max_members", String.valueOf(plugin.getConfigManager().getMaxTeamSize()))
         );
@@ -263,9 +259,9 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         for (TeamPlayer member : team.getMembers()) {
             String memberName = Bukkit.getOfflinePlayer(member.getPlayerUuid()).getName();
             String safeMemberName = memberName != null ? memberName : "Unknown";
-            messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_member_list"), Placeholder.unparsed("player", safeMemberName));
+            plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_member_list"), Placeholder.unparsed("player", safeMemberName));
         }
-        messageManager.sendRawMessage(sender, messageManager.getRawMessage("team_info_footer"));
+        plugin.getMessageManager().sendRawMessage(sender, plugin.getMessageManager().getRawMessage("team_info_footer"));
     }
 
     private void handleChatToggle(CommandSender sender) {
@@ -274,52 +270,53 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
     private void handleReload(CommandSender sender) {
         if (!sender.hasPermission("donutteams.command.reload")) {
-            messageManager.sendMessage(sender, "no_permission");
+            plugin.getMessageManager().sendMessage(sender, "no_permission");
             return;
         }
         plugin.reloadPluginConfigs();
-        messageManager.sendMessage(sender, "reload");
+        plugin.getMessageManager().sendMessage(sender, "reload");
+        plugin.getMessageManager().sendMessage(sender, "reload_commands_notice");
     }
 
     private void handleSetHome(CommandSender sender) {
-        executeOnPlayer(sender, "donutteams.command.sethome", (player, args) -> teamManager.setTeamHome(player), null);
+        executeOnPlayer(sender, "donutteams.command.sethome", (player, args) -> plugin.getTeamManager().setTeamHome(player), null);
     }
 
     private void handleHome(CommandSender sender) {
-        executeOnPlayer(sender, "donutteams.command.home", (player, args) -> teamManager.teleportToHome(player), null);
+        executeOnPlayer(sender, "donutteams.command.home", (player, args) -> plugin.getTeamManager().teleportToHome(player), null);
     }
 
     private void handleSetTag(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.settag", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team settag <newTag></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team settag <newTag></gray>");
                 return;
             }
-            teamManager.setTeamTag(player, cmdArgs[1]);
+            plugin.getTeamManager().setTeamTag(player, cmdArgs[1]);
         }, args);
     }
 
     private void handleTransfer(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team transfer <player></gray>");
+            plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team transfer <player></gray>");
             return;
         }
-        executeOnOfflinePlayer(sender, "donutteams.command.transfer", args[1], (player, targetUuid) -> teamManager.transferOwnership(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.transfer", args[1], (player, targetUuid) -> plugin.getTeamManager().transferOwnership(player, targetUuid));
     }
 
     private void handlePvpToggle(CommandSender sender) {
-        executeOnPlayer(sender, "donutteams.command.pvp", (player, args) -> teamManager.togglePvp(player), null);
+        executeOnPlayer(sender, "donutteams.command.pvp", (player, args) -> plugin.getTeamManager().togglePvp(player), null);
     }
 
     private void handleBank(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.bank", (player, cmdArgs) -> {
             if (!plugin.getConfigManager().isBankEnabled()) {
-                messageManager.sendMessage(player, "feature_disabled");
+                plugin.getMessageManager().sendMessage(player, "feature_disabled");
                 return;
             }
-            Team team = teamManager.getPlayerTeam(player.getUniqueId());
+            Team team = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
             if (team == null) {
-                messageManager.sendMessage(player, "player_not_in_team");
+                plugin.getMessageManager().sendMessage(player, "player_not_in_team");
                 return;
             }
 
@@ -328,21 +325,21 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 return;
             }
             if (cmdArgs.length < 3) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount></gray>");
                 return;
             }
 
             try {
                 double amount = Double.parseDouble(cmdArgs[2]);
                 if (cmdArgs[1].equalsIgnoreCase("deposit")) {
-                    teamManager.deposit(player, amount);
+                    plugin.getTeamManager().deposit(player, amount);
                 } else if (cmdArgs[1].equalsIgnoreCase("withdraw")) {
-                    teamManager.withdraw(player, amount);
+                    plugin.getTeamManager().withdraw(player, amount);
                 } else {
-                    messageManager.sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount></gray>");
+                    plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team bank <deposit|withdraw> <amount></gray>");
                 }
             } catch (NumberFormatException e) {
-                messageManager.sendMessage(player, "bank_invalid_amount");
+                plugin.getMessageManager().sendMessage(player, "bank_invalid_amount");
             }
         }, args);
     }
@@ -354,63 +351,63 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
     private void handleEnderChest(CommandSender sender) {
         executeOnPlayer(sender, "donutteams.command.enderchest", (player, args) -> {
             if (!plugin.getConfigManager().isEnderChestEnabled()) {
-                messageManager.sendMessage(player, "feature_disabled");
+                plugin.getMessageManager().sendMessage(player, "feature_disabled");
                 return;
             }
-            teamManager.openEnderChest(player);
+            plugin.getTeamManager().openEnderChest(player);
         }, null);
     }
 
     private void handleSetDescription(CommandSender sender, String[] args) {
         executeOnPlayer(sender, "donutteams.command.setdescription", (player, cmdArgs) -> {
             if (cmdArgs.length < 2) {
-                messageManager.sendRawMessage(sender, "<gray>Usage: /team setdescription <description...></gray>");
+                plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team setdescription <description...></gray>");
                 return;
             }
             String description = String.join(" ", Arrays.copyOfRange(cmdArgs, 1, cmdArgs.length));
-            teamManager.setTeamDescription(player, description);
+            plugin.getTeamManager().setTeamDescription(player, description);
         }, args);
     }
 
     private void handlePromote(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team promote <player></gray>");
+            plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team promote <player></gray>");
             return;
         }
-        executeOnOfflinePlayer(sender, "donutteams.command.promote", args[1], (player, targetUuid) -> teamManager.promotePlayer(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.promote", args[1], (player, targetUuid) -> plugin.getTeamManager().promotePlayer(player, targetUuid));
     }
 
     private void handleDemote(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            messageManager.sendRawMessage(sender, "<gray>Usage: /team demote <player></gray>");
+            plugin.getMessageManager().sendRawMessage(sender, "<gray>Usage: /team demote <player></gray>");
             return;
         }
-        executeOnOfflinePlayer(sender, "donutteams.command.demote", args[1], (player, targetUuid) -> teamManager.demotePlayer(player, targetUuid));
+        executeOnOfflinePlayer(sender, "donutteams.command.demote", args[1], (player, targetUuid) -> plugin.getTeamManager().demotePlayer(player, targetUuid));
     }
 
     private void handleHelp(CommandSender sender) {
         String mainColor = plugin.getConfigManager().getMainColor();
         String accentColor = plugin.getConfigManager().getAccentColor();
 
-        messageManager.sendRawMessage(sender, "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <gradient:" + mainColor + ":" + accentColor + "><bold>BetterDonutTeams Help</bold></gradient> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯");
-        messageManager.sendRawMessage(sender, "<gray>/team <white>- Opens the team GUI.");
-        messageManager.sendRawMessage(sender, "<gray>/team create <name> <tag> <white>- Creates a team.");
-        messageManager.sendRawMessage(sender, "<gray>/team disband [confirm] <white>- Disbands your team.");
-        messageManager.sendRawMessage(sender, "<gray>/team invite <player> <white>- Invites a player.");
-        messageManager.sendRawMessage(sender, "<gray>/team kick <player> <white>- Kicks a player.");
-        messageManager.sendRawMessage(sender, "<gray>/team leave <white>- Leaves your team.");
-        messageManager.sendRawMessage(sender, "<gray>/team promote <player> <white>- Promotes a member to co-owner.");
-        messageManager.sendRawMessage(sender, "<gray>/team demote <player> <white>- Demotes a co-owner to member.");
-        messageManager.sendRawMessage(sender, "<gray>/team info [team] <white>- Shows team info.");
-        messageManager.sendRawMessage(sender, "<gray>/team sethome <white>- Sets the team home.");
-        messageManager.sendRawMessage(sender, "<gray>/team home <white>- Teleports to the team home.");
-        messageManager.sendRawMessage(sender, "<gray>/team settag <tag> <white>- Changes the team tag.");
-        messageManager.sendRawMessage(sender, "<gray>/team setdesc <desc> <white>- Changes the team description.");
-        messageManager.sendRawMessage(sender, "<gray>/team transfer <player> <white>- Transfers ownership.");
-        messageManager.sendRawMessage(sender, "<gray>/team pvp <white>- Toggles team PvP.");
-        messageManager.sendRawMessage(sender, "<gray>/team bank [deposit|withdraw] [amount] <white>- Manage team bank.");
-        messageManager.sendRawMessage(sender, "<gray>/team enderchest <white>- Opens the team enderchest.");
-        messageManager.sendRawMessage(sender, "<gray>/team top <white>- Shows leaderboards.");
+        plugin.getMessageManager().sendRawMessage(sender, "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <gradient:" + mainColor + ":" + accentColor + "><bold>BetterDonutTeams Help</bold></gradient> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team <white>- Opens the team GUI.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team create <name> <tag> <white>- Creates a team.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team disband <white>- Disbands your team.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team invite <player> <white>- Invites a player.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team kick <player> <white>- Kicks a player.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team leave <white>- Leaves your team.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team promote <player> <white>- Promotes a member to co-owner.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team demote <player> <white>- Demotes a co-owner to member.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team info [team] <white>- Shows team info.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team sethome <white>- Sets the team home.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team home <white>- Teleports to the team home.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team settag <tag> <white>- Changes the team tag.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team setdesc <desc> <white>- Changes the team description.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team transfer <player> <white>- Transfers ownership.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team pvp <white>- Toggles team PvP.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team bank [deposit|withdraw] [amount] <white>- Manage team bank.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team enderchest <white>- Opens the team enderchest.");
+        plugin.getMessageManager().sendRawMessage(sender, "<gray>/team top <white>- Shows leaderboards.");
     }
 
     @Nullable
@@ -446,7 +443,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 3) {
             if (args[0].equalsIgnoreCase("admin") && args[1].equalsIgnoreCase("disband") && sender.hasPermission("donutteams.command.admin")) {
-                return teamManager.getAllTeams().stream()
+                return plugin.getTeamManager().getAllTeams().stream()
                         .map(Team::getName)
                         .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
                         .collect(Collectors.toList());

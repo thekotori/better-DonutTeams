@@ -1,14 +1,17 @@
-# ----------------------------------------------------
-#  BetterDonutTeams Messages
-# ----------------------------------------------------
-#  This file supports MiniMessage formatting.
-#  Learn more here: https://docs.advntr.dev/minimessage/format.html
-# ----------------------------------------------------
+# ---------------------------------------------------- #
+#              BetterDonutTeams Messages               #
+# ---------------------------------------------------- #
+# This file supports MiniMessage formatting for colors, gradients, and click/hover events.
+# Learn more here: https://docs.advntr.dev/minimessage/format.html
+#
+# Placeholders like <player>, <team>, <amount> will be replaced automatically.
+# ---------------------------------------------------- #
 
-prefix: "<b><gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍs</gradient></b> <dark_gray>| <gray>"
+prefix: "<bold><gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍs</gradient></bold> <dark_gray>| <gray>"
 
 # --- General Messages ---
-reload: "<green>Plugin successfully reloaded.</green>"
+reload: "<green>Plugin configurations have been successfully reloaded.</green>"
+reload_commands_notice: "<yellow>Note: Changes to 'commands.yml' (command names and aliases) require a full server restart to take effect.</yellow>"
 no_permission: "<red>You do not have permission to use this command.</red>"
 player_only: "<red>This command can only be executed by a player.</red>"
 team_not_found: "<red>A team with that name does not exist.</red>"
@@ -20,9 +23,9 @@ owner_must_disband: "<red>As the owner, you must disband the team instead of lea
 must_be_owner_or_co_owner: "<red>Only the team owner or a co-owner can do that.</red>"
 no_team_placeholder: "No Team"
 feature_disabled: "<red>This feature is currently disabled.</red>"
+gui_action_locked: "<red>You do not have permission to do that.</red>"
 
 # --- Admin Messages ---
-# This message is now just a prompt, as the GUI will handle confirmation.
 admin_disband_confirm: "<yellow>Are you sure you want to disband the team <white><team></white>? This cannot be undone.</yellow>"
 admin_team_disbanded: "<green>You have disbanded the team <white><team></white>.</green>"
 admin_team_disbanded_broadcast: "<red>Your team has been disbanded by an administrator.</red>"
@@ -34,10 +37,10 @@ name_too_short: "<red>The team name must be at least <white><min_length></white>
 name_too_long: "<red>The team name cannot be longer than <white><max_length></white> characters.</red>"
 name_invalid: "<red>The team name can only contain letters, numbers, and underscores.</red>"
 tag_too_long: "<red>The team tag cannot be longer than <white><max_length></white> characters.</red>"
+tag_invalid: "<red>The new tag is invalid (too long or contains invalid characters).</red>"
 team_name_exists: "<red>A team with the name <white><team></white> already exists.</red>"
 
 # --- Team Disband / Leave / Kick ---
-# This message is now just a prompt, as the GUI will handle confirmation.
 disband_confirm: "<yellow>Are you sure you want to disband your team? This cannot be undone.</yellow>"
 kick_confirm: "<yellow>Are you sure you want to kick <white><target></white>?</yellow>"
 team_disbanded: "<green>You have successfully disbanded your team.</green>"
@@ -62,12 +65,11 @@ invite_denied_broadcast: "<gray><white><player></white> denied the team invitati
 player_kicked: "<red>You have kicked <white><target></white> from the team.</red>"
 you_were_kicked: "<red>You have been kicked from the team <white><team></white>.</red>"
 cannot_kick_owner: "<red>You cannot kick the owner of the team.</red>"
-cannot_kick_co_owner: "<red>You cannot kick a co-owner.</red>"
+cannot_kick_co_owner: "<red>Only the owner can kick a co-owner.</red>"
 transfer_success: "<green>You have transferred ownership of the team to <white><player></white>.</green>"
 transfer_broadcast: "<green><owner> has transferred ownership of the team to <white><player></white>.</green>"
 cannot_transfer_to_self: "<red>You cannot transfer the team to yourself.</red>"
 tag_set: "<green>Team tag has been changed to <white><tag></white>.</green>"
-tag_invalid: "<red>The new tag is invalid (too long or contains invalid characters).</red>"
 description_set: "<green>Team description updated.</green>"
 description_too_long: "<red>The description cannot be longer than <white><max_length></white> characters.</red>"
 player_promoted: "<green><target> has been promoted to Co-Owner.</green>"
@@ -77,12 +79,12 @@ cannot_promote_owner: "<red>The owner cannot be promoted.</red>"
 cannot_demote_owner: "<red>The owner cannot be demoted.</red>"
 
 # --- Team Chat ---
-team_chat_enabled: "<green>Team chat enabled.</green>"
-team_chat_disabled: "<red>Team chat disabled.</red>"
+team_chat_enabled: "<green>Team chat enabled. All messages will now be sent to your team.</green>"
+team_chat_disabled: "<red>Team chat disabled. Messages will now be public.</red>"
 team_chat_format: "<dark_gray>[<gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍ</gradient>]</dark_gray> <white><player></white><dark_gray>: <gray><message></gray>"
 
 # --- Team Home ---
-home_not_set: "<red>Your team does not have a home set. The owner can set one with /team sethome.</red>"
+home_not_set: "<red>Your team does not have a home set. An Owner or Co-Owner can set one with /team sethome.</red>"
 home_set: "<green>Team home has been set to your current location.</green>"
 teleport_warmup: "<gray>Teleporting in <white><seconds></white> seconds... Don't move!</gray>"
 teleport_success: "<green>You have been successfully teleported to your team home.</green>"
@@ -101,9 +103,6 @@ bank_insufficient_funds: "<red>The team bank does not have enough funds.</red>"
 player_insufficient_funds: "<red>You do not have enough money to deposit.</red>"
 bank_invalid_amount: "<red>Invalid amount specified. Amount must be greater than 0.</red>"
 bank_max_balance_reached: "<red>The team bank has reached its maximum balance.</red>"
-
-# --- Team Ender Chest ---
-ender_chest_saved: "<gray>Your team ender chest has been saved.</gray>"
 
 # --- Team Info ---
 team_info_header: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <white><bold>ᴛᴇᴀᴍ ɪɴғᴏ: <team></bold></white> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯"

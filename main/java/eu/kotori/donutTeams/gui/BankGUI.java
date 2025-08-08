@@ -2,17 +2,23 @@ package eu.kotori.donutTeams.gui;
 
 import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
+import eu.kotori.donutTeams.team.TeamPlayer;
+import eu.kotori.donutTeams.util.GuiConfigManager;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class BankGUI implements InventoryHolder {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class BankGUI implements IRefreshableGUI, InventoryHolder {
     private final DonutTeams plugin;
     private final Player viewer;
     private final Team team;
@@ -22,43 +28,76 @@ public class BankGUI implements InventoryHolder {
         this.plugin = plugin;
         this.viewer = viewer;
         this.team = team;
-        this.inventory = Bukkit.createInventory(this, 27, Component.text("ᴛᴇᴀᴍ ʙᴀɴᴋ"));
+
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("bank-gui");
+        String title = guiConfig.getString("title", "ᴛᴇᴀᴍ ʙᴀɴᴋ");
+        int size = guiConfig.getInt("size", 27);
+
+        this.inventory = Bukkit.createInventory(this, size, plugin.getMiniMessage().deserialize(title));
         initializeItems();
     }
 
     private void initializeItems() {
         inventory.clear();
-        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
-        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
-        for (int i = 18; i < 27; i++) inventory.setItem(i, border);
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("bank-gui");
+        ConfigurationSection itemsSection = guiConfig.getConfigurationSection("items");
+        if (itemsSection == null) return;
 
-        inventory.setItem(11, new ItemBuilder(Material.GREEN_WOOL)
-                .withName("<green><bold>ᴅᴇᴘᴏsɪᴛ</bold></green>")
-                .withLore(
-                        "<gray>Click to deposit money into the team bank.",
-                        "",
-                        "<yellow>You will be prompted in chat.</yellow>"
-                ).build());
+        setItemFromConfig(itemsSection, "deposit");
+        setItemFromConfig(itemsSection, "balance");
+        setItemFromConfig(itemsSection, "back-button");
 
-        inventory.setItem(13, new ItemBuilder(Material.GOLD_INGOT)
-                .withName("<gold><bold>ᴄᴜʀʀᴇɴᴛ ʙᴀʟᴀɴᴄᴇ</bold></gold>")
-                .withLore(
-                        "<gray>Balance: <white>" + String.format("%,.2f", team.getBalance()) + "</white>"
-                ).withGlow().build());
+        TeamPlayer member = team.getMember(viewer.getUniqueId());
+        boolean canWithdraw = (member != null && member.canWithdraw()) || viewer.hasPermission("donutteams.bypass.bank.withdraw");
 
-        inventory.setItem(15, new ItemBuilder(Material.RED_WOOL)
-                .withName("<red><bold>ᴡɪᴛʜᴅʀᴀᴡ</bold></red>")
-                .withLore(
-                        "<gray>Click to withdraw money from the team bank.",
-                        "",
-                        "<yellow>You will be prompted in chat.</yellow>"
-                ).build());
+        if(canWithdraw) {
+            setItemFromConfig(itemsSection, "withdraw");
+        } else {
+            setItemFromConfig(itemsSection, "withdraw-locked");
+        }
 
-        inventory.setItem(22, new ItemBuilder(Material.ARROW)
-                .withName("<gray><bold>ʙᴀᴄᴋ</bold></gray>")
-                .withLore("<yellow>Click to return to the main menu.</yellow>").build());
+        ConfigurationSection fillConfig = guiConfig.getConfigurationSection("fill-item");
+        if(fillConfig != null) {
+            ItemStack fillItem = new ItemBuilder(Material.matchMaterial(fillConfig.getString("material", "GRAY_STAINED_GLASS_PANE")))
+                    .withName(fillConfig.getString("name", " "))
+                    .build();
+            for (int i = 0; i < inventory.getSize(); i++) {
+                if(inventory.getItem(i) == null) {
+                    inventory.setItem(i, fillItem);
+                }
+            }
+        }
     }
 
+    private void setItemFromConfig(ConfigurationSection itemsSection, String key) {
+        ConfigurationSection itemConfig = itemsSection.getConfigurationSection(key);
+        if (itemConfig == null) return;
+
+        int slot = itemConfig.getInt("slot", -1);
+        if (slot == -1) return;
+
+        Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
+        String name = replacePlaceholders(itemConfig.getString("name", ""));
+        List<String> lore = itemConfig.getStringList("lore").stream()
+                .map(this::replacePlaceholders)
+                .collect(Collectors.toList());
+
+        ItemBuilder builder = new ItemBuilder(material).withName(name).withLore(lore);
+        if (key.equals("balance")) {
+            builder.withGlow();
+        }
+
+        inventory.setItem(slot, builder.build());
+    }
+
+    private String replacePlaceholders(String text) {
+        if (text == null) return "";
+        return text.replace("<balance>", String.format("%,.2f", team.getBalance()));
+    }
+
+    @Override
     public void open() {
         viewer.openInventory(inventory);
     }

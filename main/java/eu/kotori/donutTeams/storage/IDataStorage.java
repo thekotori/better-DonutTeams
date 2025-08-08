@@ -32,7 +32,7 @@ public interface IDataStorage {
     void updateTeamStats(int teamId, int kills, int deaths);
     void saveEnderChest(int teamId, String serializedInventory);
     String getEnderChest(int teamId);
-    void updateMemberPermissions(int teamId, UUID memberUuid, boolean canWithdraw, boolean canUseEnderChest);
+    void updateMemberPermissions(int teamId, UUID memberUuid, boolean canWithdraw, boolean canUseEnderChest, boolean canSetHome, boolean canUseHome);
     void updateMemberRole(int teamId, UUID memberUuid, TeamRole role);
     Map<Integer, Team> getTopTeamsByKills(int limit);
     Map<Integer, Team> getTopTeamsByBalance(int limit);

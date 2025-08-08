@@ -132,6 +132,14 @@ public class DatabaseStorage implements IDataStorage {
                 stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_use_enderchest` BOOLEAN DEFAULT TRUE;");
                 stmt.execute("UPDATE `db_version` SET version = 2 WHERE id = 1;");
                 plugin.getLogger().info("Database migrated to version 2.");
+                currentVersion = 2;
+            }
+            if (currentVersion < 3) {
+                stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_set_home` BOOLEAN DEFAULT FALSE;");
+                stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_use_home` BOOLEAN DEFAULT TRUE;");
+                stmt.execute("UPDATE donut_team_members SET can_set_home = TRUE WHERE role = 'OWNER' OR role = 'CO_OWNER';");
+                stmt.execute("UPDATE `db_version` SET version = 3 WHERE id = 1;");
+                plugin.getLogger().info("Database migrated to version 3.");
             }
         }
     }
@@ -143,7 +151,7 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public Optional<Team> createTeam(String name, String tag, UUID ownerUuid, boolean defaultPvp) {
         String insertTeamSQL = "INSERT INTO donut_teams (name, tag, owner_uuid, pvp_enabled) VALUES (?, ?, ?, ?)";
-        String insertMemberSQL = "INSERT INTO donut_team_members (player_uuid, team_id, role, join_date, can_withdraw, can_use_enderchest) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertMemberSQL = "INSERT INTO donut_team_members (player_uuid, team_id, role, join_date, can_withdraw, can_use_enderchest, can_set_home, can_use_home) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -164,6 +172,8 @@ public class DatabaseStorage implements IDataStorage {
                         memberStmt.setTimestamp(4, Timestamp.from(Instant.now()));
                         memberStmt.setBoolean(5, true);
                         memberStmt.setBoolean(6, true);
+                        memberStmt.setBoolean(7, true);
+                        memberStmt.setBoolean(8, true);
                         memberStmt.executeUpdate();
                     }
                     conn.commit();
@@ -227,6 +237,18 @@ public class DatabaseStorage implements IDataStorage {
         return team;
     }
 
+    private TeamPlayer mapPlayerFromResultSet(ResultSet rs) throws SQLException {
+        UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
+        TeamRole role = TeamRole.valueOf(rs.getString("role"));
+        Instant joinDate = rs.getTimestamp("join_date").toInstant();
+        boolean canWithdraw = rs.getBoolean("can_withdraw");
+        boolean canUseEnderChest = rs.getBoolean("can_use_enderchest");
+        boolean canSetHome = rs.getBoolean("can_set_home");
+        boolean canUseHome = rs.getBoolean("can_use_home");
+        return new TeamPlayer(playerUuid, role, joinDate, canWithdraw, canUseEnderChest, canSetHome, canUseHome);
+    }
+
+
     @Override
     public Optional<Team> findTeamByPlayer(UUID playerUuid) {
         String sql = "SELECT t.* FROM donut_teams t JOIN donut_team_members tm ON t.id = tm.team_id WHERE tm.player_uuid = ?";
@@ -250,12 +272,7 @@ public class DatabaseStorage implements IDataStorage {
             stmt.setInt(1, teamId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
-                TeamRole role = TeamRole.valueOf(rs.getString("role"));
-                Instant joinDate = rs.getTimestamp("join_date").toInstant();
-                boolean canWithdraw = rs.getBoolean("can_withdraw");
-                boolean canUseEnderChest = rs.getBoolean("can_use_enderchest");
-                members.add(new TeamPlayer(playerUuid, role, joinDate, canWithdraw, canUseEnderChest));
+                members.add(mapPlayerFromResultSet(rs));
             }
         } catch (SQLException e) {
             plugin.getLogger().severe("Error getting team members: " + e.getMessage());
@@ -383,8 +400,8 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public void transferOwnership(int teamId, UUID newOwnerUuid, UUID oldOwnerUuid) {
         String updateTeamOwner = "UPDATE donut_teams SET owner_uuid = ? WHERE id = ?";
-        String updateNewOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE WHERE player_uuid = ?";
-        String updateOldOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE WHERE player_uuid = ?";
+        String updateNewOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE, can_set_home = TRUE, can_use_home = TRUE WHERE player_uuid = ?";
+        String updateOldOwnerRole = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE, can_set_home = FALSE, can_use_home = TRUE WHERE player_uuid = ?";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -418,9 +435,9 @@ public class DatabaseStorage implements IDataStorage {
     public void updateMemberRole(int teamId, UUID memberUuid, TeamRole role) {
         String sql;
         if (role == TeamRole.CO_OWNER) {
-            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE WHERE player_uuid = ? AND team_id = ?";
+            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE, can_set_home = TRUE, can_use_home = TRUE WHERE player_uuid = ? AND team_id = ?";
         } else {
-            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE WHERE player_uuid = ? AND team_id = ?";
+            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE, can_set_home = FALSE, can_use_home = TRUE WHERE player_uuid = ? AND team_id = ?";
         }
 
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -504,18 +521,21 @@ public class DatabaseStorage implements IDataStorage {
     }
 
     @Override
-    public void updateMemberPermissions(int teamId, UUID memberUuid, boolean canWithdraw, boolean canUseEnderChest) {
-        String sql = "UPDATE donut_team_members SET can_withdraw = ?, can_use_enderchest = ? WHERE player_uuid = ? AND team_id = ?";
+    public void updateMemberPermissions(int teamId, UUID memberUuid, boolean canWithdraw, boolean canUseEnderChest, boolean canSetHome, boolean canUseHome) {
+        String sql = "UPDATE donut_team_members SET can_withdraw = ?, can_use_enderchest = ?, can_set_home = ?, can_use_home = ? WHERE player_uuid = ? AND team_id = ?";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBoolean(1, canWithdraw);
             stmt.setBoolean(2, canUseEnderChest);
-            stmt.setString(3, memberUuid.toString());
-            stmt.setInt(4, teamId);
+            stmt.setBoolean(3, canSetHome);
+            stmt.setBoolean(4, canUseHome);
+            stmt.setString(5, memberUuid.toString());
+            stmt.setInt(6, teamId);
             stmt.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not update permissions for member " + memberUuid + ": " + e.getMessage());
         }
     }
+
 
     private Map<Integer, Team> getTopTeams(String orderBy, int limit) {
         Map<Integer, Team> topTeams = new LinkedHashMap<>();

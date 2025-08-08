@@ -13,13 +13,17 @@ public class TeamPlayer {
     private final Instant joinDate;
     private boolean canWithdraw;
     private boolean canUseEnderChest;
+    private boolean canSetHome;
+    private boolean canUseHome;
 
-    public TeamPlayer(UUID playerUuid, TeamRole role, Instant joinDate, boolean canWithdraw, boolean canUseEnderChest) {
+    public TeamPlayer(UUID playerUuid, TeamRole role, Instant joinDate, boolean canWithdraw, boolean canUseEnderChest, boolean canSetHome, boolean canUseHome) {
         this.playerUuid = playerUuid;
         this.role = role;
         this.joinDate = joinDate;
         this.canWithdraw = canWithdraw;
         this.canUseEnderChest = canUseEnderChest;
+        this.canSetHome = canSetHome;
+        this.canUseHome = canUseHome;
     }
 
     public UUID getPlayerUuid() {
@@ -53,6 +57,23 @@ public class TeamPlayer {
     public void setCanUseEnderChest(boolean canUseEnderChest) {
         this.canUseEnderChest = canUseEnderChest;
     }
+
+    public boolean canSetHome() {
+        return canSetHome;
+    }
+
+    public void setCanSetHome(boolean canSetHome) {
+        this.canSetHome = canSetHome;
+    }
+
+    public boolean canUseHome() {
+        return canUseHome;
+    }
+
+    public void setCanUseHome(boolean canUseHome) {
+        this.canUseHome = canUseHome;
+    }
+
 
     public Player getBukkitPlayer() {
         return Bukkit.getPlayer(playerUuid);

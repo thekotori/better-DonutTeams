@@ -1,15 +1,19 @@
 package eu.kotori.donutTeams.gui;
 
 import eu.kotori.donutTeams.DonutTeams;
+import eu.kotori.donutTeams.util.GuiConfigManager;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class LeaderboardCategoryGUI implements InventoryHolder {
 
@@ -20,38 +24,56 @@ public class LeaderboardCategoryGUI implements InventoryHolder {
     public LeaderboardCategoryGUI(DonutTeams plugin, Player viewer) {
         this.plugin = plugin;
         this.viewer = viewer;
-        this.inventory = Bukkit.createInventory(this, 27, Component.text("ᴛᴇᴀᴍ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ"));
+
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("leaderboard-category-gui");
+        String title = guiConfig.getString("title", "ᴛᴇᴀᴍ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ");
+        int size = guiConfig.getInt("size", 27);
+
+        this.inventory = Bukkit.createInventory(this, size, plugin.getMiniMessage().deserialize(title));
         initializeItems();
     }
 
     private void initializeItems() {
         inventory.clear();
-        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
-        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
-        for (int i = 18; i < 27; i++) inventory.setItem(i, border);
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("leaderboard-category-gui");
+        ConfigurationSection itemsConfig = guiConfig.getConfigurationSection("items");
+        if(itemsConfig == null) return;
 
-        String mainColor = plugin.getConfigManager().getMainColor();
-        String accentColor = plugin.getConfigManager().getAccentColor();
+        setItemFromConfig(itemsConfig, "top-kills");
+        setItemFromConfig(itemsConfig, "top-balance");
+        setItemFromConfig(itemsConfig, "top-members");
 
-        inventory.setItem(11, new ItemBuilder(Material.DIAMOND_SWORD)
-                .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴛᴏᴘ ᴋɪʟʟs</bold></gradient>")
-                .withLore("<gray>Shows the top 10 teams with the most kills.</gray>").build());
+        ConfigurationSection fillConfig = guiConfig.getConfigurationSection("fill-item");
+        if (fillConfig != null) {
+            ItemStack fillItem = new ItemBuilder(Material.matchMaterial(fillConfig.getString("material", "GRAY_STAINED_GLASS_PANE")))
+                    .withName(fillConfig.getString("name", " "))
+                    .build();
+            for (int i = 0; i < inventory.getSize(); i++) {
+                if(inventory.getItem(i) == null) {
+                    inventory.setItem(i, fillItem);
+                }
+            }
+        }
+    }
 
-        inventory.setItem(13, new ItemBuilder(Material.GOLD_INGOT)
-                .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴛᴏᴘ ʙᴀʟᴀɴᴄᴇ</bold></gradient>")
-                .withLore("<gray>Shows the top 10 richest teams.</gray>").build());
+    private void setItemFromConfig(ConfigurationSection itemsSection, String key) {
+        ConfigurationSection itemConfig = itemsSection.getConfigurationSection(key);
+        if (itemConfig == null) return;
 
-        inventory.setItem(15, new ItemBuilder(Material.PLAYER_HEAD)
-                .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴛᴏᴘ ᴍᴇᴍʙᴇʀs</bold></gradient>")
-                .withLore("<gray>Shows the top 10 teams with the most members.</gray>").build());
+        int slot = itemConfig.getInt("slot", -1);
+        if (slot == -1) return;
+
+        Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
+        String name = itemConfig.getString("name", "");
+        List<String> lore = itemConfig.getStringList("lore");
+
+        inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).build());
     }
 
     public void open() {
         viewer.openInventory(inventory);
-    }
-
-    public DonutTeams getPlugin() {
-        return plugin;
     }
 
     @NotNull

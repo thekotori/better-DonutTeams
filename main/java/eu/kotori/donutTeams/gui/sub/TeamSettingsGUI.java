@@ -1,18 +1,24 @@
 package eu.kotori.donutTeams.gui.sub;
 
 import eu.kotori.donutTeams.DonutTeams;
+import eu.kotori.donutTeams.gui.IRefreshableGUI;
 import eu.kotori.donutTeams.team.Team;
+import eu.kotori.donutTeams.util.GuiConfigManager;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class TeamSettingsGUI implements InventoryHolder {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class TeamSettingsGUI implements IRefreshableGUI, InventoryHolder {
     private final DonutTeams plugin;
     private final Player viewer;
     private final Team team;
@@ -22,51 +28,59 @@ public class TeamSettingsGUI implements InventoryHolder {
         this.plugin = plugin;
         this.viewer = viewer;
         this.team = team;
-        this.inventory = Bukkit.createInventory(this, 27, Component.text("ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs"));
+
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("team-settings-gui");
+        String title = guiConfig.getString("title", "ᴛᴇᴀᴍ sᴇᴛᴛɪɴɢs");
+        int size = guiConfig.getInt("size", 27);
+
+        this.inventory = Bukkit.createInventory(this, size, plugin.getMiniMessage().deserialize(title));
         initializeItems();
     }
 
     private void initializeItems() {
         inventory.clear();
-        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
-        for (int i = 0; i < 9; i++) inventory.setItem(i, border);
-        for (int i = 18; i < 27; i++) inventory.setItem(i, border);
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+        ConfigurationSection guiConfig = guiManager.getGUI("team-settings-gui");
+        ConfigurationSection itemsSection = guiConfig.getConfigurationSection("items");
+        if (itemsSection == null) return;
 
-        String mainColor = plugin.getConfigManager().getMainColor();
-        String accentColor = plugin.getConfigManager().getAccentColor();
+        for (String key : itemsSection.getKeys(false)) {
+            ConfigurationSection itemConfig = itemsSection.getConfigurationSection(key);
+            if(itemConfig == null) continue;
 
-        inventory.setItem(11, new ItemBuilder(Material.NAME_TAG)
-                .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴄʜᴀɴɢᴇ ᴛᴀɢ</bold></gradient>")
-                .withLore(
-                        "<gray>Current: <white>" + team.getTag() + "</white>",
-                        "",
-                        "<yellow>Click to set a new tag in chat.</yellow>"
-                ).build());
+            int slot = itemConfig.getInt("slot", -1);
+            if (slot == -1) continue;
 
-        inventory.setItem(13, new ItemBuilder(Material.WRITABLE_BOOK)
-                .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴄʜᴀɴɢᴇ ᴅᴇsᴄʀɪᴘᴛɪᴏɴ</bold></gradient>")
-                .withLore(
-                        "<gray>Current: <white>" + team.getDescription() + "</white>",
-                        "",
-                        "<yellow>Click to set a new description in chat.</yellow>"
-                ).build());
+            Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
+            String name = replacePlaceholders(itemConfig.getString("name", ""));
+            List<String> lore = itemConfig.getStringList("lore").stream()
+                    .map(this::replacePlaceholders)
+                    .collect(Collectors.toList());
 
-        if (team.isOwner(viewer.getUniqueId())) {
-            inventory.setItem(15, new ItemBuilder(Material.COMPARATOR)
-                    .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>ᴍᴇᴍʙᴇʀ ᴘᴇʀᴍɪssɪᴏɴs</bold></gradient>")
-                    .withLore(
-                            "<gray>Manage individual member permissions.",
-                            "",
-                            "<yellow>Click to open the member list.</yellow>"
-                    ).build());
+            inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).build());
         }
 
-
-        inventory.setItem(22, new ItemBuilder(Material.ARROW)
-                .withName("<gray><bold>ʙᴀᴄᴋ</bold></gray>")
-                .withLore("<yellow>Click to return to the main menu.</yellow>").build());
+        ConfigurationSection fillItemSection = guiConfig.getConfigurationSection("fill-item");
+        if (fillItemSection != null) {
+            ItemStack fillItem = new ItemBuilder(Material.matchMaterial(fillItemSection.getString("material", "GRAY_STAINED_GLASS_PANE")))
+                    .withName(fillItemSection.getString("name", " "))
+                    .build();
+            for (int i = 0; i < inventory.getSize(); i++) {
+                if (inventory.getItem(i) == null) {
+                    inventory.setItem(i, fillItem);
+                }
+            }
+        }
     }
 
+    private String replacePlaceholders(String text) {
+        if (team == null) return text;
+        return text.replace("<team_tag>", team.getTag())
+                .replace("<team_description>", team.getDescription());
+    }
+
+    @Override
     public void open() {
         viewer.openInventory(inventory);
     }

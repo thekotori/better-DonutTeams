@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.InventoryHolder;
 
 import java.util.Map;
 import java.util.UUID;
@@ -25,8 +24,7 @@ public class ChatInputManager implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    public void awaitInput(Player player, Consumer<String> onInput) {
-        InventoryHolder previousGui = player.getOpenInventory().getTopInventory().getHolder();
+    public void awaitInput(Player player, IRefreshableGUI previousGui, Consumer<String> onInput) {
         pendingInput.put(player.getUniqueId(), new InputData(onInput, previousGui));
     }
 
@@ -43,8 +41,8 @@ public class ChatInputManager implements Listener {
             plugin.getTaskRunner().runOnEntity(player, () -> {
                 if (message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("abort")) {
                     plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
-                    if (data.getPreviousGui() instanceof IRefreshableGUI refreshableGui) {
-                        refreshableGui.open();
+                    if (data.getPreviousGui() != null) {
+                        data.getPreviousGui().open();
                     }
                     return;
                 }
@@ -55,9 +53,9 @@ public class ChatInputManager implements Listener {
 
     private static class InputData {
         private final Consumer<String> onInput;
-        private final InventoryHolder previousGui;
+        private final IRefreshableGUI previousGui;
 
-        public InputData(Consumer<String> onInput, InventoryHolder previousGui) {
+        public InputData(Consumer<String> onInput, IRefreshableGUI previousGui) {
             this.onInput = onInput;
             this.previousGui = previousGui;
         }
@@ -66,7 +64,7 @@ public class ChatInputManager implements Listener {
             return onInput;
         }
 
-        public InventoryHolder getPreviousGui() {
+        public IRefreshableGUI getPreviousGui() {
             return previousGui;
         }
     }

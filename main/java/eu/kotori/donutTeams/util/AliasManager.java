@@ -7,10 +7,8 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.SimplePluginManager;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,11 +32,13 @@ public class AliasManager {
         commandsConfig = YamlConfiguration.loadConfiguration(commandsFile);
     }
 
+    public void reload() {
+        loadConfig();
+    }
+
     public void registerAliases() {
         try {
-            final Field serverCommandMap = SimplePluginManager.class.getDeclaredField("commandMap");
-            serverCommandMap.setAccessible(true);
-            CommandMap commandMap = (CommandMap) serverCommandMap.get(Bukkit.getPluginManager());
+            CommandMap commandMap = Bukkit.getCommandMap();
 
             String primaryCommand = commandsConfig.getString("primary-command", "team").toLowerCase();
             List<String> allMainCommands = new ArrayList<>(Arrays.asList("team", "guild", "clan", "party"));
@@ -56,8 +56,8 @@ public class AliasManager {
     private void registerAliasGroup(CommandMap commandMap, List<String> allCommands, String primaryCommand) {
         PluginCommand mainPluginCommand = plugin.getCommand(primaryCommand);
         if (mainPluginCommand == null) {
-            plugin.getLogger().severe("Primary command '" + primaryCommand + "' is not registered in plugin.yml! Defaulting to 'team'.");
-            mainPluginCommand = plugin.getCommand("team");
+            plugin.getLogger().severe("Primary command '" + primaryCommand + "' is not registered in plugin.yml! Aliases will not be set up correctly.");
+            return;
         }
 
         List<String> newAliases = new ArrayList<>(mainPluginCommand.getAliases());

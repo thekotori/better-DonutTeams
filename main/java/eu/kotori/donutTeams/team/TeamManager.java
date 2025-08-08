@@ -8,7 +8,7 @@ import eu.kotori.donutTeams.config.MessageManager;
 import eu.kotori.donutTeams.gui.ConfirmGUI;
 import eu.kotori.donutTeams.gui.TeamGUI;
 import eu.kotori.donutTeams.gui.admin.AdminGUI;
-import eu.kotori.donutTeams.gui.sub.MemberEditGUI;
+import eu.kotori.donutTeams.gui.MemberEditGUI;
 import eu.kotori.donutTeams.storage.IDataStorage;
 import eu.kotori.donutTeams.util.EffectsUtil;
 import eu.kotori.donutTeams.util.InventoryUtil;
@@ -68,7 +68,7 @@ public class TeamManager {
                 }
                 Team team = teamOpt.get();
 
-                new ConfirmGUI(admin, "Disband " + team.getName() + "?", (confirmed) -> {
+                new ConfirmGUI(plugin, admin, "Disband " + team.getName() + "?", (confirmed) -> {
                     if (confirmed) {
                         plugin.getTaskRunner().runAsync(() -> {
                             storage.deleteTeam(team.getId());
@@ -218,13 +218,13 @@ public class TeamManager {
             return;
         }
 
-        new ConfirmGUI(owner, "Disband " + team.getName() + "?", confirmed -> {
+        new ConfirmGUI(plugin, owner, "Disband " + team.getName() + "?", confirmed -> {
             if (confirmed) {
                 plugin.getTaskRunner().runAsync(() -> {
+                    uncacheTeam(team);
                     storage.deleteTeam(team.getId());
                     plugin.getTaskRunner().run(() -> {
                         team.broadcast("team_disbanded_broadcast", Placeholder.unparsed("team", team.getName()));
-                        uncacheTeam(team);
                         messageManager.sendMessage(owner, "team_disbanded");
                         EffectsUtil.playSound(owner, EffectsUtil.SoundType.SUCCESS);
                     });
@@ -319,7 +319,7 @@ public class TeamManager {
                 plugin.getTaskRunner().runAsync(() -> {
                     storage.addMemberToTeam(team.getId(), player.getUniqueId());
                     plugin.getTaskRunner().runOnEntity(player, () -> {
-                        team.addMember(new TeamPlayer(player.getUniqueId(), TeamRole.MEMBER, Instant.now(), false, true));
+                        team.addMember(new TeamPlayer(player.getUniqueId(), TeamRole.MEMBER, Instant.now(), false, true, false, true));
                         playerTeamCache.put(player.getUniqueId(), team);
 
                         messageManager.sendMessage(player, "invite_accepted", Placeholder.unparsed("team", team.getName()));
@@ -380,6 +380,7 @@ public class TeamManager {
                 messageManager.sendMessage(player, "you_left_team", Placeholder.unparsed("team", team.getName()));
                 team.broadcast("player_left_broadcast", Placeholder.unparsed("player", player.getName()));
                 EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
+                player.closeInventory();
             });
         });
     }
@@ -419,7 +420,7 @@ public class TeamManager {
             return;
         }
 
-        new ConfirmGUI(kicker, "Kick " + safeTargetName + "?", confirmed -> {
+        new ConfirmGUI(plugin, kicker, "Kick " + safeTargetName + "?", confirmed -> {
             if (confirmed) {
                 plugin.getTaskRunner().runAsync(() -> {
                     storage.removeMemberFromTeam(targetUuid);
@@ -474,6 +475,8 @@ public class TeamManager {
         target.setRole(TeamRole.CO_OWNER);
         target.setCanWithdraw(true);
         target.setCanUseEnderChest(true);
+        target.setCanSetHome(true);
+        target.setCanUseHome(true);
         plugin.getTaskRunner().runAsync(() -> storage.updateMemberRole(team.getId(), targetUuid, TeamRole.CO_OWNER));
         team.broadcast("player_promoted", Placeholder.unparsed("target", safeTargetName));
         EffectsUtil.playSound(promoter, EffectsUtil.SoundType.SUCCESS);
@@ -509,6 +512,8 @@ public class TeamManager {
         target.setRole(TeamRole.MEMBER);
         target.setCanWithdraw(false);
         target.setCanUseEnderChest(true);
+        target.setCanSetHome(false);
+        target.setCanUseHome(true);
         plugin.getTaskRunner().runAsync(() -> storage.updateMemberRole(team.getId(), targetUuid, TeamRole.MEMBER));
         team.broadcast("player_demoted", Placeholder.unparsed("target", safeTargetName));
         EffectsUtil.playSound(demoter, EffectsUtil.SoundType.SUCCESS);
@@ -573,31 +578,40 @@ public class TeamManager {
             return;
         }
 
-        plugin.getTaskRunner().runAsync(() -> {
-            storage.transferOwnership(team.getId(), newOwnerUuid, oldOwner.getUniqueId());
-            plugin.getTaskRunner().run(() -> {
-                team.setOwnerUuid(newOwnerUuid);
+        new ConfirmGUI(plugin, oldOwner, "Transfer ownership?", confirmed -> {
+            if (confirmed) {
+                plugin.getTaskRunner().runAsync(() -> {
+                    storage.transferOwnership(team.getId(), newOwnerUuid, oldOwner.getUniqueId());
+                    plugin.getTaskRunner().run(() -> {
+                        team.setOwnerUuid(newOwnerUuid);
 
-                TeamPlayer newOwnerMember = team.getMember(newOwnerUuid);
-                if (newOwnerMember != null) {
-                    newOwnerMember.setRole(TeamRole.OWNER);
-                    newOwnerMember.setCanWithdraw(true);
-                }
-                TeamPlayer oldOwnerMember = team.getMember(oldOwner.getUniqueId());
-                if (oldOwnerMember != null) {
-                    oldOwnerMember.setRole(TeamRole.MEMBER);
-                }
+                        TeamPlayer newOwnerMember = team.getMember(newOwnerUuid);
+                        if (newOwnerMember != null) {
+                            newOwnerMember.setRole(TeamRole.OWNER);
+                            newOwnerMember.setCanWithdraw(true);
+                            newOwnerMember.setCanSetHome(true);
+                            newOwnerMember.setCanUseHome(true);
+                        }
+                        TeamPlayer oldOwnerMember = team.getMember(oldOwner.getUniqueId());
+                        if (oldOwnerMember != null) {
+                            oldOwnerMember.setRole(TeamRole.MEMBER);
+                        }
 
-                String newOwnerName = Bukkit.getOfflinePlayer(newOwnerUuid).getName();
+                        String newOwnerName = Bukkit.getOfflinePlayer(newOwnerUuid).getName();
 
-                messageManager.sendMessage(oldOwner, "transfer_success", Placeholder.unparsed("player", newOwnerName != null ? newOwnerName : "Unknown"));
-                team.broadcast("transfer_broadcast",
-                        Placeholder.unparsed("owner", oldOwner.getName()),
-                        Placeholder.unparsed("player", newOwnerName != null ? newOwnerName : "Unknown"));
-                EffectsUtil.playSound(oldOwner, EffectsUtil.SoundType.SUCCESS);
-            });
-        });
+                        messageManager.sendMessage(oldOwner, "transfer_success", Placeholder.unparsed("player", newOwnerName != null ? newOwnerName : "Unknown"));
+                        team.broadcast("transfer_broadcast",
+                                Placeholder.unparsed("owner", oldOwner.getName()),
+                                Placeholder.unparsed("player", newOwnerName != null ? newOwnerName : "Unknown"));
+                        EffectsUtil.playSound(oldOwner, EffectsUtil.SoundType.SUCCESS);
+                    });
+                });
+            } else {
+                new MemberEditGUI(plugin, team, oldOwner, newOwnerUuid).open();
+            }
+        }).open();
     }
+
 
     public void togglePvp(Player player) {
         Team team = getPlayerTeam(player.getUniqueId());
@@ -621,12 +635,14 @@ public class TeamManager {
 
     public void setTeamHome(Player player) {
         Team team = getPlayerTeam(player.getUniqueId());
-        if (team == null) {
+        TeamPlayer member = team != null ? team.getMember(player.getUniqueId()) : null;
+
+        if (team == null || member == null) {
             messageManager.sendMessage(player, "player_not_in_team");
             return;
         }
-        if (!team.hasElevatedPermissions(player.getUniqueId())) {
-            messageManager.sendMessage(player, "must_be_owner_or_co_owner");
+        if (!member.canSetHome()) {
+            messageManager.sendMessage(player, "no_permission");
             return;
         }
         Location home = player.getLocation();
@@ -638,8 +654,14 @@ public class TeamManager {
 
     public void teleportToHome(Player player) {
         Team team = getPlayerTeam(player.getUniqueId());
-        if (team == null) {
+        TeamPlayer member = team != null ? team.getMember(player.getUniqueId()) : null;
+
+        if (team == null || member == null) {
             messageManager.sendMessage(player, "player_not_in_team");
+            return;
+        }
+        if (!member.canUseHome()) {
+            messageManager.sendMessage(player, "no_permission");
             return;
         }
         if (team.getHomeLocation() == null) {
@@ -844,7 +866,7 @@ public class TeamManager {
         teamNameCache.values().forEach(this::saveEnderChest);
     }
 
-    public void updateMemberPermissions(Player owner, UUID targetUuid, boolean canWithdraw, boolean canUseEnderChest) {
+    public void updateMemberPermissions(Player owner, UUID targetUuid, boolean canWithdraw, boolean canUseEnderChest, boolean canSetHome, boolean canUseHome) {
         Team team = getPlayerTeam(owner.getUniqueId());
         if (team == null || !team.isOwner(owner.getUniqueId())) {
             messageManager.sendMessage(owner, "not_owner");
@@ -856,6 +878,8 @@ public class TeamManager {
         }
         member.setCanWithdraw(canWithdraw);
         member.setCanUseEnderChest(canUseEnderChest);
-        plugin.getTaskRunner().runAsync(() -> storage.updateMemberPermissions(team.getId(), targetUuid, canWithdraw, canUseEnderChest));
+        member.setCanSetHome(canSetHome);
+        member.setCanUseHome(canUseHome);
+        plugin.getTaskRunner().runAsync(() -> storage.updateMemberPermissions(team.getId(), targetUuid, canWithdraw, canUseEnderChest, canSetHome, canUseHome));
     }
 }

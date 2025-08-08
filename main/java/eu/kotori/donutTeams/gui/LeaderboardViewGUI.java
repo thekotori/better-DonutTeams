@@ -2,6 +2,7 @@ package eu.kotori.donutTeams.gui;
 
 import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
+import eu.kotori.donutTeams.util.GuiConfigManager;
 import eu.kotori.donutTeams.util.ItemBuilder;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -33,15 +34,16 @@ public class LeaderboardViewGUI implements InventoryHolder {
 
     private void initializeItems(Map<Integer, Team> topTeams, LeaderboardType type) {
         inventory.clear();
-        ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
+        GuiConfigManager guiManager = plugin.getGuiConfigManager();
+
+        ItemStack border = new ItemBuilder(guiManager.getMaterial("admin-team-list-gui.items.border.material", Material.GRAY_STAINED_GLASS_PANE))
+                .withName(guiManager.getString("admin-team-list-gui.items.border.name", " "))
+                .build();
         for (int i = 0; i < 9; i++) inventory.setItem(i, border);
         for (int i = 45; i < 54; i++) inventory.setItem(i, border);
 
         int[] slots = { 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34 };
         int slotIndex = 0;
-
-        String mainColor = plugin.getConfigManager().getMainColor();
-        String accentColor = plugin.getConfigManager().getAccentColor();
 
         for (Map.Entry<Integer, Team> entry : topTeams.entrySet()) {
             if (slotIndex >= slots.length) break;
@@ -60,12 +62,14 @@ public class LeaderboardViewGUI implements InventoryHolder {
 
             inventory.setItem(slots[slotIndex++], new ItemBuilder(Material.PLAYER_HEAD)
                     .asPlayerHead(team.getOwnerUuid())
-                    .withName("<gradient:" + mainColor + ":" + accentColor + "><bold>#" + rank + " " + team.getName() + "</bold></gradient>")
+                    .withName("<gradient:#4C9DDE:#4C96D2><bold>#" + rank + " " + team.getName() + "</bold></gradient>")
                     .withLore(lore)
                     .build());
         }
 
-        inventory.setItem(49, new ItemBuilder(Material.ARROW).withName("<gray><bold>ʙᴀᴄᴋ</bold></gray>").build());
+        inventory.setItem(49, new ItemBuilder(guiManager.getMaterial("admin-team-list-gui.items.back-button.material", Material.ARROW))
+                .withName(guiManager.getString("admin-team-list-gui.items.back-button.name", "<gray><bold>ʙᴀᴄᴋ</bold></gray>"))
+                .build());
     }
 
     public void open() {

@@ -10,35 +10,35 @@ commands:
   team:
     description: Main command for BetterDonutTeams.
     usage: /<command> [subcommand]
-    aliases: [t]
+    aliases: [ t ]
   guild:
-    description: Main command for BetterDonutTeams.
+    description: Alias for the main team command.
     usage: /<command> [subcommand]
-    aliases: [g]
+    aliases: [ g ]
   clan:
-    description: Main command for BetterDonutTeams.
+    description: Alias for the main team command.
     usage: /<command> [subcommand]
-    aliases: [c]
+    aliases: [ c ]
   party:
-    description: Main command for BetterDonutTeams.
+    description: Alias for the main team command.
     usage: /<command> [subcommand]
-    aliases: [p]
+    aliases: [ p ]
   teammsg:
     description: Sends a message to your team.
     usage: /<command> <message>
-    aliases: [tm, tmsg]
+    aliases: [ tm, tmsg ]
   guildmsg:
     description: Sends a message to your team.
     usage: /<command> <message>
-    aliases: [gmsg]
+    aliases: [ gmsg ]
   clanmsg:
     description: Sends a message to your team.
     usage: /<command> <message>
-    aliases: [cmsg]
+    aliases: [ cmsg ]
   partymsg:
     description: Sends a message to your team.
     usage: /<command> <message>
-    aliases: [pmsg]
+    aliases: [ pmsg ]
 permissions:
   donutteams.*:
     description: Grants all permissions for the plugin.
@@ -50,8 +50,9 @@ permissions:
     children:
       - donutteams.command.reload
       - donutteams.command.admin
-      - donutteams.bank.withdraw.bypass
-      - donutteams.enderchest.bypass
+      - donutteams.bypass.bank.withdraw
+      - donutteams.bypass.enderchest.use
+      - donutteams.bypass.home.cooldown
   donutteams.user:
     description: Grants access to all standard player commands.
     children:
@@ -76,14 +77,20 @@ permissions:
       - donutteams.command.enderchest
       - donutteams.command.top
       - donutteams.command.teammsg
-  donutteams.bank.withdraw.bypass:
+  donutteams.bypass.bank.withdraw:
     description: Allows bypassing team-specific withdrawal permissions.
     default: op
-  donutteams.enderchest.bypass:
+  donutteams.bypass.enderchest.use:
     description: Allows bypassing team-specific ender chest permissions.
+    default: op
+  donutteams.bypass.home.cooldown:
+    description: Allows bypassing the /team home teleport cooldown.
     default: op
   donutteams.command.admin:
     description: Allows access to the /team admin command and GUI.
+    default: op
+  donutteams.command.reload:
+    description: Allows reloading the plugin configuration.
     default: op
   donutteams.command.create:
     description: Allows creating a team.
@@ -148,6 +155,3 @@ permissions:
   donutteams.command.teammsg:
     description: Allows sending a message to the team chat.
     default: true
-  donutteams.command.reload:
-    description: Allows reloading the plugin configuration.
-    default: op

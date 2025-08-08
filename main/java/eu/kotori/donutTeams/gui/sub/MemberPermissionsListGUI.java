@@ -1,5 +1,6 @@
 package eu.kotori.donutTeams.gui.sub;
 
+import eu.kotori.donutTeams.DonutTeams;
 import eu.kotori.donutTeams.team.Team;
 import eu.kotori.donutTeams.team.TeamPlayer;
 import eu.kotori.donutTeams.util.ItemBuilder;
@@ -11,6 +12,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MemberPermissionsListGUI implements InventoryHolder {
     private final Player viewer;
@@ -35,15 +39,20 @@ public class MemberPermissionsListGUI implements InventoryHolder {
             if (slot >= 45 || team.isOwner(member.getPlayerUuid())) continue;
 
             String memberName = Bukkit.getOfflinePlayer(member.getPlayerUuid()).getName();
+            List<String> lore = new ArrayList<>();
+            lore.add("<gray>Bank Withdraw: " + (member.canWithdraw() ? "<green>Yes" : "<red>No"));
+            lore.add("<gray>Use Ender Chest: " + (member.canUseEnderChest() ? "<green>Yes" : "<red>No"));
+            lore.add("<gray>Set Team Home: " + (member.canSetHome() ? "<green>Yes" : "<red>No"));
+            lore.add("<gray>Use Team Home: " + (member.canUseHome() ? "<green>Yes" : "<red>No"));
+            lore.add("");
+            lore.add("<yellow>Click to edit permissions.</yellow>");
+
+
             inventory.setItem(slot++, new ItemBuilder(Material.PLAYER_HEAD)
                     .asPlayerHead(member.getPlayerUuid())
                     .withName("<gradient:#95FD95:#FFFFFF><bold>" + memberName + "</bold></gradient>")
-                    .withLore(
-                            "<gray>Bank Withdraw: " + (member.canWithdraw() ? "<green>Yes" : "<red>No"),
-                            "<gray>Use Ender Chest: " + (member.canUseEnderChest() ? "<green>Yes" : "<red>No"),
-                            "",
-                            "<yellow>Click to edit permissions.</yellow>"
-                    ).build());
+                    .withLore(lore)
+                    .build());
         }
 
         inventory.setItem(49, new ItemBuilder(Material.ARROW).withName("<gray><bold>BACK</bold></gray>").build());
