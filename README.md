@@ -1,5 +1,5 @@
 
-# 🍩 DonutTeams
+# 🍩 justTeams
 
 A powerful and modern Minecraft **teams plugin**, built for **DonutSMP** and fully customizable for any **Paper-based server**.
 
@@ -31,7 +31,7 @@ A powerful and modern Minecraft **teams plugin**, built for **DonutSMP** and ful
 
 ## 📦 Installation
 
-1. Download the latest `DonutTeams.jar`.
+1. Download the latest `justTeams.jar`.
 2. Stop your Minecraft server.
 3. Place the file in the `plugins/` folder.
 4. _(Required for Bank)_ Install **[Vault](https://www.spigotmc.org/resources/vault.34315/)**.
@@ -48,7 +48,7 @@ A powerful and modern Minecraft **teams plugin**, built for **DonutSMP** and ful
 
 ```yaml
 # ----------------------------------------------------
-#  DonutTeams Configuration
+#  justTeams Configuration
 # ----------------------------------------------------
 #  This file contains all the main settings for the plugin.
 #  For message customization, please see messages.yml.
@@ -138,76 +138,76 @@ invite_received: |
 | `/team bank <deposit/withdraw> <amount>` | - | Quick bank actions. |
 | `/team enderchest` | `ec` | Open shared ender chest. |
 | `/team top` | `leaderboard` | View team leaderboard. |
-| `/team reload` | - | Reload config (eu.kotori.donutTeams.gui.admin only). |
+| `/team reload` | - | Reload config (eu.kotori.justTeams.gui.admin only). |
 | `/teammsg <message>` | `tm, tmsg` | Send message to team chat. |
 
 ### 🔐 Permissions
 
-DonutTeams uses a hybrid permission system:
+justTeams uses a hybrid permission system:
 
-1.  **Bukkit Permissions (plugin.yml):** These control *access* to commands. If a player doesn't have the permission for a command (e.g., `donutteams.command.invite`), they can't use it at all.
+1.  **Bukkit Permissions (plugin.yml):** These control *access* to commands. If a player doesn't have the permission for a command (e.g., `justTeams.command.invite`), they can't use it at all.
 2.  **Internal Team Roles (Owner, Co-Owner, Member):** These control what actions a player can perform *within their team*. For example, only an Owner or Co-Owner can invite players, regardless of Bukkit permissions.
 3.  **Internal Member Flags:** These are specific permissions (like bank withdrawal) that the team Owner can grant to individual members via the GUI.
-4.  **Bypass Permissions:** Admin-level nodes that override all internal checks (e.g., `donutteams.bank.withdraw.bypass`).
+4.  **Bypass Permissions:** Admin-level nodes that override all internal checks (e.g., `justTeams.bank.withdraw.bypass`).
 
 ### 🔧 Bukkit Permission Nodes
 
 | Permission                       | Description                                         | Default |
 | -------------------------------- | --------------------------------------------------- | ------- |
-| `donutteams.*`                   | Grants all permissions.                             | op      |
-| `donutteams.eu.kotori.donutTeams.gui.admin`               | Grants all eu.kotori.donutTeams.gui.admin commands and bypass permissions.   | op      |
-| `donutteams.user`                | Grants access to all standard player commands.      | true    |
-| `donutteams.bank.withdraw.bypass`| Allows bypassing team withdrawal restrictions.      | op      |
-| `donutteams.enderchest.bypass`   | Allows bypassing team ender chest restrictions.     | op      |
-| `donutteams.command.create`      | Allows `/team create`.                              | true    |
-| `donutteams.command.disband`     | Allows `/team disband`.                             | true    |
-| `donutteams.command.invite`      | Allows `/team invite`.                              | true    |
-| `donutteams.command.accept`      | Allows `/team accept`.                              | true    |
-| `donutteams.command.deny`        | Allows `/team deny`.                                | true    |
-| `donutteams.command.leave`       | Allows `/team leave`.                               | true    |
-| `donutteams.command.kick`        | Allows `/team kick`.                                | true    |
-| `donutteams.command.info`        | Allows `/team info`.                                | true    |
-| `donutteams.command.chat`        | Allows `/team chat`.                                | true    |
-| `donutteams.command.gui`         | Allows `/team gui`.                                 | true    |
-| `donutteams.command.sethome`     | Allows `/team sethome`.                             | true    |
-| `donutteams.command.home`        | Allows `/team home`.                                | true    |
-| `donutteams.command.settag`      | Allows `/team settag`.                              | true    |
-| `donutteams.command.setdescription`| Allows `/team setdescription`.                    | true    |
-| `donutteams.command.transfer`    | Allows `/team transfer`.                            | true    |
-| `donutteams.command.promote`     | Allows `/team promote`.                             | true    |
-| `donutteams.command.demote`      | Allows `/team demote`.                              | true    |
-| `donutteams.command.pvp`         | Allows `/team pvp`.                                 | true    |
-| `donutteams.command.bank`        | Allows `/team bank`.                                | true    |
-| `donutteams.command.enderchest`  | Allows `/team enderchest`.                          | true    |
-| `donutteams.command.top`         | Allows `/team top`.                                 | true    |
-| `donutteams.command.teammsg`     | Allows `/teammsg`.                                  | true    |
-| `donutteams.command.reload`      | Allows `/team reload`.                              | op      |
+| `justTeams.*`                   | Grants all permissions.                             | op      |
+| `justTeams.eu.kotori.justTeams.gui.admin`               | Grants all eu.kotori.justTeams.gui.admin commands and bypass permissions.   | op      |
+| `justTeams.user`                | Grants access to all standard player commands.      | true    |
+| `justTeams.bank.withdraw.bypass`| Allows bypassing team withdrawal restrictions.      | op      |
+| `justTeams.enderchest.bypass`   | Allows bypassing team ender chest restrictions.     | op      |
+| `justTeams.command.create`      | Allows `/team create`.                              | true    |
+| `justTeams.command.disband`     | Allows `/team disband`.                             | true    |
+| `justTeams.command.invite`      | Allows `/team invite`.                              | true    |
+| `justTeams.command.accept`      | Allows `/team accept`.                              | true    |
+| `justTeams.command.deny`        | Allows `/team deny`.                                | true    |
+| `justTeams.command.leave`       | Allows `/team leave`.                               | true    |
+| `justTeams.command.kick`        | Allows `/team kick`.                                | true    |
+| `justTeams.command.info`        | Allows `/team info`.                                | true    |
+| `justTeams.command.chat`        | Allows `/team chat`.                                | true    |
+| `justTeams.command.gui`         | Allows `/team gui`.                                 | true    |
+| `justTeams.command.sethome`     | Allows `/team sethome`.                             | true    |
+| `justTeams.command.home`        | Allows `/team home`.                                | true    |
+| `justTeams.command.settag`      | Allows `/team settag`.                              | true    |
+| `justTeams.command.setdescription`| Allows `/team setdescription`.                    | true    |
+| `justTeams.command.transfer`    | Allows `/team transfer`.                            | true    |
+| `justTeams.command.promote`     | Allows `/team promote`.                             | true    |
+| `justTeams.command.demote`      | Allows `/team demote`.                              | true    |
+| `justTeams.command.pvp`         | Allows `/team pvp`.                                 | true    |
+| `justTeams.command.bank`        | Allows `/team bank`.                                | true    |
+| `justTeams.command.enderchest`  | Allows `/team enderchest`.                          | true    |
+| `justTeams.command.top`         | Allows `/team top`.                                 | true    |
+| `justTeams.command.teammsg`     | Allows `/teammsg`.                                  | true    |
+| `justTeams.command.reload`      | Allows `/team reload`.                              | op      |
 
 **Recommended Setup:**
 
-- Players: `donutteams.user`
-- Admins: `donutteams.eu.kotori.donutTeams.gui.admin`
+- Players: `justTeams.user`
+- Admins: `justTeams.eu.kotori.justTeams.gui.admin`
 
 ---
 
 ## 🧩 PlaceholderAPI
 
-DonutTeams supports **PlaceholderAPI** out of the box.
+justTeams supports **PlaceholderAPI** out of the box.
 
 | Placeholder | Description |
 |------------|-------------|
-| `%donutteams_name%` | Player's team name |
-| `%donutteams_tag%` | Team's tag |
-| `%donutteams_description%` | Team description |
-| `%donutteams_owner%` | Team owner's name |
-| `%donutteams_member_count%` | Current number of members |
-| `%donutteams_max_members%` | Max team size |
-| `%donutteams_members_online%` | Online team members |
-| `%donutteams_role%` | Player's role (Owner or Member) |
-| `%donutteams_kills%` | Total team kills |
-| `%donutteams_deaths%` | Total team deaths |
-| `%donutteams_kdr%` | Team K/D ratio |
-| `%donutteams_bank_balance%` | Formatted team bank balance |
+| `%justTeams_name%` | Player's team name |
+| `%justTeams_tag%` | Team's tag |
+| `%justTeams_description%` | Team description |
+| `%justTeams_owner%` | Team owner's name |
+| `%justTeams_member_count%` | Current number of members |
+| `%justTeams_max_members%` | Max team size |
+| `%justTeams_members_online%` | Online team members |
+| `%justTeams_role%` | Player's role (Owner or Member) |
+| `%justTeams_kills%` | Total team kills |
+| `%justTeams_deaths%` | Total team deaths |
+| `%justTeams_kdr%` | Team K/D ratio |
+| `%justTeams_bank_balance%` | Formatted team bank balance |
 
 ---
 

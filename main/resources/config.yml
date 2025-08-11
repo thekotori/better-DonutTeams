@@ -1,5 +1,5 @@
 # ---------------------------------------------------- #
-#           BetterDonutTeams Configuration             #
+#           justTeams Configuration             #
 # ---------------------------------------------------- #
 # This file contains all the main settings for the plugin.
 # For message customization, please see messages.yml.
@@ -60,7 +60,7 @@ team_home:
   # Set to 0 to disable the warmup.
   warmup_seconds: 5
   # Cooldown in seconds before a player can use /team home again.
-  # Players with the 'donutteams.bypass.home.cooldown' permission ignore this.
+  # Players with the 'justteams.bypass.home.cooldown' permission ignore this.
   cooldown_seconds: 300 # 5 minutes
 
 # ---------------------------------------------------- #

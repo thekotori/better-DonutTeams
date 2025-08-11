@@ -1,6 +1,6 @@
-name: BetterDonutTeams
+name: justTeams
 version: '${project.version}'
-main: eu.kotori.donutTeams.DonutTeams
+main: eu.kotori.justTeams.JustTeams
 api-version: '1.21'
 folia-supported: true
 authors: [ kotori ]
@@ -8,7 +8,7 @@ description: A powerful teams plugin replica for DonutSMP, now with Folia suppor
 softdepend: [ Vault, PlaceholderAPI, PvPManager ]
 commands:
   team:
-    description: Main command for BetterDonutTeams.
+    description: Main command for justTeams.
     usage: /<command> [subcommand]
     aliases: [ t ]
   guild:
@@ -40,118 +40,118 @@ commands:
     usage: /<command> <message>
     aliases: [ pmsg ]
 permissions:
-  donutteams.*:
+  justteams.*:
     description: Grants all permissions for the plugin.
     children:
-      - donutteams.admin
-      - donutteams.user
-  donutteams.admin:
+      - justteams.admin
+      - justteams.user
+  justteams.admin:
     description: Grants access to all admin commands and bypasses.
     children:
-      - donutteams.command.reload
-      - donutteams.command.admin
-      - donutteams.bypass.bank.withdraw
-      - donutteams.bypass.enderchest.use
-      - donutteams.bypass.home.cooldown
-  donutteams.user:
+      - justteams.command.reload
+      - justteams.command.admin
+      - justteams.bypass.bank.withdraw
+      - justteams.bypass.enderchest.use
+      - justteams.bypass.home.cooldown
+  justteams.user:
     description: Grants access to all standard player commands.
     children:
-      - donutteams.command.create
-      - donutteams.command.disband
-      - donutteams.command.invite
-      - donutteams.command.accept
-      - donutteams.command.deny
-      - donutteams.command.leave
-      - donutteams.command.kick
-      - donutteams.command.info
-      - donutteams.command.chat
-      - donutteams.command.sethome
-      - donutteams.command.home
-      - donutteams.command.settag
-      - donutteams.command.setdescription
-      - donutteams.command.transfer
-      - donutteams.command.promote
-      - donutteams.command.demote
-      - donutteams.command.pvp
-      - donutteams.command.bank
-      - donutteams.command.enderchest
-      - donutteams.command.top
-      - donutteams.command.teammsg
-  donutteams.bypass.bank.withdraw:
+      - justteams.command.create
+      - justteams.command.disband
+      - justteams.command.invite
+      - justteams.command.accept
+      - justteams.command.deny
+      - justteams.command.leave
+      - justteams.command.kick
+      - justteams.command.info
+      - justteams.command.chat
+      - justteams.command.sethome
+      - justteams.command.home
+      - justteams.command.settag
+      - justteams.command.setdescription
+      - justteams.command.transfer
+      - justteams.command.promote
+      - justteams.command.demote
+      - justteams.command.pvp
+      - justteams.command.bank
+      - justteams.command.enderchest
+      - justteams.command.top
+      - justteams.command.teammsg
+  justteams.bypass.bank.withdraw:
     description: Allows bypassing team-specific withdrawal permissions.
     default: op
-  donutteams.bypass.enderchest.use:
+  justteams.bypass.enderchest.use:
     description: Allows bypassing team-specific ender chest permissions.
     default: op
-  donutteams.bypass.home.cooldown:
+  justteams.bypass.home.cooldown:
     description: Allows bypassing the /team home teleport cooldown.
     default: op
-  donutteams.command.admin:
+  justteams.command.admin:
     description: Allows access to the /team admin command and GUI.
     default: op
-  donutteams.command.reload:
+  justteams.command.reload:
     description: Allows reloading the plugin configuration.
     default: op
-  donutteams.command.create:
+  justteams.command.create:
     description: Allows creating a team.
     default: true
-  donutteams.command.disband:
+  justteams.command.disband:
     description: Allows disbanding a team.
     default: true
-  donutteams.command.invite:
+  justteams.command.invite:
     description: Allows inviting players to a team.
     default: true
-  donutteams.command.accept:
+  justteams.command.accept:
     description: Allows accepting a team invite.
     default: true
-  donutteams.command.deny:
+  justteams.command.deny:
     description: Allows denying a team invite.
     default: true
-  donutteams.command.leave:
+  justteams.command.leave:
     description: Allows leaving a team.
     default: true
-  donutteams.command.kick:
+  justteams.command.kick:
     description: Allows kicking members from a team.
     default: true
-  donutteams.command.info:
+  justteams.command.info:
     description: Allows viewing team information.
     default: true
-  donutteams.command.chat:
+  justteams.command.chat:
     description: Allows toggling team chat.
     default: true
-  donutteams.command.sethome:
+  justteams.command.sethome:
     description: Allows setting the team home.
     default: true
-  donutteams.command.home:
+  justteams.command.home:
     description: Allows teleporting to the team home.
     default: true
-  donutteams.command.settag:
+  justteams.command.settag:
     description: Allows changing the team tag.
     default: true
-  donutteams.command.setdescription:
+  justteams.command.setdescription:
     description: Allows changing the team description.
     default: true
-  donutteams.command.transfer:
+  justteams.command.transfer:
     description: Allows transferring team ownership.
     default: true
-  donutteams.command.promote:
+  justteams.command.promote:
     description: Allows promoting a team member.
     default: true
-  donutteams.command.demote:
+  justteams.command.demote:
     description: Allows demoting a team member.
     default: true
-  donutteams.command.pvp:
+  justteams.command.pvp:
     description: Allows toggling team PvP.
     default: true
-  donutteams.command.bank:
+  justteams.command.bank:
     description: Allows using the team bank.
     default: true
-  donutteams.command.enderchest:
+  justteams.command.enderchest:
     description: Allows using the team ender chest.
     default: true
-  donutteams.command.top:
+  justteams.command.top:
     description: Allows viewing the team leaderboards.
     default: true
-  donutteams.command.teammsg:
+  justteams.command.teammsg:
     description: Allows sending a message to the team chat.
     default: true
