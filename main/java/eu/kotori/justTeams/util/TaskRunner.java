@@ -1,6 +1,7 @@
 package eu.kotori.justTeams.util;
 
 import eu.kotori.justTeams.JustTeams;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitTask;
@@ -45,11 +46,25 @@ public class TaskRunner {
         }
     }
 
-    public BukkitTask runTaskLater(Runnable task, long delay) {
-        return plugin.getServer().getScheduler().runTaskLater(plugin, task, delay);
+    public CancellableTask runEntityTaskLater(Entity entity, Runnable task, long delay) {
+        if (JustTeams.isFolia()) {
+            ScheduledTask foliaTask = entity.getScheduler().runDelayed(plugin, t -> task.run(), null, delay);
+            return foliaTask::cancel;
+        } else {
+            BukkitTask bukkitTask = plugin.getServer().getScheduler().runTaskLater(plugin, task, delay);
+            return bukkitTask::cancel;
+        }
     }
 
-    public BukkitTask runTaskTimer(Runnable task, long delay, long period) {
-        return plugin.getServer().getScheduler().runTaskTimer(plugin, task, delay, period);
+    public CancellableTask runEntityTaskTimer(Entity entity, Runnable task, long delay, long period) {
+        if (JustTeams.isFolia()) {
+            java.util.function.Consumer<ScheduledTask> consumerTask = scheduledTask -> task.run();
+            long foliaDelay = Math.max(1L, delay);
+            ScheduledTask foliaTask = entity.getScheduler().runAtFixedRate(plugin, consumerTask, null, foliaDelay, period);
+            return foliaTask::cancel;
+        } else {
+            BukkitTask bukkitTask = plugin.getServer().getScheduler().runTaskTimer(plugin, task, delay, period);
+            return bukkitTask::cancel;
+        }
     }
 }

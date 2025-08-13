@@ -5,12 +5,16 @@ import eu.kotori.justTeams.team.TeamPlayer;
 import eu.kotori.justTeams.team.TeamRole;
 import org.bukkit.Location;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface IDataStorage {
+
+    record TeamHome(Location location, String serverName) {}
+
     boolean init();
     void shutdown();
     boolean isConnected();
@@ -23,7 +27,8 @@ public interface IDataStorage {
     Optional<Team> findTeamById(int id);
     List<Team> getAllTeams();
     List<TeamPlayer> getTeamMembers(int teamId);
-    void setTeamHome(int teamId, Location location);
+    void setTeamHome(int teamId, Location location, String serverName);
+    Optional<TeamHome> getTeamHome(int teamId);
     void setTeamTag(int teamId, String tag);
     void setTeamDescription(int teamId, String description);
     void transferOwnership(int teamId, UUID newOwnerUuid, UUID oldOwnerUuid);
@@ -37,4 +42,8 @@ public interface IDataStorage {
     Map<Integer, Team> getTopTeamsByKills(int limit);
     Map<Integer, Team> getTopTeamsByBalance(int limit);
     Map<Integer, Team> getTopTeamsByMembers(int limit);
+    void updateServerHeartbeat(String serverName);
+    Map<String, Timestamp> getActiveServers();
+    void addPendingTeleport(UUID playerUuid, String serverName, Location location);
+    Optional<Location> getAndRemovePendingTeleport(UUID playerUuid, String currentServer);
 }

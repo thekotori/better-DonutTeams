@@ -20,11 +20,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -69,6 +66,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             case "setdescription", "setdesc" -> handleSetDescription(sender, args);
             case "promote" -> handlePromote(sender, args);
             case "demote" -> handleDemote(sender, args);
+            case "data" -> handleData(sender);
             default -> handleHelp(sender);
         }
         return true;
@@ -130,7 +128,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
                 String teamName = cmdArgs[2];
                 plugin.getTeamManager().adminDisbandTeam(player, teamName);
             } else {
-                plugin.getMessageManager().sendRawMessage(player, "<gray>Usage: /team admin [disband <teamName>]</gray>");
+                plugin.getMessageManager().sendRawMessage(player, "<gray>Usage: /team admin [disband <teamName>] | /team data</gray>");
             }
         }, args);
     }
@@ -383,6 +381,28 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
         executeOnOfflinePlayer(sender, "justteams.command.demote", args[1], (player, targetUuid) -> plugin.getTeamManager().demotePlayer(player, targetUuid));
     }
 
+    private void handleData(CommandSender sender) {
+        if (!sender.hasPermission("justteams.command.admin")) {
+            plugin.getMessageManager().sendMessage(sender, "no_permission");
+            return;
+        }
+        plugin.getTaskRunner().runAsync(() -> {
+            Map<String, Timestamp> activeServers = plugin.getStorageManager().getStorage().getActiveServers();
+            plugin.getTaskRunner().run(() -> {
+                sender.sendMessage("§a[JustTeams Data]");
+                sender.sendMessage("§7Current Server Identifier: §f" + plugin.getConfigManager().getServerIdentifier());
+                if (activeServers.isEmpty()) {
+                    sender.sendMessage("§cNo other active servers detected in the database.");
+                } else {
+                    sender.sendMessage("§7Detected Servers (Last Heartbeat):");
+                    activeServers.forEach((serverName, timestamp) -> {
+                        sender.sendMessage("§8- §f" + serverName + "§7: §e" + timestamp.toString());
+                    });
+                }
+            });
+        });
+    }
+
     private void handleHelp(CommandSender sender) {
         String mainColor = plugin.getConfigManager().getMainColor();
         String accentColor = plugin.getConfigManager().getAccentColor();
@@ -415,6 +435,7 @@ public class TeamCommand implements CommandExecutor, TabCompleter {
             List<String> subcommands = new ArrayList<>(Arrays.asList("create", "disband", "invite", "accept", "deny", "kick", "leave", "info", "chat", "sethome", "home", "settag", "transfer", "pvp", "bank", "top", "enderchest", "setdescription", "promote", "demote"));
             if (sender.hasPermission("justteams.command.admin")) {
                 subcommands.add("admin");
+                subcommands.add("data");
             }
             if (sender.hasPermission("justteams.command.reload")) {
                 subcommands.add("reload");

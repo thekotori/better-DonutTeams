@@ -83,7 +83,7 @@ public class BankGUI implements IRefreshableGUI, InventoryHolder {
                 .map(this::replacePlaceholders)
                 .collect(Collectors.toList());
 
-        ItemBuilder builder = new ItemBuilder(material).withName(name).withLore(lore);
+        ItemBuilder builder = new ItemBuilder(material).withName(name).withLore(lore).withAction(key);
         if (key.equals("balance")) {
             builder.withGlow();
         }

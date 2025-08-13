@@ -100,7 +100,7 @@ public class MemberEditGUI implements IRefreshableGUI, InventoryHolder {
                 .collect(Collectors.toList());
         int slot = itemConfig.getInt("slot");
 
-        ItemBuilder builder = new ItemBuilder(material).withName(name).withLore(lore);
+        ItemBuilder builder = new ItemBuilder(material).withName(name).withLore(lore).withAction(key);
 
         if (key.equals("player-info-head")) {
             builder.asPlayerHead(targetUuid);

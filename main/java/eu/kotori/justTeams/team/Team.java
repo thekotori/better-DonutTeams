@@ -22,6 +22,7 @@ public class Team implements InventoryHolder {
     private String description;
     private UUID ownerUuid;
     private Location homeLocation;
+    private String homeServer;
     private boolean pvpEnabled;
     private double balance;
     private int kills;
@@ -53,6 +54,8 @@ public class Team implements InventoryHolder {
     public void setOwnerUuid(UUID ownerUuid) { this.ownerUuid = ownerUuid; }
     public Location getHomeLocation() { return homeLocation; }
     public void setHomeLocation(Location homeLocation) { this.homeLocation = homeLocation; }
+    public String getHomeServer() { return homeServer; }
+    public void setHomeServer(String homeServer) { this.homeServer = homeServer; }
     public boolean isPvpEnabled() { return pvpEnabled; }
     public void setPvpEnabled(boolean pvpEnabled) { this.pvpEnabled = pvpEnabled; }
     public double getBalance() { return balance; }

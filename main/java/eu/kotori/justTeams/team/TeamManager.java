@@ -2,6 +2,8 @@ package eu.kotori.justTeams.team;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import eu.kotori.justTeams.JustTeams;
 import eu.kotori.justTeams.config.ConfigManager;
 import eu.kotori.justTeams.config.MessageManager;
@@ -10,6 +12,7 @@ import eu.kotori.justTeams.gui.TeamGUI;
 import eu.kotori.justTeams.gui.admin.AdminGUI;
 import eu.kotori.justTeams.gui.MemberEditGUI;
 import eu.kotori.justTeams.storage.IDataStorage;
+import eu.kotori.justTeams.util.CancellableTask;
 import eu.kotori.justTeams.util.EffectsUtil;
 import eu.kotori.justTeams.util.InventoryUtil;
 import net.kyori.adventure.text.Component;
@@ -20,7 +23,6 @@ import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -28,6 +30,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TeamManager {
 
@@ -41,7 +44,7 @@ public class TeamManager {
     private final Map<UUID, Team> playerTeamCache = new ConcurrentHashMap<>();
     private final Cache<UUID, List<String>> teamInvites;
     private final Map<UUID, Instant> homeCooldowns = new ConcurrentHashMap<>();
-    private final Map<UUID, BukkitTask> teleportTasks = new ConcurrentHashMap<>();
+    private final Map<UUID, CancellableTask> teleportTasks = new ConcurrentHashMap<>();
 
     public TeamManager(JustTeams plugin) {
         this.plugin = plugin;
@@ -52,6 +55,19 @@ public class TeamManager {
         this.teamInvites = CacheBuilder.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
+    }
+
+    public void handlePendingTeleport(Player player) {
+        String currentServer = plugin.getConfigManager().getServerIdentifier();
+        plugin.getDebugLogger().log("Handling pending teleport check for " + player.getName() + " on server " + currentServer);
+        plugin.getTaskRunner().runAsync(() -> {
+            storage.getAndRemovePendingTeleport(player.getUniqueId(), currentServer).ifPresent(location -> {
+                plugin.getDebugLogger().log("Found pending teleport for " + player.getName() + " to " + location);
+                plugin.getTaskRunner().runEntityTaskLater(player, () -> {
+                    teleportPlayer(player, location);
+                }, 5L);
+            });
+        });
     }
 
     public List<Team> getAllTeams() {
@@ -103,9 +119,9 @@ public class TeamManager {
     }
 
     public void unloadPlayer(Player player) {
-        if (teleportTasks.containsKey(player.getUniqueId())) {
-            teleportTasks.get(player.getUniqueId()).cancel();
-            teleportTasks.remove(player.getUniqueId());
+        CancellableTask task = teleportTasks.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
         }
         Team team = getPlayerTeam(player.getUniqueId());
         if (team != null) {
@@ -200,6 +216,12 @@ public class TeamManager {
                     loadTeamIntoCache(team);
                     messageManager.sendMessage(owner, "team_created", Placeholder.unparsed("team", team.getName()));
                     EffectsUtil.playSound(owner, EffectsUtil.SoundType.SUCCESS);
+                    if (plugin.getConfigManager().isBroadcastTeamCreatedEnabled()) {
+                        Component broadcastMessage = plugin.getMiniMessage().deserialize(plugin.getMessageManager().getRawMessage("team_created_broadcast"),
+                                Placeholder.unparsed("player", owner.getName()),
+                                Placeholder.unparsed("team", team.getName()));
+                        Bukkit.broadcast(broadcastMessage);
+                    }
                 });
             });
         });
@@ -224,7 +246,9 @@ public class TeamManager {
                     uncacheTeam(team);
                     storage.deleteTeam(team.getId());
                     plugin.getTaskRunner().run(() -> {
-                        team.broadcast("team_disbanded_broadcast", Placeholder.unparsed("team", team.getName()));
+                        if (plugin.getConfigManager().isBroadcastTeamDisbandedEnabled()) {
+                            team.broadcast("team_disbanded_broadcast", Placeholder.unparsed("team", team.getName()));
+                        }
                         messageManager.sendMessage(owner, "team_disbanded");
                         EffectsUtil.playSound(owner, EffectsUtil.SoundType.SUCCESS);
                     });
@@ -612,7 +636,6 @@ public class TeamManager {
         }).open();
     }
 
-
     public void togglePvp(Player player) {
         Team team = getPlayerTeam(player.getUniqueId());
         if (team == null) {
@@ -646,82 +669,119 @@ public class TeamManager {
             return;
         }
         Location home = player.getLocation();
+        String serverName = plugin.getConfigManager().getServerIdentifier();
+
         team.setHomeLocation(home);
-        plugin.getTaskRunner().runAsync(() -> storage.setTeamHome(team.getId(), home));
+        team.setHomeServer(serverName);
+        plugin.getTaskRunner().runAsync(() -> storage.setTeamHome(team.getId(), home, serverName));
         messageManager.sendMessage(player, "home_set");
         EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
     }
 
     public void teleportToHome(Player player) {
         Team team = getPlayerTeam(player.getUniqueId());
-        TeamPlayer member = team != null ? team.getMember(player.getUniqueId()) : null;
-
-        if (team == null || member == null) {
+        if (team == null) {
             messageManager.sendMessage(player, "player_not_in_team");
             return;
         }
-        if (!member.canUseHome()) {
-            messageManager.sendMessage(player, "no_permission");
-            return;
-        }
-        if (team.getHomeLocation() == null) {
-            messageManager.sendMessage(player, "home_not_set");
-            return;
-        }
 
-        if (homeCooldowns.containsKey(player.getUniqueId())) {
-            Instant cooldownEnd = homeCooldowns.get(player.getUniqueId());
-            if (Instant.now().isBefore(cooldownEnd)) {
-                long secondsLeft = Duration.between(Instant.now(), cooldownEnd).toSeconds();
-                messageManager.sendMessage(player, "teleport_cooldown", Placeholder.unparsed("time", secondsLeft + "s"));
-                return;
-            }
-        }
+        plugin.getTaskRunner().runAsync(() -> {
+            Optional<IDataStorage.TeamHome> teamHomeOpt = storage.getTeamHome(team.getId());
 
-        int warmup = plugin.getConfig().getInt("team_home.warmup_seconds", 5);
-        if (warmup <= 0) {
-            teleportPlayer(player, team.getHomeLocation());
+            plugin.getTaskRunner().runOnEntity(player, () -> {
+                if (teamHomeOpt.isEmpty()) {
+                    messageManager.sendMessage(player, "home_not_set");
+                    return;
+                }
+
+                IDataStorage.TeamHome teamHome = teamHomeOpt.get();
+                TeamPlayer member = team.getMember(player.getUniqueId());
+
+                if (member == null || !member.canUseHome()) {
+                    messageManager.sendMessage(player, "no_permission");
+                    return;
+                }
+
+                if (!player.hasPermission("justteams.bypass.home.cooldown")) {
+                    if (homeCooldowns.containsKey(player.getUniqueId())) {
+                        Instant cooldownEnd = homeCooldowns.get(player.getUniqueId());
+                        if (Instant.now().isBefore(cooldownEnd)) {
+                            long secondsLeft = Duration.between(Instant.now(), cooldownEnd).toSeconds();
+                            messageManager.sendMessage(player, "teleport_cooldown", Placeholder.unparsed("time", secondsLeft + "s"));
+                            return;
+                        }
+                    }
+                }
+
+                String currentServer = plugin.getConfigManager().getServerIdentifier();
+                String homeServer = teamHome.serverName();
+                plugin.getDebugLogger().log("Teleport initiated for " + player.getName() + ". Current Server: " + currentServer + ", Home Server: " + homeServer);
+
+
+                if (currentServer.equalsIgnoreCase(homeServer)) {
+                    plugin.getDebugLogger().log("Player is on the correct server. Initiating local teleport.");
+                    initiateLocalTeleport(player, teamHome.location());
+                } else {
+                    plugin.getDebugLogger().log("Player is on the wrong server. Initiating cross-server teleport via database.");
+                    plugin.getTaskRunner().runAsync(() -> {
+                        storage.addPendingTeleport(player.getUniqueId(), homeServer, teamHome.location());
+                        plugin.getTaskRunner().runOnEntity(player, () -> {
+                            String connectChannel = "BungeeCord";
+                            ByteArrayDataOutput out = ByteStreams.newDataOutput();
+                            out.writeUTF("Connect");
+                            out.writeUTF(homeServer);
+                            player.sendPluginMessage(plugin, connectChannel, out.toByteArray());
+                            plugin.getDebugLogger().log("Connect message sent to proxy to move " + player.getName() + " to '" + homeServer + "'.");
+                        });
+                    });
+                    setCooldown(player);
+                }
+            });
+        });
+    }
+
+
+    private void initiateLocalTeleport(Player player, Location location) {
+        int warmup = configManager.getWarmupSeconds();
+        if (warmup <= 0 || player.hasPermission("justteams.bypass.home.cooldown")) {
+            teleportPlayer(player, location);
             setCooldown(player);
             return;
         }
 
         Location startLocation = player.getLocation();
-
-        BukkitTask task = plugin.getTaskRunner().runTaskTimer(new Runnable() {
-            int countdown = warmup;
-
-            @Override
-            public void run() {
-                if (!player.isOnline() || !player.getWorld().equals(startLocation.getWorld()) || player.getLocation().distanceSquared(startLocation) > 1) {
-                    if(player.isOnline()) {
-                        messageManager.sendMessage(player, "teleport_moved");
-                        EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
-                    }
-                    teleportTasks.get(player.getUniqueId()).cancel();
-                    teleportTasks.remove(player.getUniqueId());
-                    return;
+        AtomicInteger countdown = new AtomicInteger(warmup);
+        CancellableTask task = plugin.getTaskRunner().runEntityTaskTimer(player, () -> {
+            if (!player.isOnline() || !Objects.equals(player.getWorld(), startLocation.getWorld()) || player.getLocation().distanceSquared(startLocation) > 1) {
+                if (player.isOnline()) {
+                    messageManager.sendMessage(player, "teleport_moved");
+                    EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
                 }
+                CancellableTask runningTask = teleportTasks.remove(player.getUniqueId());
+                if (runningTask != null) runningTask.cancel();
+                return;
+            }
 
-                if (countdown > 0) {
-                    messageManager.sendMessage(player, "teleport_warmup", Placeholder.unparsed("seconds", String.valueOf(countdown)));
-                    EffectsUtil.spawnParticles(player.getLocation().add(0, 1, 0), Particle.valueOf(configManager.getWarmupParticle()), 10);
-                    countdown--;
-                } else {
-                    teleportPlayer(player, team.getHomeLocation());
-                    setCooldown(player);
-                    teleportTasks.get(player.getUniqueId()).cancel();
-                    teleportTasks.remove(player.getUniqueId());
-                }
+            if (countdown.get() > 0) {
+                messageManager.sendMessage(player, "teleport_warmup", Placeholder.unparsed("seconds", String.valueOf(countdown.get())));
+                EffectsUtil.spawnParticles(player.getLocation().add(0, 1, 0), Particle.valueOf(configManager.getWarmupParticle()), 10);
+                countdown.decrementAndGet();
+            } else {
+                teleportPlayer(player, location);
+                setCooldown(player);
+                CancellableTask runningTask = teleportTasks.remove(player.getUniqueId());
+                if (runningTask != null) runningTask.cancel();
             }
         }, 0L, 20L);
 
         teleportTasks.put(player.getUniqueId(), task);
     }
 
-    private void teleportPlayer(Player player, Location location) {
+    public void teleportPlayer(Player player, Location location) {
+        plugin.getDebugLogger().log("Executing final teleport for " + player.getName() + " to " + location);
         plugin.getTaskRunner().runAtLocation(location, () -> {
             player.teleportAsync(location).thenAccept(success -> {
-                if(success) {
+                if (success) {
                     messageManager.sendMessage(player, "teleport_success");
                     EffectsUtil.playSound(player, EffectsUtil.SoundType.TELEPORT);
                     EffectsUtil.spawnParticles(player.getLocation(), Particle.valueOf(configManager.getSuccessParticle()), 30);
@@ -734,7 +794,10 @@ public class TeamManager {
     }
 
     private void setCooldown(Player player) {
-        int cooldownSeconds = plugin.getConfig().getInt("team_home.cooldown_seconds", 300);
+        if (player.hasPermission("justteams.bypass.home.cooldown")) {
+            return;
+        }
+        int cooldownSeconds = configManager.getHomeCooldownSeconds();
         if (cooldownSeconds > 0) {
             homeCooldowns.put(player.getUniqueId(), Instant.now().plusSeconds(cooldownSeconds));
         }
@@ -814,7 +877,7 @@ public class TeamManager {
             messageManager.sendMessage(player, "bank_withdraw_success", Placeholder.unparsed("amount", String.format("%,.2f", amount)));
             EffectsUtil.playSound(player, EffectsUtil.SoundType.SUCCESS);
         } else {
-            messageManager.sendRawMessage(player, "<red>An unexpected error occurred with the economy.</red>");
+            messageManager.sendMessage(player, "economy_error");
             EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
         }
     }
@@ -830,7 +893,7 @@ public class TeamManager {
             return;
         }
         TeamPlayer member = team.getMember(player.getUniqueId());
-        if (member == null || (!member.canUseEnderChest() && !player.hasPermission("justteams.enderchest.bypass"))) {
+        if (member == null || (!member.canUseEnderChest() && !player.hasPermission("justteams.bypass.enderchest.use"))) {
             messageManager.sendMessage(player, "no_permission");
             EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
             return;

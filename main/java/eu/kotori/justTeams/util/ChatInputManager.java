@@ -40,7 +40,7 @@ public class ChatInputManager implements Listener {
 
             plugin.getTaskRunner().runOnEntity(player, () -> {
                 if (message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("abort")) {
-                    plugin.getMessageManager().sendRawMessage(player, "<red>Action cancelled.</red>");
+                    plugin.getMessageManager().sendMessage(player, "action_cancelled");
                     if (data.getPreviousGui() != null) {
                         data.getPreviousGui().open();
                     }

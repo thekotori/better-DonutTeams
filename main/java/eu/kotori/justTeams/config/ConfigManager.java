@@ -19,6 +19,18 @@ public class ConfigManager {
         this.config = plugin.getConfig();
     }
 
+    public boolean isDebugEnabled() {
+        return config.getBoolean("settings.debug", false);
+    }
+
+    public String getString(String path, String defaultValue) {
+        return config.getString(path, defaultValue);
+    }
+
+    public String getServerIdentifier() {
+        return config.getString("settings.server-identifier", "survival");
+    }
+
     public String getMainColor() {
         return config.getString("settings.main_color", "#4C9DDE");
     }
@@ -49,6 +61,22 @@ public class ConfigManager {
 
     public boolean getDefaultPvpStatus() {
         return config.getBoolean("settings.default_pvp_status", true);
+    }
+
+    public boolean isBroadcastTeamCreatedEnabled() {
+        return config.getBoolean("broadcasts.team-created", true);
+    }
+
+    public boolean isBroadcastTeamDisbandedEnabled() {
+        return config.getBoolean("broadcasts.team-disbanded", true);
+    }
+
+    public int getWarmupSeconds() {
+        return config.getInt("team_home.warmup_seconds", 5);
+    }
+
+    public int getHomeCooldownSeconds() {
+        return config.getInt("team_home.cooldown_seconds", 300);
     }
 
     public boolean isBankEnabled() {

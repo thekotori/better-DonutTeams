@@ -51,7 +51,7 @@ public class VersionChecker implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (player.hasPermission("justteams.admin") && plugin.updateAvailable) {
-            plugin.getTaskRunner().runTaskTimer(() -> {
+            plugin.getTaskRunner().runEntityTaskLater(player, () -> {
                 plugin.getMessageManager().sendRawMessage(player,
                         "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯</strikethrough>\n" +
                                 " \n" +
@@ -62,7 +62,7 @@ public class VersionChecker implements Listener {
                                 "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯</strikethrough>",
                         Placeholder.unparsed("latest_version", plugin.latestVersion)
                 );
-            }, 60L, 0L);
+            }, 60L);
         }
     }
 }

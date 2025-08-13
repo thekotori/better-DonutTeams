@@ -32,6 +32,7 @@ admin_team_disbanded_broadcast: "<red>Your team has been disbanded by an adminis
 
 # --- Team Creation ---
 team_created: "<green>You have successfully created the team <white><team></white>.</green>"
+team_created_broadcast: "<gray>The team <white><team></white> has been created by <white><player></white>."
 already_in_team: "<red>You are already in a team. Leave your current one first.</red>"
 name_too_short: "<red>The team name must be at least <white><min_length></white> characters long.</red>"
 name_too_long: "<red>The team name cannot be longer than <white><max_length></white> characters.</red>"
@@ -97,6 +98,7 @@ team_pvp_disabled: "<red>Team PvP has been disabled.</red>"
 
 # --- Team Bank ---
 economy_not_found: "<red>Economy plugin (Vault) not found. The bank is disabled.</red>"
+economy_error: "<red>An unexpected error occurred with the economy.</red>"
 bank_deposit_success: "<green>You deposited <white><amount></white> into the team bank.</green>"
 bank_withdraw_success: "<green>You withdrew <white><amount></white> from the team bank.</green>"
 bank_insufficient_funds: "<red>The team bank does not have enough funds.</red>"
@@ -115,3 +117,25 @@ team_info_member_list: "<gray>- <white><player>"
 team_info_stats: "<gray>Kills: <white><kills></white> | Deaths: <white><deaths></white> | KDR: <white><kdr>"
 team_info_bank: "<gray>Bank Balance: <white><balance>"
 team_info_footer: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+
+# --- Chat Prompts & Feedback ---
+prompt_team_name: "<gray>Please type your desired team name in chat, or type 'cancel' to abort.</gray>"
+prompt_team_tag: "<gray>Please type your desired team tag in chat, or type 'cancel' to abort.</gray>"
+prompt_bank_amount: "<gray>Please type the amount to <action> in chat, or type 'cancel' to abort.</gray>"
+prompt_setting_change: "<gray>Please type the new team <setting> in chat, or type 'cancel' to abort.</gray>"
+creation_cancelled: "<red>Team creation cancelled.</red>"
+action_cancelled: "<red>Action cancelled.</red>"
+
+# --- Usage Messages ---
+usage_create: "<gray>Usage: /team create <name> <tag></gray>"
+usage_invite: "<gray>Usage: /team invite <player></gray>"
+usage_accept: "<gray>Usage: /team accept <teamName></gray>"
+usage_deny: "<gray>Usage: /team deny <teamName></gray>"
+usage_kick: "<gray>Usage: /team kick <player></gray>"
+usage_settag: "<gray>Usage: /team settag <newTag></gray>"
+usage_transfer: "<gray>Usage: /team transfer <player></gray>"
+usage_bank: "<gray>Usage: /team bank <deposit|withdraw> <amount></gray>"
+usage_setdescription: "<gray>Usage: /team setdescription <description...></gray>"
+usage_promote: "<gray>Usage: /team promote <player></gray>"
+usage_demote: "<gray>Usage: /team demote <player></gray>"
+usage_admin_disband: "<gray>Usage: /team admin disband <teamName></gray>"

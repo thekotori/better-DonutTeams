@@ -3,9 +3,9 @@ package eu.kotori.justTeams.gui;
 import eu.kotori.justTeams.JustTeams;
 import eu.kotori.justTeams.util.GuiConfigManager;
 import eu.kotori.justTeams.util.ItemBuilder;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -23,32 +23,45 @@ public class NoTeamGUI implements IRefreshableGUI, InventoryHolder {
         this.viewer = viewer;
 
         GuiConfigManager guiManager = plugin.getGuiConfigManager();
-        String title = guiManager.getString("no-team-gui.title", "ᴛᴇᴀᴍ ᴍᴇɴᴜ");
+        ConfigurationSection guiConfig = guiManager.getGUI("no-team-gui");
+        String title = guiConfig.getString("title", "ᴛᴇᴀᴍ ᴍᴇɴᴜ");
+        int size = guiConfig.getInt("size", 27);
 
-        this.inventory = Bukkit.createInventory(this, 27, Component.text(title));
-        initializeItems();
+        this.inventory = Bukkit.createInventory(this, size, plugin.getMiniMessage().deserialize(title));
+        initializeItems(guiConfig);
     }
 
-    private void initializeItems() {
+    private void initializeItems(ConfigurationSection guiConfig) {
         inventory.clear();
-        GuiConfigManager guiManager = plugin.getGuiConfigManager();
-
-        ItemStack border = new ItemBuilder(guiManager.getMaterial("no-team-gui.items.border.material", Material.GRAY_STAINED_GLASS_PANE))
-                .withName(guiManager.getString("no-team-gui.items.border.name", " "))
-                .build();
-        for (int i = 0; i < 27; i++) {
-            inventory.setItem(i, border);
+        ConfigurationSection itemsSection = guiConfig.getConfigurationSection("items");
+        if (itemsSection != null) {
+            setItemFromConfig(itemsSection, "create-team");
+            setItemFromConfig(itemsSection, "leaderboards");
         }
 
-        inventory.setItem(12, new ItemBuilder(guiManager.getMaterial("no-team-gui.items.create-team.material", Material.WRITABLE_BOOK))
-                .withName(guiManager.getString("no-team-gui.items.create-team.name", "<gradient:#4C9DDE:#4C96D2><bold>ᴄʀᴇᴀᴛᴇ ᴀ ᴛᴇᴀᴍ</bold></gradient>"))
-                .withLore(guiManager.getStringList("no-team-gui.items.create-team.lore"))
-                .build());
+        ConfigurationSection fillConfig = guiConfig.getConfigurationSection("fill-item");
+        if (fillConfig != null) {
+            ItemStack fillItem = new ItemBuilder(Material.matchMaterial(fillConfig.getString("material", "GRAY_STAINED_GLASS_PANE")))
+                    .withName(fillConfig.getString("name", " "))
+                    .build();
+            for (int i = 0; i < inventory.getSize(); i++) {
+                if (inventory.getItem(i) == null) {
+                    inventory.setItem(i, fillItem);
+                }
+            }
+        }
+    }
 
-        inventory.setItem(14, new ItemBuilder(guiManager.getMaterial("no-team-gui.items.leaderboards.material", Material.EMERALD))
-                .withName(guiManager.getString("no-team-gui.items.leaderboards.name", "<gradient:#4C9DDE:#4C96D2><bold>ᴠɪᴇᴡ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅs</bold></gradient>"))
-                .withLore(guiManager.getStringList("no-team-gui.items.leaderboards.lore"))
-                .build());
+    private void setItemFromConfig(ConfigurationSection itemsSection, String key) {
+        ConfigurationSection itemConfig = itemsSection.getConfigurationSection(key);
+        if (itemConfig == null) return;
+
+        int slot = itemConfig.getInt("slot");
+        Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
+        String name = itemConfig.getString("name", "");
+        java.util.List<String> lore = itemConfig.getStringList("lore");
+
+        inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).withAction(key).build());
     }
 
     @Override

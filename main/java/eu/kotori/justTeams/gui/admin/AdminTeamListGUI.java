@@ -51,16 +51,18 @@ public class AdminTeamListGUI implements InventoryHolder {
                             "<gray>Members: <white>" + team.getMembers().size(),
                             "",
                             "<yellow>Click to manage this team.</yellow>"
-                    ).build());
+                    )
+                    .withAction("team-head")
+                    .build());
         }
 
         if (page > 0) {
-            inventory.setItem(45, new ItemBuilder(Material.ARROW).withName("<gray>Previous Page").build());
+            inventory.setItem(45, new ItemBuilder(Material.ARROW).withName("<gray>Previous Page").withAction("previous-page").build());
         }
         if (endIndex < allTeams.size()) {
-            inventory.setItem(53, new ItemBuilder(Material.ARROW).withName("<gray>Next Page").build());
+            inventory.setItem(53, new ItemBuilder(Material.ARROW).withName("<gray>Next Page").withAction("next-page").build());
         }
-        inventory.setItem(49, new ItemBuilder(Material.BARRIER).withName("<red>Back to Admin Menu").build());
+        inventory.setItem(49, new ItemBuilder(Material.BARRIER).withName("<red>Back to Admin Menu").withAction("back-button").build());
     }
 
     public void open() {

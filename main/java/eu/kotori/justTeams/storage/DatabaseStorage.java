@@ -29,7 +29,7 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public boolean init() {
         HikariConfig config = new HikariConfig();
-        config.setPoolName("JustTeams-Pool");
+        config.setPoolName("justTeams-Pool");
         config.setMaximumPoolSize(10);
         config.setConnectionTimeout(30000);
 
@@ -57,7 +57,7 @@ public class DatabaseStorage implements IDataStorage {
 
         try {
             this.hikari = new HikariDataSource(config);
-            runMigrations();
+            runMigrationsAndSchemaChecks();
             return true;
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to initialize database connection pool for " + storageType + "!");
@@ -65,6 +65,59 @@ public class DatabaseStorage implements IDataStorage {
             return false;
         }
     }
+
+    private void runMigrationsAndSchemaChecks() throws SQLException {
+        plugin.getLogger().info("Verifying database schema...");
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS `donut_teams` (" +
+                    "`id` INT AUTO_INCREMENT, " +
+                    "`name` VARCHAR(16) NOT NULL UNIQUE, " +
+                    "`tag` VARCHAR(6) NOT NULL, " +
+                    "`owner_uuid` VARCHAR(36) NOT NULL, " +
+                    "`home_location` VARCHAR(255), " +
+                    "`home_server` VARCHAR(255), " +
+                    "`pvp_enabled` BOOLEAN DEFAULT TRUE, " +
+                    "`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "`description` VARCHAR(64) DEFAULT NULL, " +
+                    "`balance` DOUBLE DEFAULT 0.0, " +
+                    "`kills` INT DEFAULT 0, " +
+                    "`deaths` INT DEFAULT 0, " +
+                    "PRIMARY KEY (`id`));");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS `donut_team_members` (" +
+                    "`player_uuid` VARCHAR(36) NOT NULL, " +
+                    "`team_id` INT NOT NULL, " +
+                    "`role` VARCHAR(16) NOT NULL, " +
+                    "`join_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                    "`can_withdraw` BOOLEAN DEFAULT FALSE, " +
+                    "`can_use_enderchest` BOOLEAN DEFAULT TRUE, " +
+                    "`can_set_home` BOOLEAN DEFAULT FALSE, " +
+                    "`can_use_home` BOOLEAN DEFAULT TRUE, " +
+                    "PRIMARY KEY (`player_uuid`), " +
+                    "FOREIGN KEY (`team_id`) REFERENCES `donut_teams`(`id`) ON DELETE CASCADE);");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS `donut_team_enderchest` (" +
+                    "`team_id` INT NOT NULL, " +
+                    "`inventory_data` TEXT, " +
+                    "PRIMARY KEY (`team_id`), " +
+                    "FOREIGN KEY (`team_id`) REFERENCES `donut_teams`(`id`) ON DELETE CASCADE);");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS `donut_pending_teleports` (" +
+                    "`player_uuid` VARCHAR(36) NOT NULL, " +
+                    "`destination_server` VARCHAR(255) NOT NULL, " +
+                    "`destination_location` VARCHAR(255) NOT NULL, " +
+                    "`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                    "PRIMARY KEY (`player_uuid`));");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS `donut_servers` (" +
+                    "`server_name` VARCHAR(64) PRIMARY KEY, " +
+                    "`last_heartbeat` TIMESTAMP NOT NULL);");
+
+            plugin.getLogger().info("Database schema verified successfully.");
+        }
+    }
+
 
     @Override
     public void shutdown() {
@@ -76,72 +129,6 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public boolean isConnected() {
         return hikari != null && !hikari.isClosed();
-    }
-
-    private void runMigrations() throws SQLException {
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute("CREATE TABLE IF NOT EXISTS `db_version` (`id` INT PRIMARY KEY, `version` INT);");
-
-            ResultSet rs = stmt.executeQuery("SELECT version FROM `db_version` WHERE id = 1;");
-            int currentVersion = 0;
-            if (rs.next()) {
-                currentVersion = rs.getInt("version");
-            } else {
-                stmt.execute("INSERT INTO `db_version` (id, version) VALUES (1, 0);");
-            }
-
-            if (currentVersion < 1) {
-                String createTeamsTable = "CREATE TABLE IF NOT EXISTS `donut_teams` (" +
-                        "`id` INT AUTO_INCREMENT, " +
-                        "`name` VARCHAR(16) NOT NULL UNIQUE, " +
-                        "`tag` VARCHAR(6) NOT NULL, " +
-                        "`owner_uuid` VARCHAR(36) NOT NULL, " +
-                        "`home_location` VARCHAR(255), " +
-                        "`pvp_enabled` BOOLEAN DEFAULT TRUE, " +
-                        "`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                        "PRIMARY KEY (`id`));";
-
-                String createMembersTable = "CREATE TABLE IF NOT EXISTS `donut_team_members` (" +
-                        "`player_uuid` VARCHAR(36) NOT NULL, " +
-                        "`team_id` INT NOT NULL, " +
-                        "`role` VARCHAR(16) NOT NULL, " +
-                        "`join_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                        "PRIMARY KEY (`player_uuid`), " +
-                        "FOREIGN KEY (`team_id`) REFERENCES `donut_teams`(`id`) ON DELETE CASCADE);";
-
-                stmt.execute(createTeamsTable);
-                stmt.execute(createMembersTable);
-                stmt.execute("UPDATE `db_version` SET version = 1 WHERE id = 1;");
-                plugin.getLogger().info("Database migrated to version 1.");
-                currentVersion = 1;
-            }
-            if (currentVersion < 2) {
-                stmt.execute("ALTER TABLE `donut_teams` ADD COLUMN `description` VARCHAR(64) DEFAULT NULL;");
-                stmt.execute("ALTER TABLE `donut_teams` ADD COLUMN `balance` DOUBLE DEFAULT 0.0;");
-                stmt.execute("ALTER TABLE `donut_teams` ADD COLUMN `kills` INT DEFAULT 0;");
-                stmt.execute("ALTER TABLE `donut_teams` ADD COLUMN `deaths` INT DEFAULT 0;");
-
-                String createEnderChestTable = "CREATE TABLE IF NOT EXISTS `donut_team_enderchest` (" +
-                        "`team_id` INT NOT NULL, " +
-                        "`inventory_data` TEXT, " +
-                        "PRIMARY KEY (`team_id`), " +
-                        "FOREIGN KEY (`team_id`) REFERENCES `donut_teams`(`id`) ON DELETE CASCADE);";
-                stmt.execute(createEnderChestTable);
-
-                stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_withdraw` BOOLEAN DEFAULT FALSE;");
-                stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_use_enderchest` BOOLEAN DEFAULT TRUE;");
-                stmt.execute("UPDATE `db_version` SET version = 2 WHERE id = 1;");
-                plugin.getLogger().info("Database migrated to version 2.");
-                currentVersion = 2;
-            }
-            if (currentVersion < 3) {
-                stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_set_home` BOOLEAN DEFAULT FALSE;");
-                stmt.execute("ALTER TABLE `donut_team_members` ADD COLUMN `can_use_home` BOOLEAN DEFAULT TRUE;");
-                stmt.execute("UPDATE donut_team_members SET can_set_home = TRUE WHERE role = 'OWNER' OR role = 'CO_OWNER';");
-                stmt.execute("UPDATE `db_version` SET version = 3 WHERE id = 1;");
-                plugin.getLogger().info("Database migrated to version 3.");
-            }
-        }
     }
 
     private Connection getConnection() throws SQLException {
@@ -192,94 +179,6 @@ public class DatabaseStorage implements IDataStorage {
         }
     }
 
-    private String serializeLocation(Location loc) {
-        if (loc == null || loc.getWorld() == null) return null;
-        return loc.getWorld().getName() + "," + loc.getX() + "," + loc.getY() + "," + loc.getZ() + "," + loc.getYaw() + "," + loc.getPitch();
-    }
-
-    private Location deserializeLocation(String s) {
-        if (s == null || s.isEmpty()) return null;
-        String[] parts = s.split(",");
-        if (parts.length != 6) return null;
-        World w = Bukkit.getWorld(parts[0]);
-        if (w == null) return null;
-        try {
-            double x = Double.parseDouble(parts[1]);
-            double y = Double.parseDouble(parts[2]);
-            double z = Double.parseDouble(parts[3]);
-            float yaw = Float.parseFloat(parts[4]);
-            float pitch = Float.parseFloat(parts[5]);
-            return new Location(w, x, y, z, yaw, pitch);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private Team mapTeamFromResultSet(ResultSet rs) throws SQLException {
-        int id = rs.getInt("id");
-        String name = rs.getString("name");
-        String tag = rs.getString("tag");
-        UUID ownerUuid = UUID.fromString(rs.getString("owner_uuid"));
-        boolean pvpEnabled = rs.getBoolean("pvp_enabled");
-        String description = rs.getString("description");
-        double balance = rs.getDouble("balance");
-        int kills = rs.getInt("kills");
-        int deaths = rs.getInt("deaths");
-
-        Team team = new Team(id, name, tag, ownerUuid, pvpEnabled);
-        team.setHomeLocation(deserializeLocation(rs.getString("home_location")));
-        if (description != null) {
-            team.setDescription(description);
-        }
-        team.setBalance(balance);
-        team.setKills(kills);
-        team.setDeaths(deaths);
-        return team;
-    }
-
-    private TeamPlayer mapPlayerFromResultSet(ResultSet rs) throws SQLException {
-        UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
-        TeamRole role = TeamRole.valueOf(rs.getString("role"));
-        Instant joinDate = rs.getTimestamp("join_date").toInstant();
-        boolean canWithdraw = rs.getBoolean("can_withdraw");
-        boolean canUseEnderChest = rs.getBoolean("can_use_enderchest");
-        boolean canSetHome = rs.getBoolean("can_set_home");
-        boolean canUseHome = rs.getBoolean("can_use_home");
-        return new TeamPlayer(playerUuid, role, joinDate, canWithdraw, canUseEnderChest, canSetHome, canUseHome);
-    }
-
-
-    @Override
-    public Optional<Team> findTeamByPlayer(UUID playerUuid) {
-        String sql = "SELECT t.* FROM donut_teams t JOIN donut_team_members tm ON t.id = tm.team_id WHERE tm.player_uuid = ?";
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, playerUuid.toString());
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return Optional.of(mapTeamFromResultSet(rs));
-            }
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Error finding team by player: " + e.getMessage());
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public List<TeamPlayer> getTeamMembers(int teamId) {
-        List<TeamPlayer> members = new ArrayList<>();
-        String sql = "SELECT * FROM donut_team_members WHERE team_id = ?";
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, teamId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                members.add(mapPlayerFromResultSet(rs));
-            }
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Error getting team members: " + e.getMessage());
-        }
-        return members;
-    }
-
     @Override
     public void deleteTeam(int teamId) {
         String sql = "DELETE FROM donut_teams WHERE id = ?";
@@ -314,6 +213,21 @@ public class DatabaseStorage implements IDataStorage {
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not remove member " + playerUuid + ": " + e.getMessage());
         }
+    }
+
+    @Override
+    public Optional<Team> findTeamByPlayer(UUID playerUuid) {
+        String sql = "SELECT t.* FROM donut_teams t JOIN donut_team_members tm ON t.id = tm.team_id WHERE tm.player_uuid = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(mapTeamFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error finding team by player: " + e.getMessage());
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -362,16 +276,54 @@ public class DatabaseStorage implements IDataStorage {
     }
 
     @Override
-    public void setTeamHome(int teamId, Location location) {
-        String sql = "UPDATE donut_teams SET home_location = ? WHERE id = ?";
+    public List<TeamPlayer> getTeamMembers(int teamId) {
+        List<TeamPlayer> members = new ArrayList<>();
+        String sql = "SELECT * FROM donut_team_members WHERE team_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, teamId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                members.add(mapPlayerFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error getting team members: " + e.getMessage());
+        }
+        return members;
+    }
+
+    @Override
+    public void setTeamHome(int teamId, Location location, String serverName) {
+        String sql = "UPDATE donut_teams SET home_location = ?, home_server = ? WHERE id = ?";
         try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, serializeLocation(location));
-            stmt.setInt(2, teamId);
+            stmt.setString(2, serverName);
+            stmt.setInt(3, teamId);
             stmt.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not set team home for team " + teamId + ": " + e.getMessage());
         }
     }
+
+    @Override
+    public Optional<TeamHome> getTeamHome(int teamId) {
+        String sql = "SELECT home_location, home_server FROM donut_teams WHERE id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, teamId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String locStr = rs.getString("home_location");
+                String server = rs.getString("home_server");
+                Location loc = deserializeLocation(locStr);
+                if (loc != null && server != null && !server.isEmpty()) {
+                    return Optional.of(new TeamHome(loc, server));
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not retrieve team home for team " + teamId + ": " + e.getMessage());
+        }
+        return Optional.empty();
+    }
+
 
     @Override
     public void setTeamTag(int teamId, String tag) {
@@ -428,25 +380,6 @@ public class DatabaseStorage implements IDataStorage {
             }
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not transfer team ownership for team " + teamId + ": " + e.getMessage());
-        }
-    }
-
-    @Override
-    public void updateMemberRole(int teamId, UUID memberUuid, TeamRole role) {
-        String sql;
-        if (role == TeamRole.CO_OWNER) {
-            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE, can_set_home = TRUE, can_use_home = TRUE WHERE player_uuid = ? AND team_id = ?";
-        } else {
-            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE, can_set_home = FALSE, can_use_home = TRUE WHERE player_uuid = ? AND team_id = ?";
-        }
-
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, role.name());
-            stmt.setString(2, memberUuid.toString());
-            stmt.setInt(3, teamId);
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            plugin.getLogger().severe("Could not update role for member " + memberUuid + ": " + e.getMessage());
         }
     }
 
@@ -536,6 +469,24 @@ public class DatabaseStorage implements IDataStorage {
         }
     }
 
+    @Override
+    public void updateMemberRole(int teamId, UUID memberUuid, TeamRole role) {
+        String sql;
+        if (role == TeamRole.CO_OWNER) {
+            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = TRUE, can_use_enderchest = TRUE, can_set_home = TRUE, can_use_home = TRUE WHERE player_uuid = ? AND team_id = ?";
+        } else {
+            sql = "UPDATE donut_team_members SET role = ?, can_withdraw = FALSE, can_use_enderchest = TRUE, can_set_home = FALSE, can_use_home = TRUE WHERE player_uuid = ? AND team_id = ?";
+        }
+
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, role.name());
+            stmt.setString(2, memberUuid.toString());
+            stmt.setInt(3, teamId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not update role for member " + memberUuid + ": " + e.getMessage());
+        }
+    }
 
     private Map<Integer, Team> getTopTeams(String orderBy, int limit) {
         Map<Integer, Team> topTeams = new LinkedHashMap<>();
@@ -580,5 +531,144 @@ public class DatabaseStorage implements IDataStorage {
             plugin.getLogger().severe("Could not get top teams by members: " + e.getMessage());
         }
         return topTeams;
+    }
+
+    @Override
+    public void updateServerHeartbeat(String serverName) {
+        String sql;
+        if ("mysql".equals(storageType)) {
+            sql = "INSERT INTO donut_servers (server_name, last_heartbeat) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE last_heartbeat = NOW()";
+        } else {
+            sql = "MERGE INTO donut_servers KEY(server_name) VALUES (?, NOW())";
+        }
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, serverName);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not update server heartbeat for " + serverName + ": " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Map<String, Timestamp> getActiveServers() {
+        Map<String, Timestamp> activeServers = new HashMap<>();
+        String sql = "SELECT server_name, last_heartbeat FROM donut_servers WHERE last_heartbeat > NOW() - INTERVAL 2 MINUTE";
+        if (!"mysql".equals(storageType)) {
+            sql = "SELECT server_name, last_heartbeat FROM donut_servers WHERE last_heartbeat > DATEADD('MINUTE', -2, NOW())";
+        }
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                activeServers.put(rs.getString("server_name"), rs.getTimestamp("last_heartbeat"));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not retrieve active servers: " + e.getMessage());
+        }
+        return activeServers;
+    }
+
+    @Override
+    public void addPendingTeleport(UUID playerUuid, String serverName, Location location) {
+        String sql;
+        if ("mysql".equals(storageType)) {
+            sql = "INSERT INTO donut_pending_teleports (player_uuid, destination_server, destination_location) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE destination_server = VALUES(destination_server), destination_location = VALUES(destination_location)";
+        } else {
+            sql = "MERGE INTO donut_pending_teleports KEY(player_uuid) VALUES (?, ?, ?)";
+        }
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            stmt.setString(2, serverName);
+            stmt.setString(3, serializeLocation(location));
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Could not add pending teleport for " + playerUuid + ": " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Optional<Location> getAndRemovePendingTeleport(UUID playerUuid, String currentServer) {
+        String selectSql = "SELECT destination_location FROM donut_pending_teleports WHERE player_uuid = ? AND destination_server = ?";
+        String deleteSql = "DELETE FROM donut_pending_teleports WHERE player_uuid = ?";
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                selectStmt.setString(1, playerUuid.toString());
+                selectStmt.setString(2, currentServer);
+                ResultSet rs = selectStmt.executeQuery();
+                if (rs.next()) {
+                    Location loc = deserializeLocation(rs.getString("destination_location"));
+                    try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                        deleteStmt.setString(1, playerUuid.toString());
+                        deleteStmt.executeUpdate();
+                    }
+                    conn.commit();
+                    return Optional.ofNullable(loc);
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error handling pending teleport for " + playerUuid + ": " + e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+
+    private String serializeLocation(Location loc) {
+        if (loc == null || loc.getWorld() == null) return null;
+        return loc.getWorld().getName() + "," + loc.getX() + "," + loc.getY() + "," + loc.getZ() + "," + loc.getYaw() + "," + loc.getPitch();
+    }
+
+    private Location deserializeLocation(String s) {
+        if (s == null || s.isEmpty()) return null;
+        String[] parts = s.split(",");
+        if (parts.length != 6) return null;
+        World w = Bukkit.getWorld(parts[0]);
+        if (w == null) return null;
+        try {
+            double x = Double.parseDouble(parts[1]);
+            double y = Double.parseDouble(parts[2]);
+            double z = Double.parseDouble(parts[3]);
+            float yaw = Float.parseFloat(parts[4]);
+            float pitch = Float.parseFloat(parts[5]);
+            return new Location(w, x, y, z, yaw, pitch);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Team mapTeamFromResultSet(ResultSet rs) throws SQLException {
+        int id = rs.getInt("id");
+        String name = rs.getString("name");
+        String tag = rs.getString("tag");
+        UUID ownerUuid = UUID.fromString(rs.getString("owner_uuid"));
+        boolean pvpEnabled = rs.getBoolean("pvp_enabled");
+        String description = rs.getString("description");
+        double balance = rs.getDouble("balance");
+        int kills = rs.getInt("kills");
+        int deaths = rs.getInt("deaths");
+
+        Team team = new Team(id, name, tag, ownerUuid, pvpEnabled);
+        team.setHomeLocation(deserializeLocation(rs.getString("home_location")));
+        team.setHomeServer(rs.getString("home_server"));
+        if (description != null) {
+            team.setDescription(description);
+        }
+        team.setBalance(balance);
+        team.setKills(kills);
+        team.setDeaths(deaths);
+        return team;
+    }
+
+    private TeamPlayer mapPlayerFromResultSet(ResultSet rs) throws SQLException {
+        UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
+        TeamRole role = TeamRole.valueOf(rs.getString("role"));
+        Instant joinDate = rs.getTimestamp("join_date").toInstant();
+        boolean canWithdraw = rs.getBoolean("can_withdraw");
+        boolean canUseEnderChest = rs.getBoolean("can_use_enderchest");
+        boolean canSetHome = rs.getBoolean("can_set_home");
+        boolean canUseHome = rs.getBoolean("can_use_home");
+        return new TeamPlayer(playerUuid, role, joinDate, canWithdraw, canUseEnderChest, canSetHome, canUseHome);
     }
 }

@@ -9,7 +9,16 @@
 # ---------------------------------------------------- #
 
 # CONFIG VERSION - DO NOT CHANGE THIS
-config-version: 7
+config-version: 10
+
+# ---------------------------------------------------- #
+#                   Proxy Settings                     #
+# ---------------------------------------------------- #
+proxy_settings:
+  # Set this to "VELOCITY", "BUNGEECORD", or "NONE".
+  # This MUST match the proxy software you are using.
+  # If this is wrong, cross-server teleports WILL NOT WORK.
+  type: "VELOCITY"
 
 # ---------------------------------------------------- #
 #                  Storage Settings                    #
@@ -19,12 +28,12 @@ storage:
   # Can be "mysql" for a central database or "h2" for local file-based storage.
   # H2 is recommended for single-server setups as it requires no configuration.
   # MySQL is required for multi-server networks (e.g., BungeeCord/Velocity) to sync data.
-  type: "h2"
+  type: "mysql"
 
   # MySQL database settings.
   # Only used if type is "mysql" and enabled is "true".
   mysql:
-    enabled: false
+    enabled: true
     host: "localhost"
     port: 3306
     database: "donutsmp"
@@ -35,6 +44,15 @@ storage:
 #                   General Settings                   #
 # ---------------------------------------------------- #
 settings:
+  # Enable this to see detailed teleport and database logs in the console.
+  # Useful for diagnosing cross-server issues.
+  debug: true
+  # This is a UNIQUE name for this specific server.
+  # It is ABSOLUTELY CRUCIAL for cross-server features like /team home.
+  # Each server in your network MUST have a different value here.
+  # Good Examples: "survival-1", "factions-main", "skyblock", "lobby1", "lobby2"
+  # Bad Example: Using "survival" on two different servers.
+  server-identifier: "survival"
   # The main color used in GUIs and messages. Must be a hex code (e.g., "#4C9DDE").
   main_color: "#4C9DDE"
   # The accent color used for highlights and gradients.
@@ -51,6 +69,15 @@ settings:
   max_description_length: 64
   # Default PvP status for newly created teams. If false, members cannot hurt each other by default.
   default_pvp_status: true
+
+# ---------------------------------------------------- #
+#                 Broadcast Settings                   #
+# ---------------------------------------------------- #
+broadcasts:
+  # Set to true to announce server-wide when a new team is created.
+  team-created: true
+  # Set to true to announce server-wide when a team is disbanded by its owner.
+  team-disbanded: true
 
 # ---------------------------------------------------- #
 #                 Team Home Settings                   #

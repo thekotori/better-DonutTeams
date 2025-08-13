@@ -68,7 +68,7 @@ public class LeaderboardCategoryGUI implements InventoryHolder {
         String name = itemConfig.getString("name", "");
         List<String> lore = itemConfig.getStringList("lore");
 
-        inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).build());
+        inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).withAction(key).build());
     }
 
     public void open() {

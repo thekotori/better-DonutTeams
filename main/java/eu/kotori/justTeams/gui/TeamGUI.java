@@ -120,6 +120,7 @@ public class TeamGUI implements IRefreshableGUI, InventoryHolder {
             lore.addAll(itemConfig.getStringList("lore"));
         }
         builder.withLore(lore.stream().map(this::replacePlaceholders).collect(Collectors.toList()));
+        builder.withAction(key);
 
         inventory.setItem(slot, builder.build());
     }
@@ -176,7 +177,8 @@ public class TeamGUI implements IRefreshableGUI, InventoryHolder {
         ItemBuilder builder = new ItemBuilder(Material.PLAYER_HEAD)
                 .asPlayerHead(member.getPlayerUuid())
                 .withName(name)
-                .withLore(lore);
+                .withLore(lore)
+                .withAction("player-head");
 
         if (member.getRole() == TeamRole.OWNER) {
             builder.withGlow();

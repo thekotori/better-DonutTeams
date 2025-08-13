@@ -57,7 +57,7 @@ public class TeamSettingsGUI implements IRefreshableGUI, InventoryHolder {
                     .map(this::replacePlaceholders)
                     .collect(Collectors.toList());
 
-            inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).build());
+            inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).withAction(key).build());
         }
 
         ConfigurationSection fillItemSection = guiConfig.getConfigurationSection("fill-item");

@@ -1,15 +1,18 @@
 package eu.kotori.justTeams.util;
 
+import eu.kotori.justTeams.JustTeams;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +23,7 @@ public class ItemBuilder {
 
     private final ItemStack itemStack;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private static final NamespacedKey ACTION_KEY = JustTeams.getActionKey();
 
     public ItemBuilder(Material material) {
         this.itemStack = new ItemStack(material);
@@ -69,6 +73,18 @@ public class ItemBuilder {
         ItemMeta meta = itemStack.getItemMeta();
         if (meta != null) {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            itemStack.setItemMeta(meta);
+        }
+        return this;
+    }
+
+    public ItemBuilder withAction(String action) {
+        if (action == null || action.isEmpty()) {
+            return this;
+        }
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta != null) {
+            meta.getPersistentDataContainer().set(ACTION_KEY, PersistentDataType.STRING, action);
             itemStack.setItemMeta(meta);
         }
         return this;

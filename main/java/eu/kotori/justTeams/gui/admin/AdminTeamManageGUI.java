@@ -41,9 +41,11 @@ public class AdminTeamManageGUI implements InventoryHolder {
                         "<dark_red>This action cannot be undone!",
                         "",
                         "<yellow>Click to disband.</yellow>"
-                ).build());
+                )
+                .withAction("disband-team")
+                .build());
 
-        inventory.setItem(22, new ItemBuilder(Material.ARROW).withName("<gray>Back to Team List").build());
+        inventory.setItem(22, new ItemBuilder(Material.ARROW).withName("<gray>Back to Team List").withAction("back-button").build());
     }
 
     public void open() {
