@@ -29,7 +29,7 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public boolean init() {
         HikariConfig config = new HikariConfig();
-        config.setPoolName("justTeams-Pool");
+        config.setPoolName("DonutTeams-Pool");
         config.setMaximumPoolSize(10);
         config.setConnectionTimeout(30000);
 

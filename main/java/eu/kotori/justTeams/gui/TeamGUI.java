@@ -1,6 +1,7 @@
 package eu.kotori.justTeams.gui;
 
 import eu.kotori.justTeams.JustTeams;
+import eu.kotori.justTeams.storage.IDataStorage;
 import eu.kotori.justTeams.team.Team;
 import eu.kotori.justTeams.team.TeamPlayer;
 import eu.kotori.justTeams.team.TeamRole;
@@ -19,6 +20,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TeamGUI implements IRefreshableGUI, InventoryHolder {
@@ -97,7 +99,7 @@ public class TeamGUI implements IRefreshableGUI, InventoryHolder {
             setItemFromConfig(itemsConfig, "ender-chest-locked");
         }
 
-        setItemFromConfig(itemsConfig, "home");
+        setHomeItemAsync(itemsConfig);
     }
 
     private void setItemFromConfig(ConfigurationSection itemsConfig, String key) {
@@ -113,17 +115,42 @@ public class TeamGUI implements IRefreshableGUI, InventoryHolder {
         String name = replacePlaceholders(itemConfig.getString("name", ""));
         builder.withName(name);
 
-        List<String> lore = new ArrayList<>();
-        if (key.equals("home")) {
-            lore.addAll(itemConfig.getStringList(team.getHomeLocation() == null ? "lore-not-set" : "lore-set"));
-        } else {
-            lore.addAll(itemConfig.getStringList("lore"));
-        }
+        List<String> lore = new ArrayList<>(itemConfig.getStringList("lore"));
         builder.withLore(lore.stream().map(this::replacePlaceholders).collect(Collectors.toList()));
         builder.withAction(key);
 
         inventory.setItem(slot, builder.build());
     }
+
+    private void setHomeItemAsync(ConfigurationSection itemsConfig) {
+        ConfigurationSection itemConfig = itemsConfig.getConfigurationSection("home");
+        if (itemConfig == null) return;
+
+        int slot = itemConfig.getInt("slot", -1);
+        if (slot == -1) return;
+
+        ItemStack loadingItem = new ItemBuilder(Material.CLOCK).withName("<gray>Loading Home Status...").build();
+        inventory.setItem(slot, loadingItem);
+
+        plugin.getTaskRunner().runAsync(() -> {
+            Optional<IDataStorage.TeamHome> teamHomeOpt = plugin.getStorageManager().getStorage().getTeamHome(team.getId());
+
+            plugin.getTaskRunner().runOnEntity(viewer, () -> {
+                Material material = Material.matchMaterial(itemConfig.getString("material", "ENDER_PEARL"));
+                ItemBuilder builder = new ItemBuilder(material);
+                String name = replacePlaceholders(itemConfig.getString("name", ""));
+                builder.withName(name);
+
+                List<String> lore = itemConfig.getStringList(teamHomeOpt.isPresent() ? "lore-set" : "lore-not-set");
+
+                builder.withLore(lore.stream().map(this::replacePlaceholders).collect(Collectors.toList()));
+                builder.withAction("home");
+
+                inventory.setItem(slot, builder.build());
+            });
+        });
+    }
+
 
     private String replacePlaceholders(String text) {
         if (text == null) return "";
