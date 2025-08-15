@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface IDataStorage {
 
     record TeamHome(Location location, String serverName) {}
+    record TeamEnderChestLock(int teamId, String serverName, Timestamp lockTime) {}
 
     boolean init();
     void shutdown();
@@ -46,4 +47,7 @@ public interface IDataStorage {
     Map<String, Timestamp> getActiveServers();
     void addPendingTeleport(UUID playerUuid, String serverName, Location location);
     Optional<Location> getAndRemovePendingTeleport(UUID playerUuid, String currentServer);
+    boolean acquireEnderChestLock(int teamId, String serverIdentifier);
+    void releaseEnderChestLock(int teamId);
+    Optional<TeamEnderChestLock> getEnderChestLock(int teamId);
 }

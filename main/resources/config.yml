@@ -28,12 +28,12 @@ storage:
   # Can be "mysql" for a central database or "h2" for local file-based storage.
   # H2 is recommended for single-server setups as it requires no configuration.
   # MySQL is required for multi-server networks (e.g., BungeeCord/Velocity) to sync data.
-  type: "mysql"
+  type: "h2"
 
   # MySQL database settings.
   # Only used if type is "mysql" and enabled is "true".
   mysql:
-    enabled: true
+    enabled: false
     host: "localhost"
     port: 3306
     database: "donutsmp"
@@ -46,7 +46,7 @@ storage:
 settings:
   # Enable this to see detailed teleport and database logs in the console.
   # Useful for diagnosing cross-server issues.
-  debug: true
+  debug: false
   # This is a UNIQUE name for this specific server.
   # It is ABSOLUTELY CRUCIAL for cross-server features like /team home.
   # Each server in your network MUST have a different value here.

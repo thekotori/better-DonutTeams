@@ -20,8 +20,6 @@ public class TeamEnderChestListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof Team team) {
-            Player player = (Player) event.getPlayer();
-
             plugin.getTaskRunner().runAsync(() -> {
                 plugin.getTeamManager().saveEnderChest(team);
             });

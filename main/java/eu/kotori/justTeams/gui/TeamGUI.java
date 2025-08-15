@@ -129,15 +129,15 @@ public class TeamGUI implements IRefreshableGUI, InventoryHolder {
         int slot = itemConfig.getInt("slot", -1);
         if (slot == -1) return;
 
-        ItemStack loadingItem = new ItemBuilder(Material.CLOCK).withName("<gray>Loading Home Status...").build();
+        Material homeMaterial = Material.matchMaterial(itemConfig.getString("material", "ENDER_PEARL"));
+        ItemStack loadingItem = new ItemBuilder(homeMaterial).withName("<gray>Loading Home Status...").build();
         inventory.setItem(slot, loadingItem);
 
         plugin.getTaskRunner().runAsync(() -> {
             Optional<IDataStorage.TeamHome> teamHomeOpt = plugin.getStorageManager().getStorage().getTeamHome(team.getId());
 
             plugin.getTaskRunner().runOnEntity(viewer, () -> {
-                Material material = Material.matchMaterial(itemConfig.getString("material", "ENDER_PEARL"));
-                ItemBuilder builder = new ItemBuilder(material);
+                ItemBuilder builder = new ItemBuilder(homeMaterial);
                 String name = replacePlaceholders(itemConfig.getString("name", ""));
                 builder.withName(name);
 

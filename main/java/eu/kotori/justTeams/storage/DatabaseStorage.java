@@ -29,7 +29,7 @@ public class DatabaseStorage implements IDataStorage {
     @Override
     public boolean init() {
         HikariConfig config = new HikariConfig();
-        config.setPoolName("DonutTeams-Pool");
+        config.setPoolName("justTeams-Pool");
         config.setMaximumPoolSize(10);
         config.setConnectionTimeout(30000);
 
@@ -113,6 +113,13 @@ public class DatabaseStorage implements IDataStorage {
             stmt.execute("CREATE TABLE IF NOT EXISTS `donut_servers` (" +
                     "`server_name` VARCHAR(64) PRIMARY KEY, " +
                     "`last_heartbeat` TIMESTAMP NOT NULL);");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS `donut_team_locks` (" +
+                    "`team_id` INT PRIMARY KEY, " +
+                    "`server_identifier` VARCHAR(255) NOT NULL, " +
+                    "`lock_time` TIMESTAMP NOT NULL, " +
+                    "FOREIGN KEY (`team_id`) REFERENCES `donut_teams`(`id`) ON DELETE CASCADE);");
+
 
             plugin.getLogger().info("Database schema verified successfully.");
         }
@@ -670,5 +677,67 @@ public class DatabaseStorage implements IDataStorage {
         boolean canSetHome = rs.getBoolean("can_set_home");
         boolean canUseHome = rs.getBoolean("can_use_home");
         return new TeamPlayer(playerUuid, role, joinDate, canWithdraw, canUseEnderChest, canSetHome, canUseHome);
+    }
+
+    @Override
+    public boolean acquireEnderChestLock(int teamId, String serverIdentifier) {
+        String selectSql = "SELECT server_identifier, lock_time FROM donut_team_locks WHERE team_id = ?";
+        String insertSql = "INSERT INTO donut_team_locks (team_id, server_identifier, lock_time) VALUES (?, ?, NOW())";
+        String updateSql = "UPDATE donut_team_locks SET server_identifier = ?, lock_time = NOW() WHERE team_id = ?";
+
+        try (Connection conn = getConnection()) {
+            Optional<TeamEnderChestLock> currentLock = getEnderChestLock(teamId);
+
+            if (currentLock.isPresent()) {
+                Map<String, Timestamp> activeServers = getActiveServers();
+                if (activeServers.containsKey(currentLock.get().serverName())) {
+                    plugin.getDebugLogger().log("Ender chest for team " + teamId + " is locked by an active server: " + currentLock.get().serverName());
+                    return false;
+                }
+                plugin.getDebugLogger().log("Ender chest for team " + teamId + " is locked by an inactive server. Overriding lock.");
+                try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+                    stmt.setString(1, serverIdentifier);
+                    stmt.setInt(2, teamId);
+                    stmt.executeUpdate();
+                    return true;
+                }
+            } else {
+                try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+                    stmt.setInt(1, teamId);
+                    stmt.setString(2, serverIdentifier);
+                    stmt.executeUpdate();
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error acquiring ender chest lock for team " + teamId + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public void releaseEnderChestLock(int teamId) {
+        String sql = "DELETE FROM donut_team_locks WHERE team_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, teamId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error releasing ender chest lock for team " + teamId + ": " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Optional<TeamEnderChestLock> getEnderChestLock(int teamId) {
+        String sql = "SELECT server_identifier, lock_time FROM donut_team_locks WHERE team_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, teamId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(new TeamEnderChestLock(teamId, rs.getString("server_identifier"), rs.getTimestamp("lock_time")));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error checking ender chest lock for team " + teamId + ": " + e.getMessage());
+        }
+        return Optional.empty();
     }
 }

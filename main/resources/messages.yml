@@ -1,5 +1,5 @@
 # ---------------------------------------------------- #
-#              justTeams Messages               #
+#              justTeams Messages                      #
 # ---------------------------------------------------- #
 # This file supports MiniMessage formatting for colors, gradients, and click/hover events.
 # Learn more here: https://docs.advntr.dev/minimessage/format.html
@@ -105,6 +105,9 @@ bank_insufficient_funds: "<red>The team bank does not have enough funds.</red>"
 player_insufficient_funds: "<red>You do not have enough money to deposit.</red>"
 bank_invalid_amount: "<red>Invalid amount specified. Amount must be greater than 0.</red>"
 bank_max_balance_reached: "<red>The team bank has reached its maximum balance.</red>"
+
+# --- Team Enderchest ---
+enderchest_locked_by_proxy: "<red>This team's Ender Chest is currently being used on another server. Please try again in a moment.</red>"
 
 # --- Team Info ---
 team_info_header: "<strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯</strikethrough> <white><bold>ᴛᴇᴀᴍ ɪɴғᴏ: <team></bold></white> <strikethrough><dark_gray>⎯⎯⎯⎯⎯⎯"

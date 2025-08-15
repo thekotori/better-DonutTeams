@@ -113,7 +113,6 @@ public class TeamManager {
 
         team.getMembers().clear();
         team.getMembers().addAll(storage.getTeamMembers(team.getId()));
-        loadEnderChest(team);
         teamNameCache.put(lowerCaseName, team);
         team.getMembers().forEach(member -> playerTeamCache.put(member.getPlayerUuid(), team));
     }
@@ -128,8 +127,11 @@ public class TeamManager {
             playerTeamCache.remove(player.getUniqueId());
             boolean isTeamEmptyOnline = team.getMembers().stream()
                     .allMatch(member -> member.getPlayerUuid().equals(player.getUniqueId()) || !member.isOnline());
+
             if (isTeamEmptyOnline) {
-                saveEnderChest(team);
+                if(team.getEnderChest() != null && !team.getEnderChest().getViewers().isEmpty()){
+                    saveEnderChest(team);
+                }
                 teamNameCache.remove(team.getName().toLowerCase());
             }
         }
@@ -147,7 +149,9 @@ public class TeamManager {
     }
 
     private void uncacheTeam(Team team) {
-        saveEnderChest(team);
+        if (team.getEnderChest() != null) {
+            saveEnderChest(team);
+        }
         teamNameCache.remove(team.getName().toLowerCase());
         team.getMembers().forEach(member -> playerTeamCache.remove(member.getPlayerUuid()));
     }
@@ -898,21 +902,38 @@ public class TeamManager {
             EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
             return;
         }
-        player.openInventory(team.getEnderChest());
+
+        plugin.getTaskRunner().runAsync(() -> {
+            boolean lockAcquired = storage.acquireEnderChestLock(team.getId(), configManager.getServerIdentifier());
+
+            plugin.getTaskRunner().runOnEntity(player, () -> {
+                if (lockAcquired) {
+                    loadAndOpenEnderChest(player, team);
+                } else {
+                    messageManager.sendMessage(player, "enderchest_locked_by_proxy");
+                    EffectsUtil.playSound(player, EffectsUtil.SoundType.ERROR);
+                }
+            });
+        });
     }
 
-    private void loadEnderChest(Team team) {
-        int rows = configManager.getEnderChestRows();
-        Inventory enderChest = Bukkit.createInventory(team, rows * 9, Component.text("ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ"));
-        String data = storage.getEnderChest(team.getId());
-        if (data != null && !data.isEmpty()) {
-            try {
-                InventoryUtil.deserializeInventory(enderChest, data);
-            } catch (IOException e) {
-                plugin.getLogger().warning("Could not deserialize ender chest for team " + team.getName() + ": " + e.getMessage());
-            }
-        }
-        team.setEnderChest(enderChest);
+    private void loadAndOpenEnderChest(Player player, Team team) {
+        plugin.getTaskRunner().runAsync(() -> {
+            String data = storage.getEnderChest(team.getId());
+            plugin.getTaskRunner().runOnEntity(player, () -> {
+                int rows = configManager.getEnderChestRows();
+                Inventory enderChest = Bukkit.createInventory(team, rows * 9, Component.text("ᴛᴇᴀᴍ ᴇɴᴅᴇʀ ᴄʜᴇsᴛ"));
+                if (data != null && !data.isEmpty()) {
+                    try {
+                        InventoryUtil.deserializeInventory(enderChest, data);
+                    } catch (IOException e) {
+                        plugin.getLogger().warning("Could not deserialize ender chest for team " + team.getName() + ": " + e.getMessage());
+                    }
+                }
+                team.setEnderChest(enderChest);
+                player.openInventory(team.getEnderChest());
+            });
+        });
     }
 
     public void saveEnderChest(Team team) {
@@ -920,6 +941,7 @@ public class TeamManager {
         try {
             String data = InventoryUtil.serializeInventory(team.getEnderChest());
             storage.saveEnderChest(team.getId(), data);
+            storage.releaseEnderChestLock(team.getId());
         } catch (Exception e) {
             plugin.getLogger().severe("Could not save ender chest for team " + team.getName() + ": " + e.getMessage());
         }
