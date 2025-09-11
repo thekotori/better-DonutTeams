@@ -29,448 +29,222 @@ mv justTeams.jar plugins/
 
 ---
 
-## ✨ **Why Choose justTeams?**
-
-| Feature | Description | Benefit |
-|---------|-------------|---------|
-| 🎯 **Advanced Management** | Role-based hierarchy with granular permissions | Complete control over team operations |
-| 🌐 **Cross-Server Sync** | Real-time synchronization across your network | Seamless multi-server experience |
-| 🎨 **Modern GUI** | Beautiful, responsive interface with animations | Intuitive user experience |
-| 🏦 **Team Economy** | Shared banking with Vault integration | Collaborative financial management |
-| 🗄️ **Shared Storage** | Team ender chest with cross-server access | Persistent inventory across servers |
-| 🏠 **Teleportation** | Team homes and warps with security | Easy team navigation |
-
----
-
-## 🎯 **Core Features**
-
-### 👥 **Team Management System**
-<div align="center">
-
-| Role | Permissions | Management |
-|------|-------------|------------|
-| **👑 Owner** | Full control | Create, disband, transfer |
-| **🔄 Co-Owner** | Elevated access | Promote, demote, kick |
-| **👤 Member** | Basic access | View, chat, use features |
-
-</div>
-
-- **Individual member flags** for granular control
-- **Anti-spam protection** built-in
-- **Security validation** prevents exploits
-- **Role inheritance** system
-
-### 🏦 **Team Banking & Economy**
-<div align="center">
+## ✨ **Features**
 
 | Feature | Description |
 |---------|-------------|
-| 💰 **Shared Funds** | Pool money with your team |
-| 🔐 **Permission Control** | Control who can withdraw |
-| 📊 **Transaction Logging** | Track all financial activities |
-| ⚡ **Quick Commands** | Fast deposit/withdraw from chat |
-
-</div>
-
-### 🗄️ **Team Storage & Teleportation**
-<div align="center">
-
-| System | Features |
-|--------|----------|
-| 📦 **Ender Chest** | 1-6 rows, cross-server sync |
-| 🏠 **Team Home** | Warmup/cooldown, cross-server |
-| 🎯 **Team Warps** | Up to 5 warps, password protection |
-| 🔒 **Security** | Permission-based access control |
-
-</div>
+| 🎯 **Team Management** | Role-based system with Owner/Co-Owner/Member |
+| 🏦 **Team Banking** | Shared funds with Vault integration |
+| 🗄️ **Shared Storage** | Team ender chest with cross-server sync |
+| 🏠 **Teleportation** | Team homes and warps with security |
+| 💬 **Team Chat** | Toggle team chat mode or use `/t <message>` |
+| 🌐 **Cross-Server** | Real-time synchronization across your network |
 
 ---
 
-## 🎨 **Beautiful GUI Interface**
+## ⌨️ **Commands**
 
-<div align="center">
+### **Basic Commands**
+| Command | Description |
+|---------|-------------|
+| `/team create <name> <tag>` | Create a new team |
+| `/team invite <player>` | Invite a player |
+| `/team accept <team>` | Accept invitation |
+| `/team leave` | Leave your team |
+| `/team kick <player>` | Kick a player |
+| `/team info` | Show team information |
 
-### **Main Team GUI**
-![Team GUI](https://i.ibb.co/rYxW7wr/AD12-B88-B-901-C-40-F3-884-B-6-EF243082-F4-A.png)
+### **Management Commands**
+| Command | Description |
+|---------|-------------|
+| `/team promote <player>` | Promote to Co-Owner |
+| `/team demote <player>` | Demote to Member |
+| `/team transfer <player>` | Transfer ownership |
+| `/team disband` | Disband your team |
+| `/team pvp` | Toggle team PvP |
+| `/team public` | Toggle public/private |
 
-**Features:**
-- ✨ **Modern Design** with gradients and animations
-- 📱 **Responsive Layout** adapts to any screen
-- 🔍 **Smart Sorting** by role, join date, online status
-- ⚡ **Quick Actions** for common tasks
+### **Home & Warp Commands**
+| Command | Description |
+|---------|-------------|
+| `/team sethome` | Set team home |
+| `/team delhome` | Delete team home |
+| `/team home` | Teleport home |
+| `/team setwarp <name>` | Create warp |
+| `/team delwarp <name>` | Delete warp |
+| `/team warp <name>` | Use warp |
+| `/team warps` | List warps |
 
-</div>
+### **Economy Commands**
+| Command | Description |
+|---------|-------------|
+| `/team bank` | Open bank GUI |
+| `/team enderchest` | Open shared storage |
 
-<div align="center">
+### **Chat Commands**
+| Command | Description |
+|---------|-------------|
+| `/team chat` | Toggle team chat mode |
+| `/t <message>` | Send team message |
 
-### **Member Management**
+---
 
-**Capabilities:**
-- 👑 **Role Management** promote, demote, transfer
-- 🔐 **Permission Editing** individual member flags
-- 👁️ **Self-View Mode** owners can view their profile
-- 🛡️ **Security Features** prevent self-modification
+## 🔐 **Permissions**
 
-</div>
+- `justteams.*` - All permissions
+- `justteams.user` - Basic team commands
+- `justteams.admin` - Admin commands
+
+### **Bypass Permissions**
+- `justteams.bypass.bank.withdraw`
+- `justteams.bypass.enderchest.use`
+- `justteams.bypass.home.cooldown`
+- `justteams.bypass.warp.cooldown`
+
+---
+
+## 🧩 **PlaceholderAPI**
+
+| Placeholder | Description |
+|-------------|-------------|
+| `%justteams_name%` | Team name |
+| `%justteams_tag%` | Team tag |
+| `%justteams_role%` | Player's role |
+| `%justteams_member_count%` | Number of members |
+| `%justteams_kills%` | Team kills |
+| `%justteams_kdr%` | Kill/Death ratio |
+| `%justteams_bank_balance%` | Team bank balance |
 
 ---
 
 ## ⚙️ **Configuration**
 
-### **Main Configuration (`config.yml`)**
+### **Main Settings**
 ```yaml
-# 🎨 Team Settings
 settings:
-  main_color: "#4C9DDE"           # Primary theme color
-  accent_color: "#4C96D2"         # Secondary accent color
-  max_team_size: 10               # Maximum team members
-  default_pvp_status: true        # Default PvP setting
-  
-# 🌐 Cross-Server Settings
-  enable_cross_server_sync: true
-  sync_optimization:
-    heartbeat_interval: 60        # Server heartbeat
-    cross_server_sync_interval: 15 # Data sync interval
+  max_team_size: 10
+  default_pvp_status: true
+  default_public_status: false
 
-# 🏦 Economy Settings
 team_bank:
   enabled: true
-  max_balance: 1000000.0         # Maximum bank balance
+  max_balance: 1000000.0
 
-# 🏠 Teleportation Settings
 team_home:
-  warmup_seconds: 5              # Teleport warmup
-  cooldown_seconds: 300          # Teleport cooldown
+  warmup_seconds: 5
+  cooldown_seconds: 300
 ```
 
-### **Message Customization (`messages.yml`)**
-```yaml
-# 🎨 MiniMessage Support
-prefix: "<bold><gradient:#4C9DDE:#4C96D2>ᴛᴇᴀᴍs</gradient></bold> <dark_gray>| <gray>"
-
-# ✨ Team Creation
-team_created: "<green>✨ Team <white><team></white> has been created successfully!"
-
-# 💰 Bank Transactions
-bank_deposit_success: "<green>💰 Deposited <white><amount></white> into team bank"
-bank_withdraw_success: "<green>💸 Withdrew <white><amount></white> from team bank"
-
-# 🎯 Interactive Invitations
-invite_received: |
-  <yellow>🎯 You've been invited to join <white><team></white>!
-  
-  <click:run_command:/team accept <team>>
-  <hover:show_text:'<green>Click to accept!'>🟢 [Accept]</hover>
-  </click>
-  
-  <click:run_command:/team deny <team>>
-  <hover:show_text:'<red>Click to deny!'>🔴 [Deny]</hover>
-  </click>
-```
+### **Storage Options**
+- **H2**: File-based storage (single server)
+- **MySQL**: Database storage (multi-server)
 
 ---
 
-## ⌨️ **Commands Reference**
+## 📚 **Wiki**
 
 <div align="center">
 
-### **🔧 Core Commands**
+### **Quick Guides**
 
-| Command | Aliases | Description | Permission |
-|---------|---------|-------------|------------|
-| `/team` | `t, g, c, p` | Show team info or help | `justteams.user` |
-| `/team create <name> <tag>` | - | Create a new team | `justteams.command.create` |
-| `/team invite <player>` | - | Invite a player | `justteams.command.invite` |
-| `/team accept <team>` | - | Accept invitation | `justteams.command.accept` |
-| `/team leave` | - | Leave your team | `justteams.command.leave` |
-| `/team gui` | - | Open team GUI | `justteams.command.gui` |
+| What do you want to do? | How to do it |
+|------------------------|--------------|
+| **Create your first team** | `/team create MyTeam [MT]` |
+| **Invite a player** | `/team invite PlayerName` |
+| **Accept an invitation** | `/team accept TeamName` |
+| **Open team GUI** | `/team` or `/team gui` |
+| **Set team home** | `/team sethome` |
+| **Teleport to home** | `/team home` |
+| **Access team bank** | `/team bank` |
+| **Use team storage** | `/team enderchest` |
+| **Toggle team chat** | `/team chat` |
+| **Send team message** | `/t Hello team!` |
 
 </div>
 
 <div align="center">
 
-### **🏠 Home & Warp Commands**
+### **Team Management**
 
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/team sethome` | Set team home | `justteams.command.sethome` |
-| `/team home` | Teleport home | `justteams.command.home` |
-| `/team setwarp <name>` | Create warp | `justteams.command.setwarp` |
-| `/team warp <name>` | Use warp | `justteams.command.warp` |
+| Action | Command | Permission Required |
+|--------|---------|-------------------|
+| **Promote player** | `/team promote PlayerName` | Owner/Co-Owner |
+| **Demote player** | `/team demote PlayerName` | Owner/Co-Owner |
+| **Kick player** | `/team kick PlayerName` | Owner/Co-Owner |
+| **Transfer ownership** | `/team transfer PlayerName` | Owner only |
+| **Disband team** | `/team disband` | Owner only |
+| **Toggle PvP** | `/team pvp` | Owner/Co-Owner |
+| **Make public/private** | `/team public` | Owner/Co-Owner |
 
 </div>
 
 <div align="center">
 
-### **🏦 Economy Commands**
+### **Team Features**
 
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/team bank` | Open bank GUI | `justteams.command.bank` |
-| `/team bank deposit <amount>` | Quick deposit | `justteams.command.bank` |
-| `/team bank withdraw <amount>` | Quick withdraw | `justteams.command.bank` |
-| `/team enderchest` | `ec` | Open shared storage | `justteams.command.enderchest` |
+| Feature | How to Use | Description |
+|---------|------------|-------------|
+| **🏠 Team Home** | `/team sethome` → `/team home` | Set and teleport to team home |
+| **🌐 Team Warps** | `/team setwarp name` → `/team warp name` | Create and use team warps |
+| **🏦 Team Bank** | `/team bank` | Access shared team funds |
+| **📦 Storage** | `/team enderchest` | Use shared team storage |
+| **💬 Team Chat** | `/team chat` or `/t message` | Communicate with team |
+
+</div>
+
+<div align="center">
+
+### **Permissions**
+
+| Permission | What it does |
+|------------|--------------|
+| `justteams.user` | Basic team commands |
+| `justteams.admin` | Admin commands |
+| `justteams.bypass.bank.withdraw` | Bypass bank restrictions |
+| `justteams.bypass.enderchest.use` | Bypass storage restrictions |
+| `justteams.bypass.home.cooldown` | Bypass home cooldown |
+
+</div>
+
+<div align="center">
+
+### **Configuration**
+
+| File | What it controls |
+|------|------------------|
+| `config.yml` | Main plugin settings |
+| `messages.yml` | All text and messages |
+| `gui.yml` | GUI appearance |
+| `commands.yml` | Command configuration |
+
+</div>
+
+<div align="center">
+
+### **Common Issues**
+
+| Problem | Solution |
+|---------|----------|
+| **"No permission"** | Check player permissions |
+| **"Team not found"** | Make sure team exists |
+| **"Player not in team"** | Join a team first |
+| **"GUI not opening"** | Check permissions and team status |
+| **"Database error"** | Check MySQL/H2 configuration |
 
 </div>
 
 ---
 
-## 🔐 **Permission System**
+## 🤝 **Support**
 
-<div align="center">
-
-### **Permission Hierarchy**
-
-```
-justteams.* (All permissions)
-├── justteams.admin (Admin commands)
-├── justteams.user (Basic commands)
-└── justteams.bypass.* (Bypass restrictions)
-    ├── justteams.bypass.bank.withdraw
-    ├── justteams.bypass.enderchest.use
-    ├── justteams.bypass.home.cooldown
-    └── justteams.bypass.warp.cooldown
-```
-
-</div>
-
-**Key Features:**
-- 🔒 **Multi-layer security** with role-based access
-- 🛡️ **Bypass permissions** for administrators
-- 📊 **Granular control** over individual features
-- 🔍 **Audit logging** for all actions
-
----
-
-## 🧩 **PlaceholderAPI Integration**
-
-<div align="center">
-
-### **Available Placeholders**
-
-| Category | Placeholder | Example Output |
-|----------|-------------|----------------|
-| **Team Info** | `%justteams_name%` | "TeamAlpha" |
-| **Team Info** | `%justteams_tag%` | "[TA]" |
-| **Team Info** | `%justteams_description%` | "The best team ever!" |
-| **Member Info** | `%justteams_role%` | "Owner" |
-| **Member Info** | `%justteams_member_count%` | "5" |
-| **Statistics** | `%justteams_kills%` | "150" |
-| **Statistics** | `%justteams_kdr%` | "2.00" |
-| **Economy** | `%justteams_bank_balance%` | "$1,250.00" |
-
-</div>
-
-**Usage Examples:**
-```yaml
-# Scoreboard
-scoreboard:
-  title: "Team: %justteams_name%"
-  lines:
-    - "Role: %justteams_role%"
-    - "Members: %justteams_member_count%/%justteams_max_members%"
-    - "KDR: %justteams_kdr%"
-    - "Balance: %justteams_bank_balance%"
-
-# Chat Format
-chat_format: "<%justteams_tag%> %player_name%: %message%"
-```
-
----
-
-## 🌐 **Cross-Server Features**
-
-<div align="center">
-
-### **Multi-Server Architecture**
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Survival      │    │    Skyblock     │    │     Prison      │
-│   Server        │◄──►│    Server       │◄──►│     Server      │
-│                 │    │                 │    │                 │
-│ • Team Data     │    │ • Team Data     │    │ • Team Data     │
-│ • Real-time     │    │ • Real-time     │    │ • Real-time     │
-│ • Sync          │    │ • Sync          │    │ • Sync          │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         ▲                       ▲                       ▲
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │   Proxy Server  │
-                    │  (BungeeCord/   │
-                    │    Velocity)    │
-                    └─────────────────┘
-```
-
-</div>
-
-**Features:**
-- ⚡ **Real-time synchronization** across all servers
-- 🔄 **Automatic data consistency** maintenance
-- 🚀 **Optimized performance** with intelligent caching
-- 🛡️ **Secure communication** between servers
-
----
-
-## 🚀 **Performance & Optimization**
-
-<div align="center">
-
-### **Performance Metrics**
-
-| Optimization | Benefit | Impact |
-|--------------|---------|--------|
-| **Lazy Loading** | Load data only when needed | ⚡ Faster startup |
-| **Smart Caching** | Intelligent cache management | 🚀 Reduced latency |
-| **Batch Processing** | Efficient bulk operations | 📈 Better throughput |
-| **Connection Pooling** | Optimized database connections | 💾 Lower memory usage |
-| **Async Operations** | Non-blocking background tasks | 🎯 Improved responsiveness |
-
-</div>
-
-**Advanced Configuration:**
-```yaml
-# Performance Tuning
-settings:
-  sync_optimization:
-    heartbeat_interval: 60          # Server heartbeat
-    cross_server_sync_interval: 15  # Data sync interval
-    critical_sync_interval: 3       # Critical updates
-    max_teams_per_batch: 25        # Teams per sync batch
-    team_cache_ttl: 180            # Cache lifetime
-    enable_optimistic_locking: true # Better concurrency
-    max_sync_retries: 3            # Retry failed syncs
-    sync_retry_delay: 1000         # Retry delay (ms)
-
-# Database Optimization
-storage:
-  connection_pool:
-    max_size: 16                    # Maximum connections
-    min_idle: 4                     # Minimum idle connections
-    connection_timeout: 30000       # Connection timeout
-    idle_timeout: 600000            # Idle timeout
-    max_lifetime: 1800000           # Max connection lifetime
-    leak_detection_threshold: 60000 # Leak detection
-```
-
----
-
-## 🛡️ **Security & Protection**
-
-<div align="center">
-
-### **Security Features**
-
-| Protection | Description | Benefit |
-|------------|-------------|---------|
-| 🔒 **Input Validation** | Comprehensive sanitization | Prevents exploits |
-| 🛡️ **Permission Checks** | Multi-layer verification | Secure access control |
-| 🚫 **Anti-Spam** | Rate limiting protection | Prevents abuse |
-| 🗄️ **SQL Injection** | Prepared statements | Database security |
-| 🧹 **Memory Management** | Automatic cleanup | Prevents leaks |
-
-</div>
-
-**Security Configuration:**
-```yaml
-# Security Settings
-settings:
-  # Anti-spam protection
-  command_spam_protection: true
-  message_spam_protection: true
-  
-  # Input validation
-  validate_team_names: true
-  validate_player_names: true
-  
-  # Content filtering
-  filter_inappropriate_content: true
-  max_message_length: 200
-  
-  # Rate limiting
-  command_rate_limit: 5        # Commands per second
-  message_rate_limit: 10       # Messages per second
-```
-
----
-
-## 📊 **Statistics & Analytics**
-
-<div align="center">
-
-### **Team Performance Dashboard**
-
-| Metric | Description | Tracking |
-|--------|-------------|----------|
-| 🎯 **Combat Stats** | Kills, deaths, KDR | Real-time updates |
-| 👥 **Member Activity** | Join dates, activity | Engagement metrics |
-| 💰 **Financial Data** | Bank usage, transactions | Economic tracking |
-| 📈 **Growth Stats** | Team development | Progress monitoring |
-
-</div>
-
-**Leaderboard Categories:**
-- 🏆 **Top Teams by Kills** - Combat performance
-- 💰 **Richest Teams** - Financial success
-- 👥 **Largest Teams** - Member count
-- 📊 **Best KDR** - Kill/Death ratio
-
----
-
-## 🔄 **Migration & Updates**
-
-<div align="center">
-
-### **Seamless Update Process**
-
-```
-🔄 Current Version
-    ↓
-📦 Download Update
-    ↓
-💾 Automatic Backup
-    ↓
-🚀 Database Migration
-    ↓
-✅ Validation Check
-    ↓
-🎉 Update Complete
-```
-
-</div>
-
-**Features:**
-- 🔄 **Automatic migration** of all data
-- 📁 **Config updates** without manual intervention
-- 🔙 **Rollback protection** on failure
-- 📊 **Version checking** and notifications
-
----
-
-## 🤝 **Support & Community**
-
-<div align="center">
-
-### **Get Help & Connect**
-
-| Resource | Description | Link |
-|----------|-------------|------|
-| 📚 **Documentation** | Complete API reference | [Soon](https://github.com/kotori/justTeams/wiki) |
-| 🐛 **Issue Tracker** | Report bugs & request features | [GitHub Issues](https://github.com/kotori/justTeams/issues) |
-| 💬 **Discord** | Community support & discussion | [Join Server](https://discord.gg/Am7D6Qz9) |
-| 📖 **Examples** | Sample configurations | [Soon](https://github.com/kotori/justTeams/examples) |
-
-</div>
+- **Issues**: [GitHub Issues](https://github.com/kotori/justTeams/issues)
+- **Discord**: [Join Server](https://discord.gg/Am7D6Qz9)
 
 ---
 
 <div align="center">
 
 ## 🎉 **Ready to Get Started?**
-
-**justTeams** is the ultimate team management solution for modern Minecraft servers.
 
 [![Download](https://img.shields.io/badge/Download-Latest-brightgreen?style=for-the-badge&logo=download)](https://builtbybit.com/resources/justteams.71401/)
 [![Documentation](https://img.shields.io/badge/Documentation-Wiki-blue?style=for-the-badge&logo=book)](https://github.com/kotori/justTeams/wiki)
@@ -480,6 +254,6 @@ settings:
 
 **🍩 justTeams** - *The ultimate team management solution for modern Minecraft servers*
 
-*Built with ❤️ by [**kotori**](https://github.com/thekotori)*
+*Built with ❤️ by [**kotori**](https://github.com/kotori)*
 
 </div>
