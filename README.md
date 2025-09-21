@@ -1,259 +1,141 @@
+<p align="center">
+<img src="" alt="Soon :)" width="1000"/>
+</p>
+
+<p align="center">
 <div align="center">
-
-# 🍩 justTeams
-
-### *The Ultimate Team Management Experience*
-
-[![Author](https://img.shields.io/badge/Author-kotori-lightgrey?style=for-the-badge&logo=github)](https://github.com/kotori)
-[![API](https://img.shields.io/badge/API-1.21-brightgreen?style=for-the-badge&logo=java)](https://papermc.io/downloads)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge&logo=opensourceinitiative)](LICENSE)
-[![Folia](https://img.shields.io/badge/Folia-Supported-green?style=for-the-badge&logo=serverless)](https://folia.papermc.io/)
-
-*A powerful and modern Minecraft teams plugin, fully customizable for any Paper-based server*
-
----
-
+    <h1>🍩 justTeams</h1>
+    <h3><em>The Ultimate Team Management Experience</em></h3>
 </div>
+</p>
 
-## 🚀 **Quick Start**
+<p align="center">
+<strong>A powerful and modern Minecraft teams plugin, fully customizable for any Paper-based server.</strong>
+</p>
 
-```bash
-# Download and install
-wget https://github.com/kotori/justTeams/releases/latest/download/justTeams.jar
-mv justTeams.jar plugins/
+<p align="center">
+<img src="https://img.shields.io/badge/Version-1.0.0-brightgreen?style=for-the-badge" alt="Version" />
+<img src="https://img.shields.io/badge/API-1.21+-blue?style=for-the-badge" alt="API Version" />
+<img src="https://img.shields.io/badge/Java-17+-orange?style=for-the-badge" alt="Java" />
+</p>
 
-# Install dependencies
-# - Vault (required for economy)
-# - PlaceholderAPI (recommended)
-```
+## 👋 Welcome to justTeams!
 
----
-
-## ✨ **Features**
-
-| Feature | Description |
-|---------|-------------|
-| 🎯 **Team Management** | Role-based system with Owner/Co-Owner/Member |
-| 🏦 **Team Banking** | Shared funds with Vault integration |
-| 🗄️ **Shared Storage** | Team ender chest with cross-server sync |
-| 🏠 **Teleportation** | Team homes and warps with security |
-| 💬 **Team Chat** | Toggle team chat mode or use `/t <message>` |
-| 🌐 **Cross-Server** | Real-time synchronization across your network |
+Welcome to the official documentation for **justTeams**. This guide will walk you through every feature, from basic team creation to advanced cross-server management, ensuring you can harness the full power of the plugin with confidence.
 
 ---
 
-## ⌨️ **Commands**
+## ✨ Features
 
-### **Basic Commands**
-| Command | Description |
-|---------|-------------|
-| `/team create <name> <tag>` | Create a new team |
-| `/team invite <player>` | Invite a player |
-| `/team accept <team>` | Accept invitation |
-| `/team leave` | Leave your team |
-| `/team kick <player>` | Kick a player |
-| `/team info` | Show team information |
-
-### **Management Commands**
-| Command | Description |
-|---------|-------------|
-| `/team promote <player>` | Promote to Co-Owner |
-| `/team demote <player>` | Demote to Member |
-| `/team transfer <player>` | Transfer ownership |
-| `/team disband` | Disband your team |
-| `/team pvp` | Toggle team PvP |
-| `/team public` | Toggle public/private |
-
-### **Home & Warp Commands**
-| Command | Description |
-|---------|-------------|
-| `/team sethome` | Set team home |
-| `/team delhome` | Delete team home |
-| `/team home` | Teleport home |
-| `/team setwarp <name>` | Create warp |
-| `/team delwarp <name>` | Delete warp |
-| `/team warp <name>` | Use warp |
-| `/team warps` | List warps |
-
-### **Economy Commands**
-| Command | Description |
-|---------|-------------|
-| `/team bank` | Open bank GUI |
-| `/team enderchest` | Open shared storage |
-
-### **Chat Commands**
-| Command | Description |
-|---------|-------------|
-| `/team chat` | Toggle team chat mode |
-| `/t <message>` | Send team message |
+✅ **High Performance**: Built for modern servers with support for Paper and Folia.  
+🛡️ **Advanced Team Management**: Role-based system with Owner, Co-Owner, and Member permissions.  
+🌐 **Proxy Support**: Real-time synchronization of chats, banks, and storage across your Velocity/BungeeCord network.  
+🏦 **Team Economy**: Shared team bank and ender chest storage with Vault integration.  
+🏠 **Teleportation System**: Secure team homes and warps with configurable warmups and cooldowns.  
+🎨 **Rich Customization**: Fully configurable messages, GUIs, and command settings with MiniMessage support.  
+💬 **Integrated Team Chat**: Easy-to-use team chat mode and quick message commands.  
+🧩 **Integrations**: Seamless support for Vault economy and PlaceholderAPI.  
 
 ---
 
-## 🔐 **Permissions**
+## 🚀 Installation
 
-- `justteams.*` - All permissions
-- `justteams.user` - Basic team commands
-- `justteams.admin` - Admin commands
+### Basic Setup
+1. Download `justTeams.jar`.
+2. Place the jar file in your server's `/plugins` directory.
+3. Install **Vault** (required for economy) and **PlaceholderAPI** (recommended).
+4. Restart the server to generate the configuration files.
 
-### **Bypass Permissions**
-- `justteams.bypass.bank.withdraw`
-- `justteams.bypass.enderchest.use`
-- `justteams.bypass.home.cooldown`
-- `justteams.bypass.warp.cooldown`
+### Cross-Server Setup
+For network-wide team synchronization:
 
----
-
-## 🧩 **PlaceholderAPI**
-
-| Placeholder | Description |
-|-------------|-------------|
-| `%justteams_name%` | Team name |
-| `%justteams_tag%` | Team tag |
-| `%justteams_role%` | Player's role |
-| `%justteams_member_count%` | Number of members |
-| `%justteams_kills%` | Team kills |
-| `%justteams_kdr%` | Kill/Death ratio |
-| `%justteams_bank_balance%` | Team bank balance |
+- Deploy `justTeams.jar` on all backend servers (e.g., Survival, Factions).
+- Configure a shared MySQL database in `config.yml` by setting the storage type to `MYSQL`.
+- Ensure all servers can connect to the same MySQL instance with the correct credentials.
 
 ---
 
-## ⚙️ **Configuration**
+## ⚙️ Configuration
 
-### **Main Settings**
-```yaml
-settings:
-  max_team_size: 10
-  default_pvp_status: true
-  default_public_status: false
+justTeams uses modular configuration files for clean organization:
 
-team_bank:
-  enabled: true
-  max_balance: 1000000.0
+**Core Files:**
+- `config.yml` - Main settings, database options, feature toggles.
+- `messages.yml` - All user-facing text output with MiniMessage support.
+- `gui.yml` - Configuration for all graphical user interfaces.
+- `commands.yml` - Command aliases and settings.
 
-team_home:
-  warmup_seconds: 5
-  cooldown_seconds: 300
-```
+**Key Configuration Options:**
 
-### **Storage Options**
-- **H2**: File-based storage (single server)
-- **MySQL**: Database storage (multi-server)
-
----
-
-## 📚 **Wiki**
-
-<div align="center">
-
-### **Quick Guides**
-
-| What do you want to do? | How to do it |
-|------------------------|--------------|
-| **Create your first team** | `/team create MyTeam [MT]` |
-| **Invite a player** | `/team invite PlayerName` |
-| **Accept an invitation** | `/team accept TeamName` |
-| **Open team GUI** | `/team` or `/team gui` |
-| **Set team home** | `/team sethome` |
-| **Teleport to home** | `/team home` |
-| **Access team bank** | `/team bank` |
-| **Use team storage** | `/team enderchest` |
-| **Toggle team chat** | `/team chat` |
-| **Send team message** | `/t Hello team!` |
-
-</div>
-
-<div align="center">
-
-### **Team Management**
-
-| Action | Command | Permission Required |
-|--------|---------|-------------------|
-| **Promote player** | `/team promote PlayerName` | Owner/Co-Owner |
-| **Demote player** | `/team demote PlayerName` | Owner/Co-Owner |
-| **Kick player** | `/team kick PlayerName` | Owner/Co-Owner |
-| **Transfer ownership** | `/team transfer PlayerName` | Owner only |
-| **Disband team** | `/team disband` | Owner only |
-| **Toggle PvP** | `/team pvp` | Owner/Co-Owner |
-| **Make public/private** | `/team public` | Owner/Co-Owner |
-
-</div>
-
-<div align="center">
-
-### **Team Features**
-
-| Feature | How to Use | Description |
-|---------|------------|-------------|
-| **🏠 Team Home** | `/team sethome` → `/team home` | Set and teleport to team home |
-| **🌐 Team Warps** | `/team setwarp name` → `/team warp name` | Create and use team warps |
-| **🏦 Team Bank** | `/team bank` | Access shared team funds |
-| **📦 Storage** | `/team enderchest` | Use shared team storage |
-| **💬 Team Chat** | `/team chat` or `/t message` | Communicate with team |
-
-</div>
-
-<div align="center">
-
-### **Permissions**
-
-| Permission | What it does |
-|------------|--------------|
-| `justteams.user` | Basic team commands |
-| `justteams.admin` | Admin commands |
-| `justteams.bypass.bank.withdraw` | Bypass bank restrictions |
-| `justteams.bypass.enderchest.use` | Bypass storage restrictions |
-| `justteams.bypass.home.cooldown` | Bypass home cooldown |
-
-</div>
-
-<div align="center">
-
-### **Configuration**
-
-| File | What it controls |
-|------|------------------|
-| `config.yml` | Main plugin settings |
-| `messages.yml` | All text and messages |
-| `gui.yml` | GUI appearance |
-| `commands.yml` | Command configuration |
-
-</div>
-
-<div align="center">
-
-### **Common Issues**
-
-| Problem | Solution |
-|---------|----------|
-| **"No permission"** | Check player permissions |
-| **"Team not found"** | Make sure team exists |
-| **"Player not in team"** | Join a team first |
-| **"GUI not opening"** | Check permissions and team status |
-| **"Database error"** | Check MySQL/H2 configuration |
-
-</div>
+| Setting | Description |
+|---|---|
+| `settings.max_team_size` | The maximum number of players allowed in a single team. |
+| `storage_type` | Set to `H2` for single-server or `MYSQL` for network-wide sync. |
+| `team_bank.enabled` | Toggles the shared team bank feature. |
+| `team_home.warmup_seconds` | The delay before a player teleports to the team home. |
+| `team_home.cooldown_seconds`| The time a player must wait between uses of `/team home`. |
+| `default_pvp_status` | The default friendly-fire status for newly created teams. |
+| `team_enderchest` | Enables and configures the shared team ender chest. |
 
 ---
 
-## 🤝 **Support**
+## ⌨️ Commands
 
-- **Issues**: [GitHub Issues](https://github.com/kotori/justTeams/issues)
-- **Discord**: [Join Server](https://discord.gg/Am7D6Qz9)
+### Player Commands
+| Command | Description | Permission |
+|---|---|---|
+| `/team create <name> <tag>` | Create a new team. | `justteams.user` |
+| `/team invite <player>` | Invite a player to your team. | `justteams.user` |
+| `/team accept <team>` | Accept a pending team invitation. | `justteams.user` |
+| `/team leave` | Leave your current team. | `justteams.user` |
+| `/team info` | Display information about your team. | `justteams.user` |
+| `/team home` | Teleport to your team's home. | `justteams.user` |
+| `/team bank` | Open the shared team bank GUI. | `justteams.user` |
+| `/team enderchest` | Open the shared team ender chest. | `justteams.user` |
+| `/team chat` | Toggle team-only chat mode. | `justteams.user` |
+| `/t <message>` | Send a single message to team chat. | `justteams.user` |
+
+### Admin & Management Commands
+| Command | Description | Permission |
+|---|---|---|
+| `/team kick <player>` | Kick a player from your team. | Owner/Co-Owner |
+| `/team promote <player>` | Promote a member to Co-Owner. | Owner/Co-Owner |
+| `/team demote <player>` | Demote a Co-Owner to Member. | Owner/Co-Owner |
+| `/team transfer <player>` | Transfer ownership of the team. | Owner |
+| `/team disband` | Disband your team permanently. | Owner |
+| `/team pvp` | Toggle friendly-fire for the team. | Owner/Co-Owner |
+| `/team public` | Toggle if your team is open to invites. | Owner/Co-Owner |
+| `/team sethome` | Set the team's home location. | Owner/Co-Owner |
+| `/team admin` | Admin commands for managing all teams. | `justteams.admin` |
 
 ---
 
-<div align="center">
+## ⚔️ Team Management & Features
 
-## 🎉 **Ready to Get Started?**
+Manage your team effectively using a powerful suite of features.
 
-[![Download](https://img.shields.io/badge/Download-Latest-brightgreen?style=for-the-badge&logo=download)](https://builtbybit.com/resources/justteams.71401/)
-[![Documentation](https://img.shields.io/badge/Documentation-Wiki-blue?style=for-the-badge&logo=book)](https://github.com/kotori/justTeams/wiki)
-[![Support](https://img.shields.io/badge/Support-Discord-purple?style=for-the-badge&logo=discord)](https://discord.gg/Am7D6Qz9)
+**Role System:**
+- **Owner**: Full control over the team, including disbanding and ownership transfer.
+- **Co-Owner**: Can manage members, set the team home, and toggle settings like PvP.
+- **Member**: Basic permissions to participate in chat, use the bank, and teleport home.
+
+**Team Bank & Storage:**
+- Access a shared Vault-based economy balance with `/team bank`.
+- Store items in a shared ender chest inventory using `/team enderchest`.
+- All balances and items are synchronized across the network when using MySQL.
+
+**Homes & Warps:**
+- Set a central home point for your team with `/team sethome`.
+- All members can teleport to this location via `/team home`, subject to warmup and cooldown timers.
+- Create shared team warps for easy access to important locations with `/team setwarp <name>`.
 
 ---
 
-**🍩 justTeams** - *The ultimate team management solution for modern Minecraft servers*
+## 🔑 Permissions
 
-*Built with ❤️ by [**kotori**](https://github.com/kotori)*
-
-</div>
+### Core Permissions
+| Permission | Description | Default |
+|---|---|---|
+| `justteams.user` | Access to all basic player commands. | true |
+| `justteams.admin` | Access to administrative commands to manage all teams. | op |
+| `justteams.*` | Grants access to a
