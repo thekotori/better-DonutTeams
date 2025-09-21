@@ -138,4 +138,38 @@ Manage your team effectively using a powerful suite of features.
 |---|---|---|
 | `justteams.user` | Access to all basic player commands. | true |
 | `justteams.admin` | Access to administrative commands to manage all teams. | op |
-| `justteams.*` | Grants access to a
+| `justteams.*` | Grants access to all plugin features and commands. | op |
+
+### Bypass Permissions
+| Permission | Description |
+|---|---|
+| `justteams.bypass.home.cooldown` | Skip the cooldown timer for `/team home`. |
+| `justteams.bypass.home.warmup` | Skip the warmup delay for `/team home`. |
+| `justteams.bypass.warp.cooldown` | Skip the cooldown timer for `/team warp`. |
+| `justteams.bypass.bank.withdraw`| Bypass any withdrawal restrictions from the team bank. |
+| `justteams.bypass.enderchest.use`| Bypass any restrictions on using the team ender chest. |
+
+---
+
+## 🧩 PlaceholderAPI
+
+Integrate team information into other plugins with these placeholders:
+
+| Placeholder | Description |
+|---|---|
+| `%justteams_name%` | The player's current team name. |
+| `%justteams_tag%` | The player's current team tag. |
+| `%justteams_role%` | The player's role within their team (e.g., Owner). |
+| `%justteams_member_count%`| The total number of members in the player's team. |
+| `%justteams_kills%` | The total number of kills accumulated by the team. |
+| `%justteams_kdr%` | The Kill/Death ratio of the team. |
+| `%justteams_bank_balance%`| The current balance of the team's bank. |
+
+---
+
+## 🔧 Technical Requirements
+
+- **Server Software**: Paper 1.21+, Folia supported.
+- **Java**: Version 17 or higher.
+- **Dependencies**: Vault (for economy), PlaceholderAPI (optional), a compatible permissions plugin.
+- **Database**: H2 (for single-server), MySQL 8.0+ (for cross-server networks).<p align="center">
