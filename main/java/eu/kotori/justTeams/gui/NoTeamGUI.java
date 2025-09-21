@@ -1,5 +1,4 @@
 package eu.kotori.justTeams.gui;
-
 import eu.kotori.justTeams.JustTeams;
 import eu.kotori.justTeams.util.GuiConfigManager;
 import eu.kotori.justTeams.util.ItemBuilder;
@@ -11,26 +10,20 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
 public class NoTeamGUI implements IRefreshableGUI, InventoryHolder {
-
     private final JustTeams plugin;
     private final Player viewer;
     private final Inventory inventory;
-
     public NoTeamGUI(JustTeams plugin, Player viewer) {
         this.plugin = plugin;
         this.viewer = viewer;
-
         GuiConfigManager guiManager = plugin.getGuiConfigManager();
         ConfigurationSection guiConfig = guiManager.getGUI("no-team-gui");
         String title = guiConfig.getString("title", "ᴛᴇᴀᴍ ᴍᴇɴᴜ");
         int size = guiConfig.getInt("size", 27);
-
         this.inventory = Bukkit.createInventory(this, size, plugin.getMiniMessage().deserialize(title));
         initializeItems(guiConfig);
     }
-
     private void initializeItems(ConfigurationSection guiConfig) {
         inventory.clear();
         ConfigurationSection itemsSection = guiConfig.getConfigurationSection("items");
@@ -38,7 +31,6 @@ public class NoTeamGUI implements IRefreshableGUI, InventoryHolder {
             setItemFromConfig(itemsSection, "create-team");
             setItemFromConfig(itemsSection, "leaderboards");
         }
-
         ConfigurationSection fillConfig = guiConfig.getConfigurationSection("fill-item");
         if (fillConfig != null) {
             ItemStack fillItem = new ItemBuilder(Material.matchMaterial(fillConfig.getString("material", "GRAY_STAINED_GLASS_PANE")))
@@ -51,26 +43,21 @@ public class NoTeamGUI implements IRefreshableGUI, InventoryHolder {
             }
         }
     }
-
     private void setItemFromConfig(ConfigurationSection itemsSection, String key) {
         ConfigurationSection itemConfig = itemsSection.getConfigurationSection(key);
         if (itemConfig == null) return;
-
         int slot = itemConfig.getInt("slot");
         Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
         String name = itemConfig.getString("name", "");
         java.util.List<String> lore = itemConfig.getStringList("lore");
-
         inventory.setItem(slot, new ItemBuilder(material).withName(name).withLore(lore).withAction(key).build());
     }
-
-    @Override
     public void open() {
         viewer.openInventory(inventory);
     }
-
-    @NotNull
-    @Override
+    public void refresh() {
+        open();
+    }
     public Inventory getInventory() {
         return inventory;
     }

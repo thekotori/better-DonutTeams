@@ -15,16 +15,26 @@ public class PlayerConnectionListener implements Listener {
         this.plugin = plugin;
         this.teamManager = plugin.getTeamManager();
     }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        if (plugin.getConfigManager().isBedrockSupportEnabled() && plugin.getBedrockSupport().isBedrockPlayer(player)) {
+            plugin.getLogger().info("Bedrock player joined: " + player.getName() +
+                " (UUID: " + player.getUniqueId() + ")");
+            if (plugin.getConfigManager().isShowGamertags()) {
+                String gamertag = plugin.getBedrockSupport().getBedrockGamertag(player);
+                if (gamertag != null && !gamertag.equals(player.getName())) {
+                    plugin.getLogger().info("Bedrock player gamertag: " + gamertag);
+                }
+            }
+        }
         teamManager.handlePendingTeleport(player);
         teamManager.loadPlayerTeam(player);
     }
-
-    @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        teamManager.unloadPlayer(event.getPlayer());
+        Player player = event.getPlayer();
+        if (plugin.getConfigManager().isBedrockSupportEnabled()) {
+            plugin.getBedrockSupport().clearPlayerCache(player.getUniqueId());
+        }
+        teamManager.unloadPlayer(player);
     }
 }

@@ -53,6 +53,7 @@ permissions:
       - justteams.bypass.bank.withdraw
       - justteams.bypass.enderchest.use
       - justteams.bypass.home.cooldown
+      - justteams.bypass.warp.cooldown
   justteams.user:
     description: Grants access to all standard player commands.
     children:
@@ -77,6 +78,14 @@ permissions:
       - justteams.command.enderchest
       - justteams.command.top
       - justteams.command.teammsg
+      - justteams.command.join
+      - justteams.command.unjoin
+      - justteams.command.public
+      - justteams.command.requests
+      - justteams.command.setwarp
+      - justteams.command.delwarp
+      - justteams.command.warp
+      - justteams.command.warps
   justteams.bypass.bank.withdraw:
     description: Allows bypassing team-specific withdrawal permissions.
     default: op
@@ -85,6 +94,9 @@ permissions:
     default: op
   justteams.bypass.home.cooldown:
     description: Allows bypassing the /team home teleport cooldown.
+    default: op
+  justteams.bypass.warp.cooldown:
+    description: Allows bypassing the /team warp teleport cooldown.
     default: op
   justteams.command.admin:
     description: Allows access to the /team admin command and GUI.
@@ -155,3 +167,30 @@ permissions:
   justteams.command.teammsg:
     description: Allows sending a message to the team chat.
     default: true
+  justteams.command.join:
+    description: Allows joining or requesting to join a team.
+    default: true
+  justteams.command.unjoin:
+    description: Allows withdrawing a join request from a team.
+    default: true
+  justteams.command.public:
+    description: Allows toggling a team's public status.
+    default: true
+  justteams.command.requests:
+    description: Allows viewing join requests for a team.
+    default: true
+  justteams.command.setwarp:
+    description: Allows setting a team warp.
+    default: true
+  justteams.command.delwarp:
+    description: Allows deleting a team warp.
+    default: true
+  justteams.command.warp:
+    description: Allows teleporting to a team warp.
+    default: true
+  justteams.command.warps:
+    description: Allows listing team warps or opening the GUI.
+    default: true
+  justteams.admin.performance:
+    description: Allows access to performance monitoring commands.
+    default: op

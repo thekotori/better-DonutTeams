@@ -1,29 +1,47 @@
-# ---------------------------------------------------- #
-#        justTeams Command Configuration        #
-# ---------------------------------------------------- #
-# This file controls which commands are active on your server.
-# It allows you to choose a primary command (like /guild or /clan)
-# and have all other alternatives act as aliases.
+# ===================================================================
+#                        JustTeams Commands
+#                    Command Configuration Settings
+# ===================================================================
 #
-# HOW IT WORKS:
-# The plugin registers all commands listed in plugin.yml (team, guild, clan, party).
-# The settings below determine which one becomes the "main" command.
-# All other commands will simply execute the primary one.
-# This system gives you full control over how your players interact with the plugin.
+# This file defines the main commands and aliases used by the plugin.
+# You can customize command names to match your server's conventions.
 #
-# EXAMPLE:
-# If you set primary-command to "guild", then running /team, /clan, or /party
-# will function exactly as if the player had typed /guild.
-# ---------------------------------------------------- #
+# Command Structure:
+#   - primary-command: The main command players use (e.g., /team)
+#   - primary-message-command: The team messaging command (e.g., /teammsg)
+#   - Aliases are registered for common alternatives
+#
+# Customization Options:
+#   - Change command names to fit your server style
+#   - Commands are registered with Bukkit
+#   - Plugin.yml permissions are linked to these commands
+#   - Tab completion is generated
+#
+# Important Notes:
+#   - Command changes require a full server restart
+#   - Ensure commands don't conflict with other plugins
+#   - Keep commands short and memorable
+#   - Test thoroughly after making changes
+#
+# Default Aliases:
+#   - /team also works as: /guild, /clan, /party
+#   - /teammsg also works as: /guildmsg, /clanmsg, /partymsg
+#
+# ===================================================================
 
-# primary-command:
-#   This is the main command players will use for general team management.
-#   It's recommended to choose ONE and leave it.
-#   Valid options are: team, guild, clan, party
+# Command configuration version - DO NOT MODIFY
+commands-version: 5
+
+# ===================================================================
+#                        Main Command Settings
+# ===================================================================
+
+# Primary team management command
+# This is the main command players use to access all team features
+# Examples: /team create, /team invite, /team gui, etc.
 primary-command: "team"
 
-# primary-message-command:
-#   This is the main command for sending team chat messages.
-#   It's recommended to choose ONE and leave it.
-#   Valid options are: teammsg, guildmsg, clanmsg, partymsg
+# Primary team messaging command  
+# This command allows players to send messages directly to their team
+# Usage: /teammsg <message> or /teammsg <player> <message>
 primary-message-command: "teammsg"

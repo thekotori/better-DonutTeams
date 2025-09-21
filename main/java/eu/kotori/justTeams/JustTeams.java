@@ -3,307 +3,352 @@ import eu.kotori.justTeams.commands.TeamCommand;
 import eu.kotori.justTeams.commands.TeamMessageCommand;
 import eu.kotori.justTeams.config.ConfigManager;
 import eu.kotori.justTeams.config.MessageManager;
+import eu.kotori.justTeams.gui.GUIManager;
 import eu.kotori.justTeams.gui.TeamGUIListener;
-import eu.kotori.justTeams.listeners.*;
+import eu.kotori.justTeams.listeners.PlayerConnectionListener;
+import eu.kotori.justTeams.listeners.PlayerStatsListener;
+import eu.kotori.justTeams.listeners.PvPListener;
+import eu.kotori.justTeams.listeners.TeamChatListener;
+import eu.kotori.justTeams.listeners.TeamEnderChestListener;
 import eu.kotori.justTeams.storage.StorageManager;
+import eu.kotori.justTeams.storage.DatabaseStorage;
+import eu.kotori.justTeams.storage.DatabaseMigrationManager;
 import eu.kotori.justTeams.team.TeamManager;
-import eu.kotori.justTeams.util.*;
-import me.NoChance.PvPManager.PvPManager;
+import eu.kotori.justTeams.util.AliasManager;
+import eu.kotori.justTeams.util.BedrockSupport;
+import eu.kotori.justTeams.util.ChatInputManager;
+import eu.kotori.justTeams.util.CommandManager;
+import eu.kotori.justTeams.util.ConfigUpdater;
+import eu.kotori.justTeams.util.DebugLogger;
+import eu.kotori.justTeams.util.GuiConfigManager;
+import eu.kotori.justTeams.util.ItemBuilder;
+import eu.kotori.justTeams.util.StartupManager;
+import eu.kotori.justTeams.util.TaskRunner;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+import java.util.Map;
+import eu.kotori.justTeams.storage.DatabaseStorage;
+import eu.kotori.justTeams.util.PAPIExpansion;
+import eu.kotori.justTeams.util.StartupMessage;
+import me.clip.placeholderapi.PlaceholderAPI;
 public final class JustTeams extends JavaPlugin {
-    public enum ProxyType { BUNGEECORD, VELOCITY, NONE }
-
     private static JustTeams instance;
+    private static NamespacedKey actionKey;
     private ConfigManager configManager;
     private MessageManager messageManager;
-    private GuiConfigManager guiConfigManager;
     private StorageManager storageManager;
     private TeamManager teamManager;
+    private GUIManager guiManager;
+    private TaskRunner taskRunner;
+    private ChatInputManager chatInputManager;
+    private CommandManager commandManager;
     private AliasManager aliasManager;
+    private GuiConfigManager guiConfigManager;
+    private DebugLogger debugLogger;
+    private StartupManager startupManager;
+    private BedrockSupport bedrockSupport;
     private TeamChatListener teamChatListener;
     private MiniMessage miniMessage;
     private Economy economy;
-    private ChatInputManager chatInputManager;
-    private TaskRunner taskRunner;
-    private PvPManager pvpManager;
-    private ProxyMessagingManager proxyMessagingManager;
-    private DebugLogger debugLogger;
-    private ProxyType proxyType = ProxyType.NONE;
-    private static boolean IS_FOLIA = false;
     public boolean updateAvailable = false;
     public String latestVersion = "";
-    private static NamespacedKey actionKey;
-    private Object heartbeatTask;
-
-    @Override
     public void onEnable() {
         instance = this;
-        this.miniMessage = MiniMessage.miniMessage();
-        actionKey = new NamespacedKey(this, "gui-action");
-
+        actionKey = new NamespacedKey(this, "action");
+        Logger logger = getLogger();
+        logger.info("Starting JustTeams...");
+        if (!Bukkit.getServer().getName().equals("Paper") && !Bukkit.getServer().getName().equals("Folia")) {
+            logger.warning("JustTeams is designed for Paper/Folia servers. Some features may not work correctly on other server software.");
+        }
+        if (Bukkit.getServer().getName().equals("Folia")) {
+            logger.info("Folia detected! Using threaded region support.");
+        }
+        miniMessage = MiniMessage.miniMessage();
         try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
-            IS_FOLIA = true;
-            getLogger().info("Folia detected. Enabling Folia support.");
-        } catch (ClassNotFoundException e) {
-            IS_FOLIA = false;
-            getLogger().info("Folia not detected. Using standard Bukkit scheduler.");
-        }
-
-        this.taskRunner = new TaskRunner(this);
-
-        ConfigUpdater.update(this);
-
-        this.configManager = new ConfigManager(this);
-        this.debugLogger = new DebugLogger(this);
-        this.messageManager = new MessageManager(this);
-        this.guiConfigManager = new GuiConfigManager(this);
-        this.aliasManager = new AliasManager(this);
-
-        initializeProxy();
-
-        if (!setupEconomy()) {
-            getLogger().warning("Vault or an Economy plugin not found! The team bank feature will be disabled.");
-        }
-        setupPvpManager();
-
-        this.storageManager = new StorageManager(this);
-        if (!storageManager.init()) {
-            getLogger().severe("Failed to initialize storage. Disabling plugin.");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
-        }
-
-        this.chatInputManager = new ChatInputManager(this);
-        this.teamManager = new TeamManager(this);
-
-        registerListeners();
-        registerCommands();
-        registerChannels();
-        startHeartbeat();
-
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new PAPIExpansion(this).register();
-            getLogger().info("Successfully hooked into PlaceholderAPI.");
-        }
-
-        new VersionChecker(this).check();
-
-        StartupMessage.send();
-        WebhookUtil.sendStartupNotification(this);
-    }
-
-    public void initializeProxy() {
-        String proxyConfig = configManager.getString("proxy_settings.type", "NONE").toUpperCase();
-        try {
-            this.proxyType = ProxyType.valueOf(proxyConfig);
-        } catch (IllegalArgumentException e) {
-            getLogger().severe("Invalid 'proxy_type' in config.yml! Defaulting to NONE.");
-            this.proxyType = ProxyType.NONE;
-        }
-
-        this.proxyMessagingManager = new ProxyMessagingManager(this);
-
-        if (proxyType != ProxyType.NONE) {
-            getLogger().info("Proxy mode enabled: " + proxyType.name() + ". Cross-server features are active.");
-        } else {
-            getLogger().warning("Proxy mode is NONE. Cross-server features are disabled.");
+            setupEconomy();
+            initializeManagers();
+            registerListeners();
+            registerCommands();
+            registerPlaceholderAPI();
+            StartupMessage.send();
+            logger.info("JustTeams has been enabled successfully!");
+        } catch (Exception e) {
+            logger.severe("Failed to enable JustTeams: " + e.getMessage());
+            logger.log(java.util.logging.Level.SEVERE, "JustTeams enable error details", e);
+            getServer().getPluginManager().disablePlugin(this);
         }
     }
-
-    @Override
     public void onDisable() {
-        cancelHeartbeat();
-        if (teamManager != null) {
-            teamManager.saveAllOnlineTeamEnderChests();
+        Logger logger = getLogger();
+        logger.info("Disabling JustTeams...");
+        try {
+            if (taskRunner != null) {
+                taskRunner.cancelAllTasks();
+            }
+        } catch (Exception e) {
+            logger.warning("Error cancelling tasks: " + e.getMessage());
         }
-        if (storageManager != null) {
-            storageManager.shutdown();
+        try {
+            if (teamManager != null) {
+                teamManager.shutdown();
+            }
+        } catch (Exception e) {
+            logger.warning("Error shutting down team manager: " + e.getMessage());
+        }
+        try {
+            if (guiManager != null && guiManager.getUpdateThrottle() != null) {
+                guiManager.getUpdateThrottle().cleanup();
+            }
+        } catch (Exception e) {
+            logger.warning("Error cleaning up GUI throttles: " + e.getMessage());
+        }
+        try {
+            if (storageManager != null) {
+                storageManager.shutdown();
+            }
+        } catch (Exception e) {
+            logger.warning("Error shutting down storage manager: " + e.getMessage());
+        }
+        logger.info("JustTeams has been disabled.");
+    }
+    private void initializeManagers() {
+        configManager = new ConfigManager(this);
+        ConfigUpdater.updateAllConfigs(this);
+        ConfigUpdater.migrateToPlaceholderSystem(this);
+        messageManager = new MessageManager(this);
+        storageManager = new StorageManager(this);
+        if (!storageManager.init()) {
+            throw new RuntimeException("Failed to initialize storage manager");
+        }
+
+        if (storageManager.getStorage() instanceof DatabaseStorage) {
+            DatabaseMigrationManager migrationManager = new DatabaseMigrationManager(this, (DatabaseStorage) storageManager.getStorage());
+            if (!migrationManager.performMigration()) {
+                getLogger().warning("Database migration completed with warnings. Some features may not work correctly.");
+            }
+        }
+        teamManager = new TeamManager(this);
+        guiManager = new GUIManager(this);
+        taskRunner = new TaskRunner(this);
+        chatInputManager = new ChatInputManager(this);
+        commandManager = new CommandManager(this);
+        aliasManager = new AliasManager(this);
+        guiConfigManager = new GuiConfigManager(this);
+        debugLogger = new DebugLogger(this);
+        bedrockSupport = new BedrockSupport(this);
+        teamManager.cleanupEnderChestLocksOnStartup();
+        if (storageManager.getStorage() instanceof DatabaseStorage) {
+            startupManager = new StartupManager(this, (DatabaseStorage) storageManager.getStorage());
+            if (!startupManager.performStartup()) {
+                throw new RuntimeException("Startup sequence failed! Check logs for details.");
+            }
+            startupManager.schedulePeriodicHealthChecks();
+            startupManager.schedulePeriodicPermissionSaves();
+        }
+        startCrossServerTasks();
+    }
+    private void startCrossServerTasks() {
+        String serverName = configManager.getServerIdentifier();
+        long heartbeatInterval = configManager.getHeartbeatInterval();
+        long crossServerInterval = configManager.getCrossServerSyncInterval();
+        long criticalInterval = configManager.getCriticalSyncInterval();
+        long cacheCleanupInterval = configManager.getCacheCleanupInterval();
+
+        taskRunner.runAsyncTaskTimer(() -> {
+            try {
+                if (storageManager.getStorage() instanceof DatabaseStorage dbStorage) {
+                    dbStorage.updateServerHeartbeat(serverName);
+                } else {
+                    storageManager.getStorage().updateServerHeartbeat(serverName);
+                }
+                if (configManager.isDebugLoggingEnabled()) {
+                    debugLogger.log("Updated server heartbeat for: " + serverName);
+                }
+            } catch (Exception e) {
+                getLogger().warning("Error updating server heartbeat: " + e.getMessage());
+            }
+        }, heartbeatInterval, heartbeatInterval);
+
+        if (configManager.isCrossServerSyncEnabled()) {
+            taskRunner.runAsyncTaskTimer(() -> {
+                try {
+                    teamManager.syncCrossServerData();
+                    if (configManager.isDebugLoggingEnabled()) {
+                        debugLogger.log("Cross-server sync cycle completed");
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Error in cross-server sync: " + e.getMessage());
+                }
+            }, crossServerInterval, crossServerInterval);
+
+            taskRunner.runAsyncTaskTimer(() -> {
+                try {
+                    teamManager.syncCriticalUpdates();
+                } catch (Exception e) {
+                    getLogger().warning("Error in critical sync: " + e.getMessage());
+                }
+            }, criticalInterval, criticalInterval);
+
+            taskRunner.runAsyncTaskTimer(() -> {
+                try {
+                    teamManager.flushCrossServerUpdates();
+                    if (configManager.isDebugLoggingEnabled()) {
+                        debugLogger.log("Flushed pending cross-server updates");
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Error flushing cross-server updates: " + e.getMessage());
+                }
+            }, 120L, 120L);
+        }
+
+        taskRunner.runAsyncTaskTimer(() -> {
+            try {
+                teamManager.cleanupExpiredCache();
+                if (configManager.isDebugLoggingEnabled()) {
+                    debugLogger.log("Cleaned up expired cache entries");
+                }
+            } catch (Exception e) {
+                getLogger().warning("Error cleaning up cache: " + e.getMessage());
+            }
+        }, cacheCleanupInterval, cacheCleanupInterval);
+
+        taskRunner.runAsyncTaskTimer(() -> {
+            try {
+                if (storageManager.getStorage() instanceof DatabaseStorage) {
+                    ((DatabaseStorage) storageManager.getStorage()).cleanupOldCrossServerData();
+                    if (configManager.isDebugLoggingEnabled()) {
+                        debugLogger.log("Cleaned up old cross-server data");
+                    }
+                }
+            } catch (Exception e) {
+                getLogger().warning("Error cleaning up old cross-server data: " + e.getMessage());
+            }
+        }, 1200L, 1200L);
+
+        if (configManager.isConnectionPoolMonitoringEnabled()) {
+            taskRunner.runAsyncTaskTimer(() -> {
+                try {
+                    if (storageManager.getStorage() instanceof DatabaseStorage) {
+                        DatabaseStorage dbStorage = (DatabaseStorage) storageManager.getStorage();
+                        if (configManager.isDebugEnabled()) {
+                            Map<String, Object> stats = dbStorage.getDatabaseStats();
+                            debugLogger.log("Database stats: " + stats.toString());
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Error monitoring connection pool: " + e.getMessage());
+                }
+            }, configManager.getConnectionPoolLogInterval() * 60L, configManager.getConnectionPoolLogInterval() * 60L);
         }
     }
-
-    public void reloadPluginConfigs() {
-        configManager.reloadConfig();
-        messageManager.reload();
-        guiConfigManager.reload();
-        aliasManager.reload();
-        debugLogger.reload();
-        initializeProxy();
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new TeamGUIListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerConnectionListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerStatsListener(this), this);
+        getServer().getPluginManager().registerEvents(new PvPListener(this), this);
+        teamChatListener = new TeamChatListener(this);
+        getServer().getPluginManager().registerEvents(teamChatListener, this);
+        getServer().getPluginManager().registerEvents(new TeamEnderChestListener(this), this);
     }
-
+    private void registerCommands() {
+        TeamCommand teamCommand = new TeamCommand(this);
+        TeamMessageCommand teamMessageCommand = new TeamMessageCommand(this);
+        getCommand("team").setExecutor(teamCommand);
+        getCommand("team").setTabCompleter(teamCommand);
+        getCommand("guild").setExecutor(teamCommand);
+        getCommand("guild").setTabCompleter(teamCommand);
+        getCommand("clan").setExecutor(teamCommand);
+        getCommand("clan").setTabCompleter(teamCommand);
+        getCommand("party").setExecutor(teamCommand);
+        getCommand("party").setTabCompleter(teamCommand);
+        getCommand("teammsg").setExecutor(teamMessageCommand);
+        getCommand("guildmsg").setExecutor(teamMessageCommand);
+        getCommand("clanmsg").setExecutor(teamMessageCommand);
+        getCommand("partymsg").setExecutor(teamMessageCommand);
+        aliasManager.registerAliases();
+        commandManager.registerCommands();
+    }
+    private void registerPlaceholderAPI() {
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new PAPIExpansion(this).register();
+            getLogger().info("PlaceholderAPI expansion registered successfully!");
+        } else {
+            getLogger().warning("PlaceholderAPI not found! Placeholders will not work.");
+        }
+    }
+    public static JustTeams getInstance() {
+        return instance;
+    }
+    public static NamespacedKey getActionKey() {
+        return actionKey;
+    }
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+    public MessageManager getMessageManager() {
+        return messageManager;
+    }
+    public StorageManager getStorageManager() {
+        return storageManager;
+    }
+    public TeamManager getTeamManager() {
+        return teamManager;
+    }
+    public TeamChatListener getTeamChatListener() {
+        return teamChatListener;
+    }
+    public GUIManager getGuiManager() {
+        return guiManager;
+    }
+    public TaskRunner getTaskRunner() {
+        return taskRunner;
+    }
+    public ChatInputManager getChatInputManager() {
+        return chatInputManager;
+    }
+    public CommandManager getCommandManager() {
+        return commandManager;
+    }
+    public AliasManager getAliasManager() {
+        return aliasManager;
+    }
+    public GuiConfigManager getGuiConfigManager() {
+        return guiConfigManager;
+    }
+    public StartupManager getStartupManager() {
+        return startupManager;
+    }
+    public DebugLogger getDebugLogger() {
+        return debugLogger;
+    }
+    public MiniMessage getMiniMessage() {
+        return miniMessage;
+    }
+    public Economy getEconomy() {
+        return economy;
+    }
+    public BedrockSupport getBedrockSupport() {
+        return bedrockSupport;
+    }
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().warning("Vault plugin not found! Economy features will be disabled.");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
+            getLogger().warning("No economy provider found! Economy features will be disabled.");
             return false;
         }
         economy = rsp.getProvider();
+        if (economy != null) {
+            getLogger().info("Economy provider found: " + economy.getName());
+        }
         return economy != null;
-    }
-
-    private void setupPvpManager() {
-        if (Bukkit.getPluginManager().isPluginEnabled("PvPManager")) {
-            this.pvpManager = (PvPManager) Bukkit.getPluginManager().getPlugin("PvPManager");
-            getLogger().info("Successfully hooked into PvPManager.");
-        } else {
-            this.pvpManager = null;
-        }
-    }
-
-    private void registerCommands() {
-        TeamCommand teamExecutor = new TeamCommand(this, this.teamChatListener);
-        TeamMessageCommand teamMessageExecutor = new TeamMessageCommand(this);
-
-        List<String> mainCommands = Arrays.asList("team", "guild", "clan", "party");
-        for (String cmd : mainCommands) {
-            if (getCommand(cmd) != null) {
-                getCommand(cmd).setExecutor(teamExecutor);
-                getCommand(cmd).setTabCompleter(teamExecutor);
-            }
-        }
-
-        List<String> msgCommands = Arrays.asList("teammsg", "guildmsg", "clanmsg", "partymsg");
-        for (String cmd : msgCommands) {
-            if (getCommand(cmd) != null) {
-                getCommand(cmd).setExecutor(teamMessageExecutor);
-            }
-        }
-
-        aliasManager.registerAliases();
-    }
-
-    private void registerListeners() {
-        this.teamChatListener = new TeamChatListener(this);
-        Bukkit.getPluginManager().registerEvents(new PlayerConnectionListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new TeamGUIListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PvPListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerStatsListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new TeamEnderChestListener(this), this);
-        Bukkit.getPluginManager().registerEvents(this.teamChatListener, this);
-        if (this.proxyMessagingManager != null) {
-            Bukkit.getPluginManager().registerEvents(this.proxyMessagingManager, this);
-        }
-    }
-
-    private void registerChannels() {
-        if (proxyType == ProxyType.BUNGEECORD) {
-            this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-            this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", proxyMessagingManager);
-            getDebugLogger().log("Registered BungeeCord channels.");
-        } else if (proxyType == ProxyType.VELOCITY) {
-            this.getServer().getMessenger().registerOutgoingPluginChannel(this, "velocity:main");
-            this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-            this.getServer().getMessenger().registerIncomingPluginChannel(this, ProxyMessagingManager.CUSTOM_DATA_CHANNEL, proxyMessagingManager);
-            getDebugLogger().log("Registered Velocity channels.");
-        }
-    }
-
-    private void startHeartbeat() {
-        if (heartbeatTask != null) {
-            cancelHeartbeat();
-        }
-        Runnable heartbeatRunnable = () -> {
-            getStorageManager().getStorage().updateServerHeartbeat(getConfigManager().getServerIdentifier());
-            getDebugLogger().log("Sent database heartbeat for server: " + getConfigManager().getServerIdentifier());
-        };
-
-        if (isFolia()) {
-            this.heartbeatTask = getServer().getAsyncScheduler().runAtFixedRate(this, (task) -> heartbeatRunnable.run(), 1, 1, TimeUnit.MINUTES);
-        } else {
-            this.heartbeatTask = getServer().getScheduler().runTaskTimerAsynchronously(this, heartbeatRunnable, 20L * 60, 20L * 60);
-        }
-    }
-
-    private void cancelHeartbeat() {
-        if (heartbeatTask instanceof ScheduledFuture) {
-            ((ScheduledFuture<?>) heartbeatTask).cancel(false);
-        } else if (heartbeatTask instanceof BukkitTask) {
-            ((BukkitTask) heartbeatTask).cancel();
-        }
-        heartbeatTask = null;
-    }
-
-    public static JustTeams getInstance() {
-        return instance;
-    }
-
-    public static boolean isFolia() {
-        return IS_FOLIA;
-    }
-
-    public static NamespacedKey getActionKey() {
-        return actionKey;
-    }
-
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public MessageManager getMessageManager() {
-        return messageManager;
-    }
-
-    public GuiConfigManager getGuiConfigManager() {
-        return guiConfigManager;
-    }
-
-    public StorageManager getStorageManager() {
-        return storageManager;
-    }
-
-    public TeamManager getTeamManager() {
-        return teamManager;
-    }
-
-    public AliasManager getAliasManager() {
-        return aliasManager;
-    }
-
-    public TeamChatListener getTeamChatListener() {
-        return teamChatListener;
-    }
-
-    public MiniMessage getMiniMessage() {
-        return miniMessage;
-    }
-
-    public Economy getEconomy() {
-        return economy;
-    }
-
-    public ChatInputManager getChatInputManager() {
-        return chatInputManager;
-    }
-
-    public TaskRunner getTaskRunner() {
-        return taskRunner;
-    }
-
-    public PvPManager getPvpManager() {
-        return pvpManager;
-    }
-
-    public ProxyMessagingManager getProxyMessagingManager() {
-        return proxyMessagingManager;
-    }
-
-    public DebugLogger getDebugLogger() {
-        return debugLogger;
-    }
-
-    public ProxyType getProxyType() {
-        return proxyType;
     }
 }

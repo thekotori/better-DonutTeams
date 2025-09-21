@@ -1,5 +1,4 @@
 package eu.kotori.justTeams.gui.admin;
-
 import eu.kotori.justTeams.JustTeams;
 import eu.kotori.justTeams.team.Team;
 import eu.kotori.justTeams.util.ItemBuilder;
@@ -11,14 +10,11 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
 public class AdminTeamManageGUI implements InventoryHolder {
-
     private final JustTeams plugin;
     private final Player viewer;
     private final Team targetTeam;
     private final Inventory inventory;
-
     public AdminTeamManageGUI(JustTeams plugin, Player viewer, Team targetTeam) {
         this.plugin = plugin;
         this.viewer = viewer;
@@ -26,14 +22,12 @@ public class AdminTeamManageGUI implements InventoryHolder {
         this.inventory = Bukkit.createInventory(this, 27, Component.text("Manage: " + targetTeam.getName()));
         initializeItems();
     }
-
     private void initializeItems() {
         inventory.clear();
         ItemStack border = new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).withName(" ").build();
         for (int i = 0; i < 27; i++) {
             inventory.setItem(i, border);
         }
-
         inventory.setItem(13, new ItemBuilder(Material.TNT)
                 .withName("<red><bold>DISBAND TEAM</bold></red>")
                 .withLore(
@@ -44,20 +38,14 @@ public class AdminTeamManageGUI implements InventoryHolder {
                 )
                 .withAction("disband-team")
                 .build());
-
         inventory.setItem(22, new ItemBuilder(Material.ARROW).withName("<gray>Back to Team List").withAction("back-button").build());
     }
-
     public void open() {
         viewer.openInventory(inventory);
     }
-
     public Team getTargetTeam() {
         return targetTeam;
     }
-
-    @NotNull
-    @Override
     public Inventory getInventory() {
         return inventory;
     }

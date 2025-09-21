@@ -1,142 +1,324 @@
-# ---------------------------------------------------- #
-#           justTeams Configuration             #
-# ---------------------------------------------------- #
-# This file contains all the main settings for the plugin.
-# For message customization, please see messages.yml.
-# For GUI customization, please see gui.yml.
+# ===================================================================
+#                        JustTeams Configuration
+#                    Team Management Plugin Settings
+# ===================================================================
 #
-# You can use /team reload to apply changes without a server restart.
-# ---------------------------------------------------- #
+# This file contains all configuration options for the JustTeams plugin.
+# Each setting controls different aspects of team functionality.
+#
+# Configuration Guidelines:
+#   - Boolean values: true/false (lowercase)
+#   - Strings: Use quotes "like this" for text values
+#   - Numbers: No quotes needed for integers
+#   - Colors: Use hex format #RRGGBB
+#
+# For support and documentation, please visit our wiki.
+# Always backup this file before making changes.
+#
+# ===================================================================
 
-# CONFIG VERSION - DO NOT CHANGE THIS
-config-version: 10
+# Configuration version - DO NOT MODIFY
+config-version: 20
 
-# ---------------------------------------------------- #
-#                   Proxy Settings                     #
-# ---------------------------------------------------- #
+# ===================================================================
+#                         Proxy Configuration
+# ===================================================================
+#
+# Configure cross-server functionality for network setups.
+# Supports BungeeCord, Velocity, and Waterfall proxies.
+#
 proxy_settings:
-  # Set this to "VELOCITY", "BUNGEECORD", or "NONE".
-  # This MUST match the proxy software you are using.
-  # If this is wrong, cross-server teleports WILL NOT WORK.
-  type: "VELOCITY"
+  # Proxy type selection
+  # Options: "NONE", "BUNGEE", "VELOCITY"
+  type: "NONE"
 
-# ---------------------------------------------------- #
-#                  Storage Settings                    #
-# ---------------------------------------------------- #
-# Configure how the plugin stores its data.
+# ===================================================================
+#                        Database Configuration
+# ===================================================================
+#
+# Choose your preferred storage method for team data.
+# H2 is recommended for single servers, MySQL for networks.
+#
 storage:
-  # Can be "mysql" for a central database or "h2" for local file-based storage.
-  # H2 is recommended for single-server setups as it requires no configuration.
-  # MySQL is required for multi-server networks (e.g., BungeeCord/Velocity) to sync data.
+  # Database type: "h2", "mysql", "mariadb"
   type: "h2"
 
-  # MySQL database settings.
-  # Only used if type is "mysql" and enabled is "true".
+  # MySQL/MariaDB Settings
   mysql:
     enabled: false
     host: "localhost"
     port: 3306
-    database: "donutsmp"
+    database: "teams"
     username: "root"
     password: ""
+    
+    # Connection security
+    use_ssl: false
+    allow_public_key_retrieval: true
+    use_unicode: true
+    character_encoding: "utf8"
+    collation: "utf8_general_ci"
+    
+    # Connection timeouts (milliseconds)
+    connection_timeout: 30000
+    socket_timeout: 60000
+    auto_reconnect: true
+    fail_over_read_only: false
+    max_reconnects: 3
 
-# ---------------------------------------------------- #
-#                   General Settings                   #
-# ---------------------------------------------------- #
+  # Connection Pool Settings (Optimized for both H2 and MySQL)
+  connection_pool:
+    # H2 defaults: max_size=4, min_idle=1
+    # MySQL defaults: max_size=10, min_idle=3  
+    max_size: 8
+    min_idle: 2
+    
+    # Timeouts in milliseconds
+    idle_timeout: 300000          # 5 minutes
+    max_lifetime: 1800000         # 30 minutes
+    connection_timeout: 15000     # 15 seconds (reduced from 20s)
+    validation_timeout: 3000      # 3 seconds
+    
+    # Connection testing
+    connection_test_query: "SELECT 1"
+    
+    # Leak detection (0 = disabled, >0 = milliseconds before leak warning)
+    leak_detection_threshold: 0
+
+# ===================================================================
+#                        Feature Configuration
+# ===================================================================
+#
+# Enable or disable specific features to customize functionality.
+# Each feature can be toggled independently.
+#
+features:
+  # Core Team Management
+  team_creation: true
+  team_disband: true
+  team_invites: true
+  team_join_requests: true
+  team_blacklist: true
+  team_transfer: true
+  team_public_toggle: true
+  
+  # Member Management
+  member_kick: true
+  member_promote: true
+  member_demote: true
+  member_leave: true
+  
+  # Information Features
+  team_info: true
+  team_tag: true
+  team_description: true
+  team_leaderboard: true
+  
+  # Home System
+  team_home: true
+  team_home_set: true
+  team_home_teleport: true
+  
+  # Warp System
+  team_warps: false
+  team_warp_set: false
+  team_warp_delete: false
+  team_warp_teleport: false
+  
+  # PvP Features
+  team_pvp: false
+  team_pvp_toggle: false
+  
+  # Economy Features (Requires Vault)
+  team_bank: false
+  team_bank_deposit: false
+  team_bank_withdraw: false
+  
+  # Storage Features
+  team_enderchest: true
+  
+  # Communication Features
+  team_chat: true
+  team_message_command: true
+
+# ===================================================================
+#                          General Settings
+# ===================================================================
+#
+# Core plugin settings affecting overall behavior.
+#
 settings:
-  # Enable this to see detailed teleport and database logs in the console.
-  # Useful for diagnosing cross-server issues.
+  # Debug Options
   debug: false
-  # This is a UNIQUE name for this specific server.
-  # It is ABSOLUTELY CRUCIAL for cross-server features like /team home.
-  # Each server in your network MUST have a different value here.
-  # Good Examples: "survival-1", "factions-main", "skyblock", "lobby1", "lobby2"
-  # Bad Example: Using "survival" on two different servers.
+  
+  # Server Configuration
+  single_server_mode: true
   server-identifier: "survival"
-  # The main color used in GUIs and messages. Must be a hex code (e.g., "#4C9DDE").
+  
+  # Theme Colors
   main_color: "#4C9DDE"
-  # The accent color used for highlights and gradients.
-  accent_color: "#4C96D2"
-  # Maximum number of players allowed in a single team.
+  accent_color: "#FFD700"
+  currency_format: ""
+  
+  # Team Limits
   max_team_size: 10
-  # Minimum character length for a team name.
   min_name_length: 3
-  # Maximum character length for a team name.
   max_name_length: 16
-  # Maximum character length for a team tag.
   max_tag_length: 6
-  # Maximum character length for a team description.
   max_description_length: 64
-  # Default PvP status for newly created teams. If false, members cannot hurt each other by default.
+  
+  # Default Settings
   default_pvp_status: true
+  default_public_status: false
+  
+  # Cross-Server Synchronization
+  enable_cross_server_sync: false
+  
+  # Performance Optimization
+  sync_optimization:
+    heartbeat_interval: 600
+    cross_server_sync_interval: 300
+    critical_sync_interval: 180
+    max_teams_per_batch: 100
+    enable_lazy_loading: true
+    team_cache_ttl: 1200
+    enable_optimistic_locking: true
+    max_sync_retries: 2
+    sync_retry_delay: 3000
+    max_batch_size: 500
+    cache_cleanup_interval: 900
+    async_database_operations: true
+    bulk_operation_batch_size: 200
+    connection_validation_interval: 60
+    heartbeat_batch_size: 1
+    enable_connection_pooling: true
 
-# ---------------------------------------------------- #
-#                 Broadcast Settings                   #
-# ---------------------------------------------------- #
+  # Performance Monitoring
+  performance:
+    enable_metrics: false
+    log_slow_queries: true
+    slow_query_threshold: 50
+    detailed_sync_logging: false
+    monitor_connection_pool: false
+    connection_pool_log_interval: 60
+    enable_debug_logging: false
+    gui_update_throttle_ms: 100
+    max_concurrent_db_operations: 5
+
+# ===================================================================
+#                        Broadcast Settings
+# ===================================================================
+#
+# Control server-wide announcements for team events.
+#
 broadcasts:
-  # Set to true to announce server-wide when a new team is created.
   team-created: true
-  # Set to true to announce server-wide when a team is disbanded by its owner.
   team-disbanded: true
 
-# ---------------------------------------------------- #
-#                 Team Home Settings                   #
-# ---------------------------------------------------- #
-team_home:
-  # Time in seconds a player must stand still before being teleported.
-  # Set to 0 to disable the warmup.
-  warmup_seconds: 5
-  # Cooldown in seconds before a player can use /team home again.
-  # Players with the 'justteams.bypass.home.cooldown' permission ignore this.
-  cooldown_seconds: 300 # 5 minutes
+# ===================================================================
+#                        Team Chat Settings
+# ===================================================================
+#
+# Configure the team chat system.
+#
+team_chat:
+  character_enabled: true
+  character: ""
+  require_space: false
 
-# ---------------------------------------------------- #
-#                  Team Bank Settings                  #
-# ---------------------------------------------------- #
-# Requires Vault and an economy plugin (e.g., EssentialsX) to be installed.
+# ===================================================================
+#                        Home Configuration
+# ===================================================================
+#
+# Configure team home teleportation system.
+#
+team_home:
+  warmup_seconds: 5
+  cooldown_seconds: 300
+
+# ===================================================================
+#                        Warp Configuration
+# ===================================================================
+#
+# Configure the team warp system.
+#
+team_warps:
+  max_warps: 5
+  warmup_seconds: 5
+  cooldown_seconds: 300
+
+# ===================================================================
+#                        Bank Configuration
+# ===================================================================
+#
+# Configure the team banking system (requires Vault).
+#
 team_bank:
-  # Set to false to completely disable the team bank feature.
   enabled: true
-  # Maximum balance a team bank can hold. Set to -1 for unlimited.
   max_balance: 1000000.0
 
-# ---------------------------------------------------- #
-#              Team Ender Chest Settings               #
-# ---------------------------------------------------- #
+# ===================================================================
+#                     Ender Chest Configuration
+# ===================================================================
+#
+# Configure the shared team ender chest.
+#
 team_enderchest:
-  # Set to false to completely disable the team ender chest feature.
   enabled: true
-  # Number of rows in the team ender chest. Must be between 1 and 6.
-  rows: 3 # 3 rows = 27 slots
+  rows: 3
 
-# ---------------------------------------------------- #
-#              Visual and Sound Effects                #
-# ---------------------------------------------------- #
+# ===================================================================
+#                        Effects Configuration
+# ===================================================================
+#
+# Configure sound and particle effects.
+#
 effects:
   sounds:
     enabled: true
-    # Sound played for successful actions (e.g., creating a team, depositing money).
-    # A list of valid sound names can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
-    success: "ENTITY_PLAYER_LEVELUP"
-    # Sound played for failed actions or errors.
-    error: "ENTITY_VILLAGER_NO"
-    # Sound played on teleportation.
-    teleport: "ENTITY_ENDERMAN_TELEPORT"
+    
+    # General Sounds
+    success: "BLOCK_NOTE_BLOCK_PLING"
+    error: "BLOCK_NOTE_BLOCK_BASS"
+    teleport: "BLOCK_BEACON_ACTIVATE"
+    gui_open: "BLOCK_WOODEN_BUTTON_CLICK_ON"
+    
+    # Event Sounds
+    team_created: "ENTITY_PLAYER_LEVELUP"
+    team_disbanded: "BLOCK_NOTE_BLOCK_CHIME"
+    member_join: "BLOCK_NOTE_BLOCK_HARP"
+    member_leave: "BLOCK_NOTE_BLOCK_BELL"
+    permission_change: "BLOCK_NOTE_BLOCK_FLUTE"
+    warp_created: "BLOCK_NOTE_BLOCK_XYLOPHONE"
+    warp_deleted: "BLOCK_NOTE_BLOCK_COW_BELL"
+    home_set: "BLOCK_NOTE_BLOCK_GUITAR"
+    bank_transaction: "BLOCK_NOTE_BLOCK_BIT"
+    
   particles:
-    enabled: true
-    # Particle effect shown during teleport warmup.
-    # A list of valid particle names can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
     teleport_warmup: "PORTAL"
-    # Particle effect shown upon successful teleportation.
     teleport_success: "END_ROD"
 
-# ---------------------------------------------------- #
-#                   Webhook Settings                   #
-# ---------------------------------------------------- #
-# This feature sends anonymous startup statistics to the developer to help improve the plugin.
-# It helps track usage and prioritize updates. No player or server IP data is ever sent.
-# You can disable it at any time.
+# ===================================================================
+#                      Bedrock Edition Support
+# ===================================================================
+#
+# Configure cross-platform support for Bedrock Edition players.
+# Requires Floodgate plugin.
+#
+bedrock_support:
+  enabled: true
+  show_platform_indicators: true
+  show_gamertags: true
+  full_feature_support: true
+  cross_platform_teams: true
+  uuid_mode: "auto"
+
+# ===================================================================
+#                       Webhook Configuration
+# ===================================================================
+#
+# Developement.. You can disable it anytime
+#
 webhook:
   enabled: true
-  # You can optionally set a server name to distinguish it in the statistics.
   server-name: "ServerName"

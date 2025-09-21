@@ -1,5 +1,4 @@
 package eu.kotori.justTeams.util;
-
 import eu.kotori.justTeams.JustTeams;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -13,26 +12,20 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 public class ItemBuilder {
-
     private final ItemStack itemStack;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private static final NamespacedKey ACTION_KEY = JustTeams.getActionKey();
-
     public ItemBuilder(Material material) {
         this.itemStack = new ItemStack(material);
     }
-
     public ItemBuilder(ItemStack itemStack) {
         this.itemStack = itemStack.clone();
     }
-
     public ItemBuilder withName(String name) {
         ItemMeta meta = itemStack.getItemMeta();
         if (meta != null) {
@@ -43,11 +36,9 @@ public class ItemBuilder {
         }
         return this;
     }
-
     public ItemBuilder withLore(String... loreLines) {
         return withLore(Arrays.asList(loreLines));
     }
-
     public ItemBuilder withLore(List<String> loreLines) {
         ItemMeta meta = itemStack.getItemMeta();
         if (meta != null) {
@@ -59,7 +50,6 @@ public class ItemBuilder {
         }
         return this;
     }
-
     public ItemBuilder asPlayerHead(UUID playerUuid) {
         if (itemStack.getType() == Material.PLAYER_HEAD && itemStack.getItemMeta() instanceof SkullMeta skullMeta) {
             skullMeta.setPlayerProfile(Bukkit.createProfile(playerUuid));
@@ -67,7 +57,6 @@ public class ItemBuilder {
         }
         return this;
     }
-
     public ItemBuilder withGlow() {
         itemStack.addUnsafeEnchantment(Enchantment.UNBREAKING, 1);
         ItemMeta meta = itemStack.getItemMeta();
@@ -77,7 +66,6 @@ public class ItemBuilder {
         }
         return this;
     }
-
     public ItemBuilder withAction(String action) {
         if (action == null || action.isEmpty()) {
             return this;
@@ -89,7 +77,17 @@ public class ItemBuilder {
         }
         return this;
     }
-
+    public ItemBuilder withData(String key, String value) {
+        if (key == null || value == null) {
+            return this;
+        }
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta != null) {
+            meta.getPersistentDataContainer().set(new NamespacedKey(JustTeams.getInstance(), key), PersistentDataType.STRING, value);
+            itemStack.setItemMeta(meta);
+        }
+        return this;
+    }
     public ItemStack build() {
         return itemStack;
     }
